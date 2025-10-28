@@ -25,26 +25,59 @@
         .wrap { white-space: normal; word-break: break-word; }
 
         /* Generic Builder Style */
-        .builderSection .row.titleRow { justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: nowrap; /* Prevent title/controls wrapping */ }
-        .builderSection .row.titleRow > div:first-child { font-weight: 700; color: var(--muted); font-size: 14px; white-space: nowrap; } /* Section title */
-        .builderSection .row.filterRow { justify-content: flex-end; gap: 8px; flex-grow: 1; /* Allow controls to take space */ }
-        .builderSection .row.filterRow input[type="text"] { flex-grow: 1; min-width: 150px; } /* Allow filter to grow */
-        .builderSection .row.filterRow input.delimiter { width: 100px; flex-grow: 0; display: none; /* Hide delimiter for now */ }
+        .builderSection .row.titleRow { justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: nowrap; }
+        .builderSection .row.titleRow > div:first-child { font-weight: 700; color: var(--muted); font-size: 14px; white-space: nowrap; }
+        .builderSection .row.filterRow { justify-content: flex-end; gap: 8px; flex-grow: 1; }
+        .builderSection .row.filterRow input[type="text"] { flex-grow: 1; min-width: 150px; }
+        .builderSection .row.filterRow input.delimiter { width: 100px; flex-grow: 0; display: none; }
         .builderSection .row.selects { margin-top: 8px; display: flex; gap: 10px; align-items: stretch; }
-        .builderSection select { flex: 1; min-height: 220px; width: 100%; border-radius: 8px;} /* Ensure selects take full width */
+        .builderSection select { flex: 1; min-height: 220px; width: 100%; border-radius: 8px;}
         .builderSection .buttons { display: flex; flex-direction: column; gap: 8px; justify-content: center; width: 56px; align-items: center; }
         .builderSection .tip { margin-top: 10px; font-size: 12px; color: var(--muted); }
 
-        .outCard code { display: block; overflow: auto; width: 100%; white-space: pre-wrap; word-break: break-all; max-height: 200px; background: #0c121b; padding: 10px; border-radius: 8px; border: 2px solid var(--line); transition: border-color 0.3s ease;}
+        /* Output Box Styling */
+        .outCard code {
+            display: block; overflow: auto; width: 100%; white-space: pre-wrap; word-break: break-all;
+            max-height: 100px; /* Reduced max height */
+            min-height: 50px;
+            background: #0c121b; padding: 10px; border-radius: 8px; border: 2px solid var(--line); transition: border-color 0.3s ease;
+        }
         .outCard code[contenteditable="true"]:focus { outline: none; border-color: var(--edit-yellow); }
-        .outCard code.manual-edit { border-color: var(--edit-yellow); } /* Style when manually edited */
+        .outCard code.manual-edit { border-color: var(--edit-yellow); }
 
         #apiCard code { max-height: 100px; }
-
-        /* Sticky behavior */
         .sticky { position: sticky; top: 10px; z-index: 20; }
+        
+         /* Input Serial Box Styling */
+        #inputSerialCode {
+            width: 100%; min-height: 40px; margin-top: 6px; padding: 8px 10px;
+            background: #141c27; 
+            color: var(--ink); border: 1px solid var(--line); border-radius: 8px;
+            font-family: monospace; font-size: 0.9em;
+        }
 
-         /* Error/Status Message Styling */
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .outCard code { max-height: 120px; }
+            .outCard .row { flex-wrap: wrap; }
+            .outCard .row button.small { min-height: 30px; }
+            #dice { padding: 4px 8px !important; font-size: 12px !important; }
+        }
+        /* Status Message Styling */
+        .copy-status {
+            font-size: 12px;
+            color: var(--success-green);
+            margin-left: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
+        }
+        .copy-status.visible { opacity: 1; }
+        .manual-edit-indicator { font-size: 12px; color: var(--edit-yellow); margin-left: auto; display: none; }
+        .manual-edit .manual-edit-indicator { display: inline; }
+         /* Loading state - hides main content */
+        .loading #mainContent { opacity: 0; pointer-events: none; }
+        .loading #inputCard { opacity: 0; pointer-events: none; }
+        /* Message Area Styling */
         #message-area {
             padding: 10px 15px;
             border-radius: 8px;
@@ -58,65 +91,23 @@
         #message-area.success { background-color: var(--success-green); color: white; }
         #message-area.visible { display: block; }
         #message-area code { background: rgba(0,0,0,0.2); padding: 2px 4px; border-radius: 4px; font-size: 0.9em;}
-
-        /* Loading state */
-        .loading #mainContent { opacity: 0.5; pointer-events: none; }
-
-
-        /* Mobile adjustments */
-        @media (max-width: 1024px) {
-            body { padding: 14px; }
-            .card { padding: 12px; border-radius: 12px; }
-            .row { gap: 8px; }
-            .sticky { position: static !important; } /* Disable sticky on smaller screens */
-        }
-
-        @media (max-width: 768px) {
-            body { padding: 12px; font-size: 15px;}
-            h2 { font-size: 18px; margin-bottom: 10px; }
-
-            .builderSection .row.titleRow { flex-wrap: wrap; } /* Allow title and controls to wrap */
-            .builderSection .row.filterRow { width: 100%; justify-content: space-between; margin-top: 8px;} /* Full width controls */
-             .builderSection .row.filterRow input[type="text"] { min-width: 120px; }
-             .builderSection .row.filterRow input.delimiter { width: 80px; display: none; } /* Hide delimiter */
-
-            .builderSection .row.selects { flex-direction: column; gap: 8px; }
-            .builderSection select { min-height: 25vh; }
-            .builderSection .buttons { flex-direction: row; width: 100%; }
-
-            .outCard code, #apiCard code { max-height: 25vh; }
-            label { font-size: 13px; }
-            button.small { min-height: 40px; min-width: 40px; }
-            .outCard .row { flex-wrap: nowrap; } /* Keep output controls together */
-        }
-
-        @media (max-width: 480px) {
-            h2 { font-size: 16px; }
-            .row { gap: 6px; }
-            .builderSection select { min-height: 22vh; }
-             .builderSection .row.filterRow input[type="text"] { min-width: 100px; }
-             .builderSection .row.filterRow input.delimiter { width: 70px; display: none; } /* Hide delimiter */
-            .outCard .row { gap: 4px; } /* Reduce gap for smaller buttons */
-            button.small { font-size: 12px; min-width: auto; padding: 6px 8px;}
-        }
-         /* Simple Status Message Styling (replaces .status) */
-        .copy-status {
-            font-size: 12px;
-            color: var(--success-green);
-            margin-left: 8px;
-            opacity: 0;
-            transition: opacity 0.3s ease-out;
-        }
-        .copy-status.visible { opacity: 1; }
-        .manual-edit-indicator { font-size: 12px; color: var(--edit-yellow); margin-left: auto; display: none; }
-        .manual-edit .manual-edit-indicator { display: inline; } /* Show indicator when edited */
     </style>
 </head>
-<body class="loading"> <!-- Start with loading class -->
+<body class="loading">
 <div class="container">
-    <div id="message-area"></div> <!-- Universal Message/Error display area -->
+    <div id="message-area"></div>
     <h2>BL4 Weapon Part Editor (Hosted)</h2>
 
+    <!-- Input Serial Section -->
+    <div class="card" id="inputCard">
+        <div class="row" style="justify-content: space-between; align-items: center;">
+             <label>Input Base Serial String (Base85 or Deserialized Parts)</label>
+             <!-- Re-added the Deserialize button -->
+             <button class="small" id="deserializeBtn" title="Deserialize Base85 string from this input box" style="font-size: 12px; padding: 8px 12px;">🔗 Deserialize Base85</button>
+        </div>
+        <code id="inputSerialCode" contenteditable="plaintext-only" title="Paste Base85 and click 'Deserialize', OR paste Deserialized parts to use as a base."></code>
+    </div>
+    
     <!-- Output + API (Sticky) -->
     <div class="card outCard sticky">
         <div class="row" style="justify-content: space-between; align-items: center;">
@@ -128,9 +119,8 @@
                  <span id="copyFullStatus" class="copy-status"></span>
             </div>
         </div>
-        <!-- Added contenteditable="plaintext-only" for better plain text pasting -->
         <div id="out" style="margin-top:6px"><code contenteditable="plaintext-only"><!-- Output code will appear here --></code></div>
-         <button class="small" id="dice" title="New random seed" style="margin-top: 10px; width: fit-content;">🎲 New Seed</button>
+         <button class="small" id="dice" title="New random seed" style="font-size: 12px; padding: 8px 12px; width: fit-content; min-width: auto;">🎲 New Seed</button>
     </div>
 
     <div class="card" id="apiCard" style="margin-bottom:14px">
@@ -176,13 +166,12 @@
              </div>
         </div>
 
-        <!-- Alt Firing Modes Builder -->
+        <!-- Builder Sections -->
         <div class="card builderSection" data-key="altFireModes" data-name-field="name" data-code-field="code" data-id-prefix="AltFire">
             <div class="row titleRow">
                 <div>Alt Fire Mode Variations</div>
                 <div class="row filterRow">
                     <input id="filterAltFire" placeholder="Filter..." type="text"/>
-                    <input id="delimAltFire" class="delimiter" placeholder="Delimiter" title="Output Delimiter" value=" " type="text"/> <!-- Keep but hide via CSS -->
                     <button class="small" id="clearAltFire" title="Clear Selected">❌</button>
                 </div>
             </div>
@@ -191,19 +180,17 @@
                 <div class="buttons">
                     <button id="addAltFire" title="Add Selected">»</button>
                     <button id="remAltFire" title="Remove Selected">«</button>
-                </div>
+                </diV>
                 <select id="selAltFire" multiple size="8" aria-label="Selected Alt Fire Modes"></select>
             </div>
-             <div class="tip">Hold Ctrl/Cmd/Shift to select multiple. Use Del/Backspace to remove from selected list. Double-click to add/remove.</div>
+             <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
         </div>
 
-        <!-- Magazine / Ammo Mode Builder -->
         <div class="card builderSection" data-key="magazineModes" data-name-field="name" data-code-field="code" data-id-prefix="MagMode">
              <div class="row titleRow">
                 <div>Magazine / Ammo Mode Variations</div>
                  <div class="row filterRow">
                     <input id="filterMagMode" placeholder="Filter..." type="text"/>
-                    <input id="delimMagMode" class="delimiter" placeholder="Delimiter" title="Output Delimiter" value=" " type="text"/> <!-- Keep but hide via CSS -->
                     <button class="small" id="clearMagMode" title="Clear Selected">❌</button>
                 </div>
             </div>
@@ -212,19 +199,17 @@
                 <div class="buttons">
                     <button id="addMagMode" title="Add Selected">»</button>
                     <button id="remMagMode" title="Remove Selected">«</button>
-                </div>
+                </diV>
                 <select id="selMagMode" multiple size="8" aria-label="Selected Magazine/Ammo Modes"></select>
             </div>
-             <div class="tip">Hold Ctrl/Cmd/Shift to select multiple. Use Del/Backspace to remove from selected list. Double-click to add/remove.</div>
+             <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
         </div>
 
-        <!-- Legendary Perk Part Variations Builder -->
         <div class="card builderSection" data-key="legendaryPerks" data-name-field="name" data-code-field="code" data-id-prefix="LegPerk">
              <div class="row titleRow">
                  <div>Legendary Perk Part Variations</div>
                  <div class="row filterRow">
                     <input id="filterLegPerk" placeholder="Filter..." type="text"/>
-                    <input id="delimLegPerk" class="delimiter" placeholder="Delimiter" title="Output Delimiter" value=" " type="text"/> <!-- Keep but hide via CSS -->
                     <button class="small" id="clearLegPerk" title="Clear Selected">❌</button>
                 </div>
             </div>
@@ -236,16 +221,14 @@
                 </div>
                 <select id="selLegPerk" multiple size="8" aria-label="Selected Legendary Perks"></select>
             </div>
-             <div class="tip">Hold Ctrl/Cmd/Shift to select multiple. Use Del/Backspace to remove from selected list. Double-click to add/remove.</div>
+             <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
         </div>
 
-        <!-- Ordnance Legendary Perks Builder -->
         <div class="card builderSection" data-key="ordnancePerks" data-name-field="name" data-code-field="code" data-id-prefix="OrdPerk">
              <div class="row titleRow">
                 <div>Ordnance Legendary Perks (Heavy/Grenade)</div>
                  <div class="row filterRow">
                     <input id="filterOrdPerk" placeholder="Filter..." type="text"/>
-                    <input id="delimOrdPerk" class="delimiter" placeholder="Delimiter" title="Output Delimiter" value=" " type="text"/> <!-- Keep but hide via CSS -->
                     <button class="small" id="clearOrdPerk" title="Clear Selected">❌</button>
                 </div>
             </div>
@@ -254,46 +237,59 @@
                 <div class="buttons">
                     <button id="addOrdPerk" title="Add Selected">»</button>
                     <button id="remOrdPerk" title="Remove Selected">«</button>
-                </div>
+                </diV>
                 <select id="selOrdPerk" multiple size="8" aria-label="Selected Ordnance Perks"></select>
             </div>
-             <div class="tip">Hold Ctrl/Cmd/Shift to select multiple. Use Del/Backspace to remove from selected list. Double-click to add/remove.</div>
+             <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
         </div>
 
-    </div> <!-- End mainContent -->
-</div> <!-- End container -->
+    </div>
+</div>
 
 <script>
     // Global variables
     let PAYLOAD = {};
-    const builders = {}; // Stores builder instances { key: instance }
+    const builders = {};
     let rndSeed = Math.floor(1000 + Math.random() * 9000);
-    let apiCallTimer; // Debounce timer for API calls
-    let rebuildTimer; // Debounce timer for rebuildOutput
-    let lastGeneratedOutput = ''; // Store the last output generated by the script
-    let isManualEditMode = false; // Track if user is editing the output box
+    let apiCallTimer;
+    let rebuildTimer;
+    let lastGeneratedOutput = '';
+    let isManualEditMode = false;
 
-    // --- DOM Elements Cache ---
-    const dom = {
-        body: document.body,
-        messageArea: document.getElementById('message-area'),
-        itemTypeSel: document.getElementById('itemTypeSel'),
-        raritySel: document.getElementById('raritySel'),
-        outWrapper: document.getElementById('out'), // Get the wrapper div
-        outCode: document.querySelector('#out code'),
-        serial_b85: document.getElementById('serial_b85'),
-        additionalData: document.getElementById('additionalData'),
-        copyFull: document.getElementById('copyFull'),
-        copySerial: document.getElementById('copySerial'),
-        dice: document.getElementById('dice'),
-        copyFullStatus: document.getElementById('copyFullStatus'),
-        copyApiStatus: document.getElementById('copyApiStatus'),
-        undoEditBtn: document.getElementById('undoEdit'),
-        reserializeManualBtn: document.getElementById('reserializeManual'),
-    };
+    // --- DOM Elements Cache (to be populated on DOMContentLoaded) ---
+    const dom = {};
+    
+    // --- Initialization Function ---
+    document.addEventListener('DOMContentLoaded', () => {
+        // This is the *only* safe time to assign DOM elements
+        Object.assign(dom, {
+            body: document.body,
+            messageArea: document.getElementById('message-area'),
+            itemTypeSel: document.getElementById('itemTypeSel'),
+            raritySel: document.getElementById('raritySel'),
+            outWrapper: document.getElementById('out'),
+            outCode: document.querySelector('#out code'),
+            inputSerialCode: document.getElementById('inputSerialCode'),
+            serial_b85: document.getElementById('serial_b85'),
+            additionalData: document.getElementById('additionalData'),
+            copyFull: document.getElementById('copyFull'),
+            copySerial: document.getElementById('copySerial'),
+            dice: document.getElementById('dice'),
+            copyFullStatus: document.getElementById('copyFullStatus'),
+            copyApiStatus: document.getElementById('copyApiStatus'),
+            undoEditBtn: document.getElementById('undoEdit'),
+            reserializeManualBtn: document.getElementById('reserializeManual'),
+            deserializeBtn: document.getElementById('deserializeBtn'),
+        });
+        
+        // Start the app's loading process
+        initializeApp();
+    });
 
     // --- Utility Functions ---
     function showMessage(message, isError = true) {
+        if (!dom.messageArea) return console.error("Message area not initialized.");
+        
         console.log(isError ? "Error:" : "Status:", message.replace(/<code>(.*?)<\/code>/g, '$1'));
         dom.messageArea.innerHTML = message;
         dom.messageArea.className = `message-area visible ${isError ? 'error' : 'success'}`;
@@ -317,8 +313,77 @@
             statusElement.classList.remove('visible');
         }, 1500);
     }
+    
+    // --- Condensing Logic ---
+    function getPartId(code) {
+        // Find {ID: or {ID}
+        const match = code.match(/\{(\d+)/);
+        return match ? match[1] : null;
+    }
+    function getPartValue(code) {
+        // Find :VALUE}
+        const match = code.match(/:\s*([^}]+)}/);
+        if (match) {
+            return match[1].trim(); // This is a key-value part
+        }
+        // Fallback for simple parts like {217}
+        const singleMatch = code.match(/\{(\d+)\}/);
+        if (singleMatch && !code.includes(':')) {
+            return null; // It's a simple part, not a key-value part
+        }
+        return null; // Malformed or no value
+    }
 
-    // --- Generic Builder UI Logic (minor update for robustness) ---
+    function condenseParts(parts) {
+        if (!parts || parts.length === 0) return [];
+
+        const grouped = {}; // { 'ID': ['VALUE1', 'VALUE2', ...] }
+        const simpleParts = new Set(); // Use a Set to handle duplicate simple parts like {217}
+        const malformedParts = []; // Fails parsing
+
+        parts.forEach(code => {
+            const id = getPartId(code);
+            const value = getPartValue(code); // Is null for simple parts
+            
+            if (id && value) {
+                // This is a key:value part, e.g., {1:12} or {247:[...]}
+                if (!grouped[id]) grouped[id] = [];
+                grouped[id].push(value);
+            } else if (id && !value && !code.includes(':')) {
+                // This is a simple part, e.g., {217}
+                simpleParts.add(code);
+            } else {
+                 // Malformed or unknown, e.g., "15," or "foo"
+                 // Only add if it's not just an empty string
+                 if (code) malformedParts.push(code);
+            }
+        });
+
+        const finalParts = [];
+        // Add simple parts first (often rarity, etc.)
+        finalParts.push(...Array.from(simpleParts));
+
+        // Add grouped parts
+        for (const id in grouped) {
+            const values = [...new Set(grouped[id])]; // Remove duplicate values for the same ID
+            if (values.length === 0) continue;
+
+            if (values.length === 1) {
+                // Single part: return to original format {ID:VALUE}
+                finalParts.push(`{${id}:${values[0]}}`);
+            } else {
+                // Multiple parts: condense to {ID:[VALUE1 VALUE2 ...]}
+                finalParts.push(`{${id}:[${values.join(' ')}]}`);
+            }
+        }
+        
+        // Add back any parts we couldn't parse (should be none, but safe)
+        finalParts.push(...malformedParts);
+        
+        return finalParts;
+    }
+
+    // --- Generic Builder UI Logic ---
     function createBuilder(key, nameField, codeField, idPrefix) {
         const dataList = PAYLOAD[key] || [];
         const filterInput = document.getElementById(`filter${idPrefix}`);
@@ -353,10 +418,9 @@
         });
 
         function populateAvailable() {
-            // Optimization: DocumentFragment to reduce reflows
             const fragment = document.createDocumentFragment();
             const query = (filterInput.value || '').toLowerCase();
-            availList.innerHTML = ''; // Clear previous options efficiently
+            availList.innerHTML = '';
             (dataList || [])
                 .filter(item => {
                     const code = item[codeField];
@@ -371,11 +435,10 @@
                     const o = document.createElement('option');
                     o.value = code;
                     o.textContent = `${displayName} ${code}`;
-                    fragment.appendChild(o); // Add to fragment
+                    fragment.appendChild(o);
                 });
-            availList.appendChild(fragment); // Append fragment once
+            availList.appendChild(fragment);
         }
-
 
         function renderSelected() {
             const scrollState = { top: selList.scrollTop, left: selList.scrollLeft };
@@ -390,11 +453,10 @@
             });
              selList.scrollTop = scrollState.top;
              selList.scrollLeft = scrollState.left;
-             if (!isManualEditMode) { // Only trigger rebuild if not manually editing
+             if (!isManualEditMode) {
                  triggerDebouncedRebuild();
              }
         }
-
 
         function addSelected() {
             Array.from(availList.selectedOptions).forEach(opt => selectedItems.push(opt.value));
@@ -429,124 +491,119 @@
         selList.addEventListener('dblclick', removeSelected);
         availList.addEventListener('dblclick', addSelected);
 
-
         return { getSelectedItems: () => selectedItems, clear: clearSelected };
     }
 
-    // --- Output Builder (Corrected Format and Condensing Logic) ---
 
-    // Utility function to get the first ID from a part code, e.g., "{17:45}" -> "17"
-    function getPartId(code) {
-        const match = code.match(/\{(\d+)/);
-        return match ? match[1] : null;
+    // --- Input Detection & Routing ---
+    
+    // **FIXED** This function now correctly identifies Base85 vs Part Strings
+    function isBase85Serial(input) {
+        const cleanedInput = input.trim();
+        if (cleanedInput.length < 50) return false; // Too short for Base85
+
+        // A part string MUST contain a comma (e.g., "299, 0, 1...")
+        // A Base85 string WILL NOT contain a comma.
+        const hasCommas = cleanedInput.includes(',');
+        if (hasCommas) return false; // It's a part string
+
+        // If it has no commas and starts with @ or U, it's Base85.
+        return cleanedInput.startsWith('@') || cleanedInput.startsWith('U');
     }
 
-    function condenseParts(parts) {
-        if (!parts || parts.length === 0) return [];
-
-        const grouped = {}; // { 'ID': ['{ID:VAL}', '{ID:VAL}', ...] }
-        parts.forEach(code => {
-            const id = getPartId(code);
-            if (id) {
-                if (!grouped[id]) {
-                    grouped[id] = [];
-                }
-                grouped[id].push(code);
-            } else {
-                // For parts that don't match {ID:VALUE} pattern (e.g. "{999}"), treat them as individual blocks
-                if (!grouped['__single__']) {
-                    grouped['__single__'] = [];
-                }
-                grouped['__single__'].push(code);
-            }
-        });
-
-        const finalParts = [];
-
-        // Process grouped parts
-        for (const id in grouped) {
-            if (id === '__single__') {
-                finalParts.push(...grouped[id]);
-                continue;
-            }
-
-            const codes = grouped[id];
-            if (codes.length === 1) {
-                // If only one, output as simple code: {ID:VALUE}
-                finalParts.push(codes[0]);
-            } else {
-                // If multiple, condense: {ID:[VALUE1 VALUE2 ...]}
-                const values = codes.map(code => {
-                    // Extract value: "{ID:VALUE}" -> "VALUE"
-                    const match = code.match(/:\s*([^}]+)/);
-                    return match ? match[1].trim() : null;
-                }).filter(v => v !== null).map(v => v.replace(/\{|\}/g, '')); // Remove internal braces/pipes if present
-
-                if (values.length > 0) {
-                    finalParts.push(`{${id}:[${values.join(' ')}]}`);
-                }
-            }
-        }
-
-        return finalParts;
-    }
-
-
+    
     function rebuildOutput() {
         try {
-            const allSelectedParts = [];
-            // --- Base Serial Structure (Placeholder - Needs Real BL4 Logic) ---
-            let manufacturerCode = 0;
-            let itemTypeId = 0;
-            let rarityPartCode = '';
-
-            // Use simple placeholders for base data
-            const typeMap = { gun: 1, shield: 2, grenade: 3, classmod: 4, enhancement: 5 };
-            itemTypeId = typeMap[dom.itemTypeSel.value] || 0;
-            const rarityCodeMap = { common: 217, uncommon: 218, rare: 219, epic: 220, legendary: 999 };
-            rarityPartCode = `{${rarityCodeMap[dom.raritySel.value] || 0}}`;
-
-            // 1. Construct the base part (HIGHLY SPECULATIVE)
-            allSelectedParts.push(`${manufacturerCode}, ${itemTypeId}, 1, 50| 2, ${rndSeed}||`);
-            allSelectedParts.push(rarityPartCode);
-            // --- End Base Serial Structure ---
-
-            // 2. Collect all selected parts
+            const baseInput = dom.inputSerialCode.textContent.trim();
+            
+            let parts = [];
+            let rawParts = [];
+            
+            // 1. --- COLLECT RAW PARTS FROM BUILDERS ---
             document.querySelectorAll('.builderSection').forEach(section => {
                  const key = section.dataset.key;
                  if (builders[key] && typeof builders[key].getSelectedItems === 'function') {
-                     allSelectedParts.push(...builders[key].getSelectedItems()); // Add all codes
+                     rawParts.push(...builders[key].getSelectedItems());
                  }
             });
-
-            // 3. Apply condensation and reformat to string
-            const dynamicParts = allSelectedParts.splice(2); // Keep base header and rarity, process dynamic parts
-            const condensedParts = condenseParts(dynamicParts);
             
-            // Recombine header, rarity, and condensed parts
-            const parts = [
-                allSelectedParts[0].trim(), // Base Header
-                allSelectedParts[1].trim(), // Rarity Part
-                ...condensedParts
-            ];
+            let baseHeader = '';
+            
+            // This rebuild logic now ONLY runs on Part Strings (or empty)
+            // It assumes baseInput is NOT Base85
+            if (baseInput && !isBase85Serial(baseInput)) { // Process only if it's NOT Base85
+                // --- Use User's Input as Base ---
+                const preCleanedInput = baseInput.replace(/@/g, '') // Strip @ just in case
+                                                .replace(/\|/g, '') // Strip all pipes
+                                                .replace(/\s+/g, ' ').trim();
+                
+                const inputParts = preCleanedInput.split(/\s+/).filter(p => p.length > 0);
+                
+                const headerParts = [];
+                const inputDynamicParts = [];
+                let foundPart = false;
 
-            // 4. Join parts with spaces and add the final pipe
-            const newOutput = parts.join(' ').trim() + '|';
-            lastGeneratedOutput = newOutput; // Store this generated version
+                inputParts.forEach(p => {
+                    if (p.startsWith('{') && p.endsWith('}')) {
+                        foundPart = true;
+                        inputDynamicParts.push(p);
+                    } else if (!foundPart) {
+                        // This is part of the header (e.g., "299," "0," "1," "50|" "2," "332||")
+                        // We must rejoin them carefully
+                        headerParts.push(p);
+                    }
+                    // Discard any text after the first part block that isn't a part
+                });
+                
+                baseHeader = headerParts.join(' '); 
+                // Combine parts from input AND parts from builders
+                const dynamicList = [...inputDynamicParts, ...rawParts];
+                const condensedDynamicParts = condenseParts(dynamicList);
+                parts = [baseHeader, ...condensedDynamicParts].filter(p => p.length > 0);
 
-            // Update textContent only if the user is not currently editing it
-            if (document.activeElement !== dom.outCode) {
-                 dom.outCode.textContent = newOutput;
-                 if (isManualEditMode) { // If reverting from manual edit, turn off indicator
-                     isManualEditMode = false;
-                     dom.outCode.classList.remove('manual-edit');
-                     dom.outWrapper.classList.remove('manual-edit');
-                 }
+            } else if (!baseInput) { // Only run if input is empty
+                // --- Generated Base Serial (If Input is Empty) ---
+                const typeMap = { gun: 1, shield: 2, grenade: 3, classmod: 4, enhancement: 5 };
+                const itemTypeId = typeMap[dom.itemTypeSel.value] || 0;
+                const rarityCodeMap = { common: 217, uncommon: 218, rare: 219, epic: 220, legendary: 999 };
+                const rarityPartCode = `{${rarityCodeMap[dom.raritySel.value] || 0}}`;
+                
+                baseHeader = `0, ${itemTypeId}, 1, 50| 2, ${rndSeed}||`;
+                
+                parts.push(baseHeader);
+                parts.push(rarityPartCode); 
+                
+                const condensedDynamicParts = condenseParts(rawParts);
+                parts.push(...condensedDynamicParts);
             }
+            // If it *is* Base85, this function does nothing, as it's waiting for the deserialize button.
+            
+            // 3. Final Assembly: Join and add the mandatory pipe
+            // Only update if parts were actually generated
+            if (parts.length > 0) {
+                // Ensure a single trailing pipe
+                const newOutput = parts.join(' ').trim().replace(/\|/g, '') + '|';
+                lastGeneratedOutput = newOutput;
+
+                if (document.activeElement !== dom.outCode) {
+                    dom.outCode.textContent = newOutput;
+                    if (isManualEditMode) {
+                        isManualEditMode = false;
+                        dom.outCode.classList.remove('manual-edit');
+                        dom.outWrapper.classList.remove('manual-edit');
+                    }
+                }
+            } else if (!baseInput) {
+                // Handle case where input is empty and no parts are selected
+                const defaultOutput = `0, 1, 1, 50| 2, ${rndSeed}|| {0}|`;
+                dom.outCode.textContent = defaultOutput;
+                lastGeneratedOutput = defaultOutput;
+            }
+            
             dom.messageArea.style.display = 'none';
 
         } catch (err) {
-            showMessage(`Error during output generation: <code>${err.message}</code>. Check builder setup and data.`, true);
+            showMessage(`Error during output generation: <code>${err.message}</code>. Check parts data formats.`, true);
             console.error("Output Generation Error:", err);
             dom.outCode.textContent = '[Error generating output]';
             lastGeneratedOutput = '';
@@ -554,28 +611,86 @@
     }
 
 
-     // --- Debounced Triggers ---
+     // --- Debounced Triggers and API Logic ---
      function triggerDebouncedRebuild() {
          clearTimeout(rebuildTimer);
-         rebuildTimer = setTimeout(rebuildOutputAndCallApi, 50); // Short delay for UI updates
+         rebuildTimer = setTimeout(rebuildOutputAndCallApi, 50);
      }
      function triggerDebouncedApiCall() {
          clearTimeout(apiCallTimer);
-         // Only trigger API if not in manual edit mode
          if (!isManualEditMode) {
-             apiCallTimer = setTimeout(callReserialize, 400); // 400ms delay
+             apiCallTimer = setTimeout(callReserialize, 400);
          }
      }
-     // Combines rebuild and API call trigger
     function rebuildOutputAndCallApi() {
         rebuildOutput();
-        triggerDebouncedApiCall(); // Schedules API call if applicable
+        triggerDebouncedApiCall();
+    }
+    
+    // --- API Calls ---
+    async function deserializeBase85(serialB85) {
+        showMessage('Deserializing Base85...', false);
+        dom.copySerial.disabled = true;
+        dom.deserializeBtn.disabled = true; // Disable button during API call
+        dom.deserializeBtn.textContent = '...';
+
+        const url = 'https://borderlands4-deserializer.nicnl.com/api/v1/deserialize';
+        
+        try {
+            // CRITICAL FIX: Strip the '@' prefix and trim whitespace
+            const cleanSerialB85 = serialB85.trim().replace(/^@/, '');
+
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ serial_b85: cleanSerialB85 })
+            });
+
+            if (!resp.ok) {
+                let errorText = `Deserialization Failed (HTTP ${resp.status})`;
+                try { 
+                    const errorData = await resp.json(); 
+                    errorText += `: ${errorData.error || errorData.message || 'Unknown API error'}`; 
+                } catch (_) {}
+                throw new Error(errorText);
+            }
+
+            const data = await resp.json();
+            const deserializedCode = data.deserialized || '';
+
+            if (!deserializedCode) {
+                 throw new Error("API returned an empty deserialized string.");
+            }
+
+            // SUCCESS: Place the deserialized code into the *Input* Box
+            // This is the new flow:
+            dom.inputSerialCode.textContent = deserializedCode.trim();
+            
+            // Clear any existing parts from builders
+            Object.values(builders).forEach(b => b.clear()); 
+
+            showMessage('✅ Serial deserialized! Input box updated. Ready to build.', false);
+            
+            // NOW, trigger a rebuild based on the *new* content of the input box
+            triggerDebouncedRebuild(); // This will call rebuildOutputAndCallApi
+            
+            return true; // Signal success
+
+        } catch (err) {
+            showMessage(`Deserialization Error: <code>${err.message}</code>. Check Base85 syntax.`, true);
+            console.error('Deserialize API error:', err);
+            return false; // Signal failure
+        } finally {
+            dom.deserializeBtn.disabled = false; // Re-enable button
+            dom.deserializeBtn.textContent = '🔗 Deserialize Base85';
+        }
     }
 
-    // --- API Call Logic (Minor update to handle manual edit state) ---
+
     async function callReserialize() {
-      if (dom.serial_b85) dom.serial_b85.textContent = 'Fetching...';
-      if (dom.additionalData) dom.additionalData.textContent = '';
+      if (!dom.serial_b85) return; 
+      dom.serial_b85.textContent = 'Fetching...';
+      dom.additionalData.textContent = '';
       dom.copySerial.disabled = true;
 
       try {
@@ -593,21 +708,21 @@
         });
 
         if (!resp.ok) {
-            let errorText = `HTTP ${resp.status} - ${resp.statusText}`;
+            let errorText = `Reserialization Failed (HTTP ${resp.status})`;
             try { const errorData = await resp.json(); errorText += `: ${errorData.error || errorData.message || 'Unknown API error'}`; }
             catch (_) {}
             throw new Error(errorText);
         }
 
         const data = await resp.json();
-        if (dom.serial_b85) dom.serial_b85.textContent = data.serial_b85 || '[No serial returned]';
-        if (dom.additionalData) dom.additionalData.textContent = data.additional_data || '[No details]';
+        dom.serial_b85.textContent = data.serial_b85 || '[No serial returned]';
+        dom.additionalData.textContent = data.additional_data || '[No details]';
         dom.copySerial.disabled = !data.serial_b85;
 
       } catch (err) {
         console.error('Reserialize API error:', err);
-        if (dom.serial_b85) dom.serial_b85.textContent = `[API error: ${err.message}]`;
-        if (dom.additionalData) dom.additionalData.textContent = '';
+        dom.serial_b85.textContent = `[API error: ${err.message}]`;
+        dom.additionalData.textContent = '';
         dom.copySerial.disabled = true;
         showMessage(`API Error: ${err.message}`, true);
       }
@@ -615,9 +730,10 @@
 
     // --- Initialization ---
     async function initializeApp() {
+        // initializeDomElements() is called first by DOMContentLoaded
+        
         dom.body.classList.add('loading');
         try {
-            // Check for required JSON file (bl4_parts_data.json)
             const response = await fetch('bl4_parts_data.json');
             if (!response.ok) throw new Error(`HTTP error ${response.status} fetching <code>bl4_parts_data.json</code>. You must host this file on GitHub Pages alongside index.html.`);
 
@@ -644,13 +760,34 @@
             dom.itemTypeSel.addEventListener('change', triggerDebouncedRebuild);
             dom.raritySel.addEventListener('change', triggerDebouncedRebuild);
             dom.dice.onclick = () => { rndSeed = Math.floor(1000 + Math.random()*9000); triggerDebouncedRebuild(); };
+            
+            // This is the manual "Deserialize" button
+            dom.deserializeBtn.addEventListener('click', () => {
+                 const input = dom.inputSerialCode.textContent.trim();
+                 if (isBase85Serial(input)) {
+                     deserializeBase85(input);
+                 } else {
+                     showMessage("Input does not look like a Base85 serial. Paste a serial starting with '@' or 'U'.", true);
+                 }
+            });
 
+            // This listener handles manual typing of *part strings*
+            dom.inputSerialCode.addEventListener('input', () => {
+                const input = dom.inputSerialCode.textContent.trim();
+                // This debounces the input
+                clearTimeout(rebuildTimer);
+                if (!isBase85Serial(input)) {
+                    // Only trigger rebuild if it's NOT a Base85
+                    rebuildTimer = setTimeout(rebuildOutputAndCallApi, 250); // 250ms delay on typing
+                }
+            });
+            
             // Manual Edit Handling
             dom.outCode.addEventListener('input', () => {
                 isManualEditMode = true;
                 dom.outCode.classList.add('manual-edit');
                 dom.outWrapper.classList.add('manual-edit');
-                clearTimeout(apiCallTimer); // Stop auto API calls on manual edit
+                clearTimeout(apiCallTimer);
             });
 
             dom.undoEditBtn.addEventListener('click', () => {
@@ -668,7 +805,22 @@
 
             dom.reserializeManualBtn.addEventListener('click', callReserialize);
 
-            // Copy Buttons are wired above
+            dom.copyFull.addEventListener('click', async () => {
+                try {
+                    const text = (dom.outCode?.textContent || '').trim();
+                    if (!text || text.startsWith('[')) return showCopyStatus(dom.copyFullStatus, 'No output!');
+                    await navigator.clipboard.writeText(text);
+                    showCopyStatus(dom.copyFullStatus, 'Copied!');
+                } catch(e) { console.error('Copy Output failed:', e); showCopyStatus(dom.copyFullStatus, 'Error!'); }
+             });
+             dom.copySerial.addEventListener('click', async () => {
+                try {
+                    const text = (dom.serial_b85?.textContent || '').trim();
+                     if (!text || text.startsWith('[')) return showCopyStatus(dom.copyApiStatus, 'No serial!');
+                    await navigator.clipboard.writeText(text);
+                     showCopyStatus(dom.copyApiStatus, 'Copied!');
+                } catch(e) { console.error('Copy API Serial failed:', e); showCopyStatus(dom.copyApiStatus, 'Error!'); }
+             });
 
             // Initial build and API call
             rebuildOutput();
@@ -677,15 +829,17 @@
 
         } catch (error) {
             showMessage(error.message, true);
-            document.querySelectorAll('input, select, button').forEach(el => el.disabled = true);
+            // Disable all inputs/buttons/selects if init fails
+            document.querySelectorAll('input, select, button, [contenteditable]').forEach(el => {
+                el.disabled = true;
+                if (el.isContentEditable) el.contentEditable = false;
+            });
         } finally {
              dom.body.classList.remove('loading');
         }
     }
 
-    // Start the app
-    document.addEventListener('DOMContentLoaded', initializeApp);
-
 </script>
 </body>
 </html>
+
