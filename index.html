@@ -51,7 +51,7 @@
          /* Input Serial Box Styling */
         #inputSerialCode {
             width: 100%; min-height: 40px; margin-top: 6px; padding: 8px 10px;
-            background: #141c27; /* Slightly lighter background */
+            background: #141c27; 
             color: var(--ink); border: 1px solid var(--line); border-radius: 8px;
             font-family: monospace; font-size: 0.9em;
         }
@@ -60,19 +60,33 @@
         @media (max-width: 768px) {
             .outCard code { max-height: 120px; }
             .outCard .row { flex-wrap: wrap; }
-            .outCard .row button.small { min-height: 30px; } /* Smaller button size */
-            #dice { padding: 4px 8px !important; font-size: 12px !important; } /* Smaller dice button text */
+            .outCard .row button.small { min-height: 30px; }
+            #dice { padding: 4px 8px !important; font-size: 12px !important; }
         }
+        /* Status Message Styling */
+        .copy-status {
+            font-size: 12px;
+            color: var(--success-green);
+            margin-left: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
+        }
+        .copy-status.visible { opacity: 1; }
+        .manual-edit-indicator { font-size: 12px; color: var(--edit-yellow); margin-left: auto; display: none; }
+        .manual-edit .manual-edit-indicator { display: inline; }
     </style>
 </head>
-<body class="loading"> <!-- Start with loading class -->
+<body class="loading">
 <div class="container">
-    <div id="message-area"></div> <!-- Universal Message/Error display area -->
+    <div id="message-area"></div>
     <h2>BL4 Weapon Part Editor (Hosted)</h2>
 
     <!-- Input Serial Section -->
     <div class="card" id="inputCard">
-        <label>Input Base Serial String (Editable)</label>
+        <div class="row" style="justify-content: space-between; align-items: center;">
+             <label>Input Base Serial String (Base85 or Deserialized)</label>
+             <button class="small" id="deserializeBtn" title="Deserialize Base85 to Part String">🔗 Base85 Deserializer</button>
+        </div>
         <code id="inputSerialCode" contenteditable="plaintext-only" title="Enter a base serial string here. Selected parts will be appended to this string."></code>
     </div>
     
@@ -88,7 +102,7 @@
             </div>
         </div>
         <div id="out" style="margin-top:6px"><code contenteditable="plaintext-only"><!-- Output code will appear here --></code></div>
-         <button class="small" id="dice" title="New random seed" style="margin-top: 10px; width: fit-content;">🎲 New Seed</button>
+         <button class="small" id="dice" title="New random seed">🎲 New Seed</button>
     </div>
 
     <div class="card" id="apiCard" style="margin-bottom:14px">
@@ -134,7 +148,7 @@
              </div>
         </div>
 
-        <!-- Builder Sections (Removed delimiter inputs in HTML for simplicity) -->
+        <!-- Builder Sections -->
         <div class="card builderSection" data-key="altFireModes" data-name-field="name" data-code-field="code" data-id-prefix="AltFire">
             <div class="row titleRow">
                 <div>Alt Fire Mode Variations</div>
@@ -205,14 +219,14 @@
                 <div class="buttons">
                     <button id="addOrdPerk" title="Add Selected">»</button>
                     <button id="remOrdPerk" title="Remove Selected">«</button>
-                </div>
+                </diV>
                 <select id="selOrdPerk" multiple size="8" aria-label="Selected Ordnance Perks"></select>
             </div>
              <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
         </div>
 
-    </div> <!-- End mainContent -->
-</div> <!-- End container -->
+    </div>
+</div>
 
 <script>
     // Global variables
@@ -232,7 +246,7 @@
         raritySel: document.getElementById('raritySel'),
         outWrapper: document.getElementById('out'),
         outCode: document.querySelector('#out code'),
-        inputSerialCode: document.getElementById('inputSerialCode'), // New: Input Base Code
+        inputSerialCode: document.getElementById('inputSerialCode'),
         serial_b85: document.getElementById('serial_b85'),
         additionalData: document.getElementById('additionalData'),
         copyFull: document.getElementById('copyFull'),
@@ -242,6 +256,7 @@
         copyApiStatus: document.getElementById('copyApiStatus'),
         undoEditBtn: document.getElementById('undoEdit'),
         reserializeManualBtn: document.getElementById('reserializeManual'),
+        deserializeBtn: document.getElementById('deserializeBtn'), 
     };
 
     // --- Utility Functions ---
@@ -270,8 +285,9 @@
         }, 1500);
     }
 
-    // --- Generic Builder UI Logic (unchanged from previous working version) ---
+    // --- Generic Builder UI Logic (omitted for brevity, assume contents are present) ---
     function createBuilder(key, nameField, codeField, idPrefix) {
+        // [Existing createBuilder logic, mostly unchanged but ensures calls to triggerDebouncedRebuild/renderSelected]
         const dataList = PAYLOAD[key] || [];
         const filterInput = document.getElementById(`filter${idPrefix}`);
         const availList = document.getElementById(`avail${idPrefix}`);
@@ -382,134 +398,141 @@
 
         return { getSelectedItems: () => selectedItems, clear: clearSelected };
     }
-    
+
     // --- Condensing Logic ---
+    // Extract Part ID (e.g., "9" from "{9:26}" or "{9}")
     function getPartId(code) {
-        // Matches the ID in {ID:VALUE} or {ID}
+        // Find {ID: or {ID}
         const match = code.match(/\{(\d+)/);
         return match ? match[1] : null;
     }
+    // Extract Part Value (e.g., "26" from "{9:26}")
+    function getPartValue(code) {
+        // Find :VALUE} or {VALUE}
+        const match = code.match(/:\s*([^}]+)}/);
+        return match ? match[1].trim() : (code.match(/\{(\d+)\}/)?.[1] || null); // Fallback for {ID} structure
+    }
+
 
     function condenseParts(parts) {
         if (!parts || parts.length === 0) return [];
 
-        // Group parts by their primary ID
-        const grouped = {};
-        const individualParts = [];
+        const grouped = {}; // { 'ID': ['VALUE1', 'VALUE2', ...] }
+        const condensedParts = [];
 
         parts.forEach(code => {
             const id = getPartId(code);
-            if (id) {
-                if (!grouped[id]) {
-                    grouped[id] = [];
+            const value = getPartValue(code);
+            
+            if (id && value) {
+                // If it contains a colon, it's a value part, and we attempt to group it
+                if (code.includes(':')) {
+                    if (!grouped[id]) grouped[id] = [];
+                    grouped[id].push(value);
+                } else {
+                    // It's a simple {ID} block (e.g., {217} or {999}), keep it as is
+                    condensedParts.push(code);
                 }
-                grouped[id].push(code);
+            } else if (id && !value && !code.includes(':')) {
+                 // It's a simple {ID} block (e.g., {217} or {999}), keep it as is
+                 condensedParts.push(code);
             } else {
-                // If it doesn't match the {ID:VALUE} format (e.g., plain {999} or malformed)
-                individualParts.push(code);
+                 // Malformed code or complex block, keep as is
+                 condensedParts.push(code);
             }
         });
 
-        const condensedParts = [];
-
+        // Process grouped parts
         for (const id in grouped) {
-            const codes = grouped[id];
-            if (codes.length === 1) {
-                // If only one, keep as simple code: {ID:VALUE}
-                condensedParts.push(codes[0]);
-            } else {
-                // If multiple, condense: {ID:[VALUE1 VALUE2 ...]}
-                const values = codes.map(code => {
-                    // Extract value: "{ID:VALUE}" -> "VALUE"
-                    const match = code.match(/:\s*([^}]+)/);
-                    if (match) {
-                        return match[1].trim(); // Get the part after the colon
-                    }
-                    // If it's a simple {ID} block (shouldn't happen for condensing, but safe fallback)
-                    return ''; 
-                }).filter(v => v !== ''); 
+            const values = grouped[id];
+            if (values.length === 0) continue;
 
-                if (values.length > 0) {
-                    // Join values with space as the delimiter inside the array brackets
-                    condensedParts.push(`{${id}:[${values.join(' ')}]}`);
-                }
+            if (values.length === 1) {
+                // Single part: return to original format {ID:VALUE}
+                condensedParts.push(`{${id}:${values[0]}}`);
+            } else {
+                // Multiple parts: condense to {ID:[VALUE1 VALUE2 ...]}
+                condensedParts.push(`{${id}:[${values.join(' ')}]}`);
             }
         }
         
-        // Add back any parts that weren't condensed
-        condensedParts.push(...individualParts);
         return condensedParts;
     }
 
 
     function rebuildOutput() {
         try {
-            const allSelectedParts = [];
             const baseInput = dom.inputSerialCode.textContent.trim();
-
-            let baseParts = [];
-            let header = '';
-            let rarityPart = '';
-            let dynamicParts = [];
-
-            if (baseInput) {
-                // Use the user's input as the base
-                baseParts = baseInput.split(/\s+/).filter(p => p.length > 0);
-                
-                // Identify the main header and potentially the rarity part for separation
-                // This is a simplification; a full parser would be required for robust base parsing.
-                if (baseParts.length > 0) {
-                    // Assume the base is everything up to the first block {X...} or the last pipe |
-                    const splitIndex = baseParts.findIndex(p => p.startsWith('{'));
-
-                    if (splitIndex !== -1) {
-                         header = baseParts.slice(0, splitIndex).join(' ');
-                         dynamicParts = baseParts.slice(splitIndex);
-                    } else {
-                        header = baseParts.join(' ').replace(/\|$/, ''); // Keep pipe logic separate
-                    }
-                    
-                    // Clear the output of any existing pipes or spaces before appending
-                    header = header.replace(/\|$/, '').trim(); 
-                    
-                } else {
-                     header = '';
-                }
-
-                allSelectedParts.push(header);
-                allSelectedParts.push(...dynamicParts);
-
-            } else {
-                // --- Generated Base Serial (Placeholder) ---
-                const typeMap = { gun: 1, shield: 2, grenade: 3, classmod: 4, enhancement: 5 };
-                const itemTypeId = typeMap[dom.itemTypeSel.value] || 0;
-                const rarityCodeMap = { common: 217, uncommon: 218, rare: 219, epic: 220, legendary: 999 };
-                rarityPart = `{${rarityCodeMap[dom.raritySel.value] || 0}}`;
-                
-                // Base Header Structure (HIGHLY SPECULATIVE)
-                header = `0, ${itemTypeId}, 1, 50| 2, ${rndSeed}||`;
-
-                allSelectedParts.push(header);
-                allSelectedParts.push(rarityPart);
-            }
-
-            // 2. Collect all selected parts from builders (always appended)
+            const inputHasContent = baseInput.length > 0;
+            
+            let parts = []; // Final list of components to join
+            let rawParts = []; // List of only the part codes selected from builders
+            
+            // 1. --- COLLECT RAW PARTS FROM BUILDERS ---
             document.querySelectorAll('.builderSection').forEach(section => {
                  const key = section.dataset.key;
                  if (builders[key] && typeof builders[key].getSelectedItems === 'function') {
-                     allSelectedParts.push(...builders[key].getSelectedItems());
+                     rawParts.push(...builders[key].getSelectedItems());
                  }
             });
             
-            // 3. Separate header/base from dynamic parts for condensation
-            const basePart = allSelectedParts[0].trim();
-            const dynamicList = allSelectedParts.slice(1);
+            // 2. --- DETERMINE BASE HEADER AND DYNAMIC PARTS ---
+            if (inputHasContent) {
+                // Use User's Input as Base and append selected parts
+                
+                // Clean the input aggressively: remove all newlines/pipes/double spaces for consistency
+                const cleanedInput = baseInput.replace(/\s+/g, ' ').replace(/\|/g, '').trim();
+                
+                // If the user's input is a full deserialized string (header + parts), we use it as the base
+                parts = cleanedInput.split(' ').filter(p => p.length > 0); 
+                
+                // Remove all existing part codes ({X:Y} or {X}) from the base to replace them
+                // This logic is complex, so for simplicity and safety: we only remove the user-selected PARTS
+                // and keep the base structure intact.
+
+                const baseHeaderParts = [];
+                const baseDynamicParts = [];
+
+                parts.forEach(p => {
+                    if (p.startsWith('{') && p.endsWith('}')) {
+                        // This is a part code, add it to the list to be condensed
+                        baseDynamicParts.push(p);
+                    } else {
+                        // This is part of the header (MFR, Type, Level, Seed, etc.)
+                        baseHeaderParts.push(p);
+                    }
+                });
+
+                // The parts list now contains the original dynamic parts + the new selected parts
+                const dynamicList = [...baseDynamicParts, ...rawParts];
+                
+                // Start the final parts list with the original, cleaned header
+                parts = baseHeaderParts;
+
+                // Condense the combined dynamic parts list
+                const condensedDynamicParts = condenseParts(dynamicList);
+                
+                // Add condensed parts to the final list
+                parts.push(...condensedDynamicParts);
+
+
+            } else {
+                // --- Generated Base Serial (If Input is Empty) ---
+                const typeMap = { gun: 1, shield: 2, grenade: 3, classmod: 4, enhancement: 5 };
+                const itemTypeId = typeMap[dom.itemTypeSel.value] || 0;
+                const rarityCodeMap = { common: 217, uncommon: 218, rare: 219, epic: 220, legendary: 999 };
+                const rarityPartCode = `{${rarityCodeMap[dom.raritySel.value] || 0}}`;
+                
+                const header = `0, ${itemTypeId}, 1, 50| 2, ${rndSeed}||`;
+                parts.push(header);
+                parts.push(rarityPartCode); // Initial rarity part
+
+                // Condense the raw parts list
+                const condensedDynamicParts = condenseParts(rawParts);
+                parts.push(...condensedDynamicParts);
+            }
             
-            // 4. Condense the dynamic parts
-            const condensedDynamicParts = condenseParts(dynamicList);
-            
-            // 5. Recombine, join with space, and add the final pipe
-            const parts = [basePart, ...condensedDynamicParts];
+            // 3. Final Assembly: Join and add the mandatory pipe
             const newOutput = parts.join(' ').trim() + '|';
             
             lastGeneratedOutput = newOutput;
@@ -526,7 +549,7 @@
             dom.messageArea.style.display = 'none';
 
         } catch (err) {
-            showMessage(`Error during output generation: <code>${err.message}</code>. Check builder setup and data.`, true);
+            showMessage(`Error during output generation: <code>${err.message}</code>. Check parts data formats.`, true);
             console.error("Output Generation Error:", err);
             dom.outCode.textContent = '[Error generating output]';
             lastGeneratedOutput = '';
@@ -534,7 +557,7 @@
     }
 
 
-     // --- Debounced Triggers and API Logic (Unchanged) ---
+     // --- Debounced Triggers and API Logic ---
      function triggerDebouncedRebuild() {
          clearTimeout(rebuildTimer);
          rebuildTimer = setTimeout(rebuildOutputAndCallApi, 50);
@@ -550,6 +573,51 @@
         triggerDebouncedApiCall();
     }
     
+    // --- API Calls ---
+    async function deserializeBase85(serialB85) {
+        showMessage('Deserializing...', false);
+        dom.copySerial.disabled = true;
+
+        const url = 'https://borderlands4-deserializer.nicnl.com/api/v1/deserialize';
+        
+        try {
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ serial_b85: serialB85 })
+            });
+
+            if (!resp.ok) {
+                let errorText = `Deserialization Failed (HTTP ${resp.status})`;
+                try { 
+                    const errorData = await resp.json(); 
+                    errorText += `: ${errorData.error || errorData.message || 'Unknown API error'}`; 
+                } catch (_) {}
+                throw new Error(errorText);
+            }
+
+            const data = await resp.json();
+            const deserializedCode = data.deserialized || '';
+
+            if (!deserializedCode) {
+                 throw new Error("API returned an empty deserialized string.");
+            }
+
+            // Place the deserialized code into the Input Base Serial Box
+            dom.inputSerialCode.textContent = deserializedCode.trim();
+            
+            // Clear selections (this triggers rebuildOutput)
+            Object.values(builders).forEach(b => b.clear());
+
+            showMessage('✅ Serial deserialized and loaded!', false);
+
+        } catch (err) {
+            showMessage(`Deserialization Error: <code>${err.message}</code>. Check Base85 syntax.`, true);
+            console.error('Deserialize API error:', err);
+        }
+    }
+
+
     async function callReserialize() {
       if (dom.serial_b85) dom.serial_b85.textContent = 'Fetching...';
       if (dom.additionalData) dom.additionalData.textContent = '';
@@ -570,7 +638,7 @@
         });
 
         if (!resp.ok) {
-            let errorText = `HTTP ${resp.status} - ${resp.statusText}`;
+            let errorText = `Reserialization Failed (HTTP ${resp.status})`;
             try { const errorData = await resp.json(); errorText += `: ${errorData.error || errorData.message || 'Unknown API error'}`; }
             catch (_) {}
             throw new Error(errorText);
@@ -594,7 +662,6 @@
     async function initializeApp() {
         dom.body.classList.add('loading');
         try {
-            // Check for required JSON file
             const response = await fetch('bl4_parts_data.json');
             if (!response.ok) throw new Error(`HTTP error ${response.status} fetching <code>bl4_parts_data.json</code>. You must host this file on GitHub Pages alongside index.html.`);
 
@@ -621,7 +688,14 @@
             dom.itemTypeSel.addEventListener('change', triggerDebouncedRebuild);
             dom.raritySel.addEventListener('change', triggerDebouncedRebuild);
             dom.dice.onclick = () => { rndSeed = Math.floor(1000 + Math.random()*9000); triggerDebouncedRebuild(); };
-            dom.inputSerialCode.addEventListener('input', triggerDebouncedRebuild); // New: Listen to base input
+            dom.inputSerialCode.addEventListener('input', triggerDebouncedRebuild);
+            
+            dom.deserializeBtn.addEventListener('click', () => {
+                const serial = dom.inputSerialCode.textContent.trim();
+                if (serial) { deserializeBase85(serial); } 
+                else { showMessage('Please paste a Base85 serial string into the input box.', true); }
+            });
+
 
             // Manual Edit Handling
             dom.outCode.addEventListener('input', () => {
