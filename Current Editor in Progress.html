@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1, maximum-scale=1" name="viewport"/>
+<title>Weapon/Item Editor</title>
+<style>
+/* Base styles from Enhancement_Editor.html */
+:root { --bg:#0b0f14; --card:#0e1520; --ink:#e6f0ff; --muted:#a6b4c8; --line:#1f2a3a; }
+* { box-sizing: border-box; }
+body { font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); padding:18px; }
+h2 { margin: 0 0 14px; }
+.row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; margin-bottom: 14px; /* Added margin between cards */ }
+label { color:var(--muted); font-size:12px; display:block; margin-bottom:6px; }
+select,input,button { background:#0f1720; color:var(--ink); border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+code { background:#0c121b; border:1px solid var(--line); padding:6px 8px; display:inline-block; }
+button.small { padding:6px 10px; border-radius:8px; }
+.wrap { white-space: normal; word-break: break-word; }
+
+/* main columns (simplified to single column layout) */
+#mainContent { display:flex; flex-direction: column; gap:14px; align-items:stretch; }
+
+/* Generic Builder Style (adapted from builder247) */
+.builderSection .row.titleRow { justify-content:space-between; align-items:center; margin-bottom: 8px;}
+.builderSection .row.filterRow { justify-content:flex-end; gap: 8px;}
+.builderSection .row.selects { margin-top:8px; display:flex; gap:10px; align-items:stretch;}
+.builderSection select { flex:1; min-height:220px; }
+.builderSection .buttons { display:flex; flex-direction:column; gap:8px; justify-content:center; width:56px; }
+
+.outCard code { display:block; overflow:auto; width:100%; white-space: pre-wrap; word-break: break-word;}
+
+
+/* ---------- Injected Mobile UX polish ---------- */
+select, input, button { font-size: 16px; } /* stop iOS zoom */
+button, .buttons > button { min-height: 44px; min-width: 44px; }
+.outCard code, #serialWrap code, #addDataWrap code {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow: auto;
+  max-width: 100%;
+}
+/* Keep Output + API visible */
+.outCard, #apiCard { position: sticky; top: 0; z-index: 20; }
+
+/* Tablet and down */
+@media (max-width: 1024px) {
+  body { padding: 14px; }
+  .card { padding: 12px; border-radius: 12px; }
+  .row { gap: 8px; flex-wrap: wrap; }
+}
+
+/* Phone */
+@media (max-width: 768px) {
+  body { padding: 12px; }
+  h2 { font-size: 18px; margin-bottom: 10px; }
+  .row { gap: 8px; flex-wrap: wrap; }
+
+  .builderSection .row.filterRow input[type="text"],
+  .builderSection .row.filterRow input[type="placeholder"] { width: calc(50% - 4px); } /* Adjust filter/delimiter width */
+  .builderSection .row.filterRow button { flex-grow: 1; }
+
+  .builderSection .row.selects { flex-direction: column; gap: 8px; }
+  .builderSection select { min-width: 0; width: 100%; min-height: 28vh; }
+  .builderSection .buttons {
+    display: flex; flex-direction: row;
+    gap: 10px; justify-content: center; align-items: center; width: 100%;
+  }
+
+  .outCard code { max-height: 28vh; display: block; }
+  #apiCard code { max-height: 24vh; display: block; }
+
+  label { font-size: 13px; }
+}
+
+/* Very small phones */
+@media (max-width: 480px) {
+  h2 { font-size: 16px; }
+  .row { gap: 6px; }
+   .builderSection select { min-height: 26vh; }
+}
+/* ---------- Sticky behavior override ---------- */
+@media (min-width: 1025px) {
+  .outCard.sticky, #apiCard.sticky, .outCard, #apiCard { position: sticky; top: 0; z-index: 20; }
+}
+@media (max-width: 1024px) {
+  .outCard.sticky, #apiCard.sticky, .outCard, #apiCard { position: static !important; top: auto !important; z-index: auto !important; }
+}
+</style>
+</head>
+<body>
+<h2>Weapon/Item Editor</h2>
+<div class="card outCard">
+<div style="color:var(--muted)">Output</div>
+<div id="out" style="margin-top:6px"><code></code></div>
+<div class="row" style="margin-top:8px">
+<button class="small" id="copyFull">Copy Output</button>
+<button class="small" id="dice" title="New random seed">🎲</button>
+</div>
+</div>
+<div class="card" id="apiCard">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+<div>
+<div style="color:var(--muted)">New Serial (API)</div>
+<div id="serialWrap" style="margin-top:6px"><code id="serial_b85"></code></div>
+<div id="addDataWrap" style="margin-top:6px;color:var(--muted)">
+<span style="opacity:.8">Details:</span> <code id="additionalData"></code>
+</div>
+</div>
+<div class="row" style="gap:8px">
+<button class="small" id="copySerial">Copy Serial</button>
+</div>
+</div>
+</div>
+
+<div id="mainContent">
+    <div class="card">
+        <label>Base Item Type (Placeholder)</label>
+        <select id="itemTypeSel">
+            <option value="gun">Generic Gun</option>
+            <option value="shield">Shield</option>
+            <option value="grenade">Grenade Mod</option>
+            </select>
+        <label>Rarity (Placeholder)</label>
+        <select id="raritySel">
+            <option value="common">Common</option>
+            <option value="uncommon">Uncommon</option>
+            <option value="rare">Rare</option>
+            <option value="epic">Epic</option>
+            <option value="legendary">Legendary</option>
+        </select>
+    </div>
+
+    <div class="card builderSection" id="builderAltFire">
+        <div class="row titleRow">
+            <div style="color:var(--muted)">Alt Firing Modes</div>
+            <div class="row filterRow">
+                <input id="filterAltFire" placeholder="Filter modes..."/>
+                <input id="delimAltFire" placeholder="Delimiter" style="width:120px" value=" "/>
+                <button class="small" id="clearAltFire">Clear</button>
+            </div>
+        </div>
+        <div class="row selects">
+            <select id="availAltFire" multiple="" size="8"></select>
+            <div class="buttons">
+                <button id="addAltFire" title="Add">»</button>
+                <button id="remAltFire" title="Remove">«</button>
+            </div>
+            <select id="selAltFire" multiple="" size="8"></select>
+        </div>
+    </div>
+
+    <div class="card builderSection" id="builderLegPerkVar">
+        <div class="row titleRow">
+            <div style="color:var(--muted)">Legendary Perk Part Variations</div>
+             <div class="row filterRow">
+                <input id="filterLegPerkVar" placeholder="Filter variations..."/>
+                <input id="delimLegPerkVar" placeholder="Delimiter" style="width:120px" value=" "/>
+                <button class="small" id="clearLegPerkVar">Clear</button>
+            </div>
+        </div>
+        <div class="row selects">
+            <select id="availLegPerkVar" multiple="" size="8"></select>
+            <div class="buttons">
+                <button id="addLegPerkVar" title="Add">»</button>
+                <button id="remLegPerkVar" title="Remove">«</button>
+            </div>
+            <select id="selLegPerkVar" multiple="" size="8"></select>
+        </div>
+    </div>
+
+    <div class="card builderSection" id="builderOrdPerk">
+        <div class="row titleRow">
+            <div style="color:var(--muted)">Ordnance Legendary Perks (Heavy/Grenade)</div>
+             <div class="row filterRow">
+                <input id="filterOrdPerk" placeholder="Filter perks..."/>
+                <input id="delimOrdPerk" placeholder="Delimiter" style="width:120px" value=" "/>
+                <button class="small" id="clearOrdPerk">Clear</button>
+            </div>
+        </div>
+        <div class="row selects">
+            <select id="availOrdPerk" multiple="" size="8"></select>
+            <div class="buttons">
+                <button id="addOrdPerk" title="Add">»</button>
+                <button id="remOrdPerk" title="Remove">«</button>
+            </div>
+            <select id="selOrdPerk" multiple="" size="8"></select>
+        </div>
+    </div>
+
+</div> <script>
+// Combined dataset from your markdown file (embedded, base64)
+const PAYLOAD = JSON.parse(atob("ewogICJhbHRGaXJpbmdNb2RlcyI6IFt7Im5hbWUiOiAiQWlyc3RyaWtlIiwgImNvZGUiOiAiMTc6NDUifSwgeyJuYW1lIjogIkF1dG8gVHVycmV0IChUZWRpb3JlKSIsICJjb2RlIjogIjExOjU3In0sIHsibmFtZSI6ICJBdHRhY2sgRHJvbmUiLCAiY29kZSI6ICI1OjgwIn0sIHsibmFtZSI6ICJCZWFtIiwgImNvZGUiOiAiNzo0OCJ9LCB7Im5hbWUiOiAiQmVhbSBUb3NzIiwgImNvZGUiOiAiMTA6NDMifSwgeyJuYW1lIjogIkJsb3diYWNrIiwgImNvZGUiOiAiNjo3NSJ9LCB7Im5hbWUiOiAiQm91bmNlIEdyZW5hZGUgKFRvcmd1ZSkiLCAiY29kZSI6ICIxNzo0NCJ9LCB7Im5hbWUiOiAiQm91bmNlIEdyZW5hZGUiLCAiY29kZSI6ICIxMjo0NCJ9LCB7Im5hbWUiOiAiQnVsbHkgQmFycmVsIEd1bi1TaGllbGQiLCAiY29kZSI6ICI0Ojc1In0sIHsibmFtZSI6ICJDLk8uTS5CLk8iLCAiY29kZSI6ICIxNDo2NCJ9LCB7Im5hbWUiOiAiQ2xlYXZlciIsICJjb2RlIjogIjY6NDUifSwgeyJuYW1lIjogIkNyYW5rIiwgImNvZGUiOiAiMjc6NTcifSwgeyJuYW1lIjogIkRhZWRhbHVzIFNlbXRleC9EZW1vIENoYXJnZSIsICJjb2RlIjogIjI6NzUifSwgeyJuYW1lIjogIkRlYXRoIFNwaGVyZSIsICJjb2RlIjogIjE1OjY4In0sIHsibmFtZSI6ICJEZXBsb3lhYmxlIFNoaWVsZCIsICJjb2RlIjogIjExOjUwIn0sIHsibmFtZSI6ICJEaXNjaGFyZ2UiLCAiY29kZSI6ICI3OjgwIn0sIHsibmFtZSI6ICJEcnVua3JvY2tldCIsICJjb2RlIjogIjE5OjQ3In0sIHsibmFtZSI6ICJFbmVyZ3kgQmxhc3QgLyBCbG93YmFjayIsICJjb2RlIjogIjEwOjQ5In0sIHsibmFtZSI6ICJFbmVyZ3kgQnVyc3QiLCAiY29kZSI6ICI0OjQ0In0sIHsibmFtZSI6ICJFbmVyZ3kgRGlzayIsICJjb2RlIjogIjEwOjQ0In0sIHsibmFtZSI6ICJGbGFtZSBCbGFzdCIsICJjb2RlIjogIjEyOjUwIn0sIHsibmFtZSI6ICJGbGFtZSBUaHJvd2VyIiwgImNvZGUiOiAiMjI6NTIifSwgeyJuYW1lIjogIkZsaW50bG9jayIsICJjb2RlIjogIjI3OjU2In0sIHsibmFtZSI6ICJGcmFnY2luZGlhcnkiLCAiY29kZSI6ICIxMzo2NyJ9LCB7Im5hbWUiOiAiR2FzdHJhcCIsICJjb2RlIjogIjE5OjQ2In0sIHsibmFtZSI6ICJHYXVzcyIsICJjb2RlIjogIjc6NDkifSwgeyJuYW1lIjogIkdyYXZpdHkgSGFycG9vbiIsICJjb2RlIjogIjg6NDMifSwgeyJuYW1lIjogIkdyYXZpdHkgSGFycG9vbiB2MiIsICJjb2RlIjogIjk6NDYifSwgeyJuYW1lIjogIkdyYXZpdHkgVHJhcCAoUmlwcGVyKSIsICJjb2RlIjogIjIzOjQ4In0sIHsibmFtZSI6ICJHcmF2aXR5IFdlbGwiLCAiY29kZSI6ICI0OjcyIn0sIHsibmFtZSI6ICJHcmVuYWRlIiwgImNvZGUiOiAiOTo0NSJ9LCB7Im5hbWUiOiAiR3JlbmFkZSBMYXVuY2hlciIsICJjb2RlIjogIjIwOjc5In0sIHsibmFtZSI6ICJIYW5kIENyYW5rIHYyIiwgImNvZGUiOiAiMjc6NTcifSwgeyJuYW1lIjogIkhlYXZ5dHVycmV0IiwgImNvZGUiOiAiMTE6NzkifSwgeyJuYW1lIjogIkphY29icyBSaWNvY2hldCBBY2Nlc3NvcnkiLCAiY29kZSI6ICIxMTo3MCJ9LCB7Im5hbWUiOiAiSmFjb2JzIFJpY29jaGV0IiwgImNvZGUiOiAiNDo2MiJ9LCB7Im5hbWUiOiAiS2lsbCBEcm9uZSIsICJjb2RlIjogIjE1OjQzIn0sIHsibmFtZSI6ICJLbmlmZSBMYXVuY2hlciIsICJjb2RlIjogIjk6NTAifSwgeyJuYW1lIjogIktub2NrYmFjayIsICJjb2RlIjogIjIzNzoxMSJ9LCB7Im5hbWUiOiAiTGFzZXIgV2lyZSIsICJjb2RlIjogIjIxOjUzIn0sIHsibmFtZSI6ICJNYWdudW0gUm9ja2V0cyIsICJjb2RlIjogIjY6NDQifSwgeyJuYW1lIjogIk1hbHN3aXRjaCIsICJjb2RlIjogIjE3OjQyIn0sIHsibmFtZSI6ICJNYWxzd2l0Y2ggdjIiLCAiY29kZSI6ICI3OjUzIn0sIHsibmFtZSI6ICJNYXJrZWQiLCAiY29kZSI6ICIyMzo1NSJ9LCB7Im5hbWUiOiAiTWVhdGhvb2siLCAiY29kZSI6ICI5OjQ2In0sIHsibmFtZSI6ICJNaWNybyBSb2NrZXRzIiwgImNvZGUiOiAiNDo0MyJ9LCB7Im5hbWUiOiAiTWljcm8gU2hvdGd1biIsICJjb2RlIjogIjU6NTAifSwgeyJuYW1lIjogIk1pY3Jvcm9ja2V0IiwgImNvZGUiOiAiMTM6NjIifSwgeyJuYW1lIjogIk1pbmUiLCAiY29kZSI6ICI4OjUwIn0sIHsibmFtZSI6ICJNaXJ2Z3JlbmFkZSIsICJjb2RlIjogIjE3OjQzIn0sIHsibmFtZSI6ICJNaXNzaWxlIFN3YXJtIiwgImNvZGUiOiAiMjM3OjgifSwgeyJuYW1lIjogIk11bHRpdGFzZXIiLCAiY29kZSI6ICIyNTo0OCJ9LCB7Im5hbWUiOiAiT3ZlcmNoYXJnZSIsICJjb2RlIjogIjIwOjQ5In0sIHsibmFtZSI6ICJPdmVyZHJpdmUgU2hpZWxkIFNlZ21lbnQgRHJvcCAoVmxhZG9mPykiLCAiY29kZSI6ICIxODo2In0sIHsibmFtZSI6ICJQcm94eSBNaW5lcyB2MiIsICJjb2RlIjogIjg6NTAifSwgeyJuYW1lIjogIlJhZGlhdGlvbiBSYWQgRnVlbCBSb2QgdjIiLCAiY29kZSI6ICI3OjgwIn0sIHsibmFtZSI6ICJSYWlsZ3VuIiwgImNvZGUiOiAiMjY6NTgifSwgeyJuYW1lIjogIlJhaWxndW4gVjIiLCAiY29kZSI6ICIyMTo0NSJ9LCB7Im5hbWUiOiAiUm9ja2V0cG9kIiwgImNvZGUiOiAiMjU6NTMifSwgeyJuYW1lIjogIlJvY2tldHMiLCAiY29kZSI6ICI1Ojc5In0sIHsibmFtZSI6ICJSb2NrZXRzIHYyIiwgImNvZGUiOiAiNjo0NCJ9LCB7Im5hbWUiOiAiU2NyYXAgQ2Fubm9uIChWbGFkb2YpIiwgImNvZGUiOiAiMjI6NTUifSwgeyJuYW1lIjogIlNlZWtlciIsICJjb2RlIjogIjE1OjQyIn0sIHsibmFtZSI6ICJTZWVrZXIgRGFydHMiLCAiY29kZSI6ICIyOjc0In0sIHsibmFtZSI6ICJTZWVrZXIgTWlzc2lsZSAoT3JkZXIpIiwgImNvZGUiOiAiMTU6NDIifSwgeyJuYW1lIjogIlNlZWtlciBNaXNzaWxlIChSaXBwZXIpIiwgImNvZGUiOiAiMjM6NDcifSwgeyJuYW1lIjogIlNlZWtlciBNaXNzaWxlcyIsICJjb2RlIjogIjEyOjQzIn0sIHsibmFtZSI6ICJTaG9jayBGaWVsZCAvIE11bHRpLVRhc2VyIHYyIiwgImNvZGUiOiAiMjU6NDgifSwgeyJuYW1lIjogIlNob2NrIExpZ2h0bmluZyBCZWFtIHYyIiwgImNvZGUiOiAiNzo0OCJ9LCB7Im5hbWUiOiAiU2hvdGd1biIsICJjb2RlIjogIjEzOjYxIn0sIHsibmFtZSI6ICJTaG90Z3VuIHYyIiwgImNvZGUiOiAiMTQ6NjUifSwgeyJuYW1lIjogIlNob3RndW4gdjMiLCAiY29kZSI6ICIyNzo1NSJ9LCB7Im5hbWUiOiAiU2hyYXBuZWwiLCAiY29kZSI6ICIxOTo1MiJ9LCB7Im5hbWUiOiAiU2hyYXBuZWwgKFJpcHBlciBTTUcpIiwgImNvZGUiOiAiMTk6NTIifSwgeyJuYW1lIjogIlNpbmd1bGFyaXR5IEdyZW5hZGUgTGF1bmNoZXIiLCAiY29kZSI6ICIyNTo0OSJ9LCB7Im5hbWUiOiAiU3BhY2VsYXNlciIsICJjb2RlIjogIjEzOjc1In0sIHsibmFtZSI6ICJTcGVhciIsICJjb2RlIjogIjI2OjYyIn0sIHsibmFtZSI6ICJTcHJlYWQgTGF1bmNoZXIiLCAiY29kZSI6ICI5OjQ1In0sIHsibmFtZSI6ICJTcHVue3kiLCAiY29kZSI6ICIyMzc6MTQifSwgeyJuYW1lIjogIlN0YXIgSGVsaXgiLCAiY29kZSI6ICIxMzo3NiJ9LCB7Im5hbWUiOiAiU3RpY2t5IE1pbmUgKFRlZGlvcmUpIiwgImNvZGUiOiAiMTE6NTEifSwgeyJuYW1lIjogIlN0dW5ncmVuYWRlIiwgImNvZGUiOiAiMjA6NzkifSwgeyJuYW1lIjogIlN1cHBvcnQgRHJvbmUiLCAiY29kZSI6ICIxNDo2OCJ9LCB7Im5hbWUiOiAiVGFzZXIgSG91c2luZyAoVmxhZG9mKSIsICJjb2RlIjogIjIyOjU2In0sIHsibmFtZSI6ICJUZWRpb3IgTGljZW5jZWQtTWlydi1TcGF3bnMgNCBHcmVuYWRlcy0iLCAiY29kZSI6ICIyOjcxfSwgeyJuYW1lIjogIlRlZGlvciBNaXJ2IC0gU3BsaXRzIEludG8gNCAtICIsICJjb2RlIjogIjE0OjEwIn0sIHsibmFtZSI6ICJUZWRpb3IgTWlydiAtIFRob3J3biBHdW4gU3BhdW5zIDQgR3JlbmFkZXMiLCAiY29kZSI6ICIxMToxMCJ9LCB7Im5hbWUiOiAiVGVkaW9yIFJlcGxpY2F0b3IgLSBUaHJvd3MgR3VuIE9uIFJlbG9hZCAtICIsICJjb2RlIjogIjU6MTIifSwgeyJuYW1lIjogIlRldGhlciBTbmFyZSIsICJjb2RlIjogIjI2OjU3In0sIHsibmFtZSI6ICJUcmFja2VyIERhcnRzIiwgImNvZGUiOiAiOTo0NCJ9LCB7Im5hbWUiOiAiVHVyYmluZSBDbGVhdmVyIiwgImNvZGUiOiAiNjo0NSJ9LCB7Im5hbWUiOiAiVW5kZXJiYXJyZWwgUm9ja2V0IFBvWQgdjIiLCAiY29kZSI6ICIyNTo1MyJ9LCB7Im5hbWUiOiAiVmlhbCIsICJjb2RlIjogIjM6NjgifSwgeyJuYW1lIjogIlZpYWwgTGF1bmNoZXIiLCAiY29kZSI6ICIzOjY4In0sIHsibmFtZSI6ICJaIGlwIFJvY2tldHMiLCAiY29kZSI6ICIzOjQ2In0sIHsibmFtZSI6ICJBdGxhcyIsICJjb2RlIjogIjY6NzQifSwgeyJuYW1lIjogIkF0bGFzIHYyIiwgImNvZGUiOiAiMTI6NDUifSwgeyJuYW1lIjogIkF0bGFzIEJhbGwiLCAiY29kZSI6ICIxMjo0OSJ9LCB7Im5hbWUiOiAiQXRsYXMgQmFsbCAoTWFsaXdhbiBTbmlwZXIpIiwgImNvZGUiOiAiMjU6NDcifV0sCiAgImxlZ2VuZGFyeVBlcmtQYXJ0VmFyaWF0aW9ucyI6IFt7Im5hbWUiOiAiQWNleSBNYXkiLCAidmFyaWFudCI6ICJMVVYiLCAiY29kZSI6ICI4OjU0In0sIHsibmFtZSI6ICJBZWdvbidzIERyZWFtIiwgInZhcmlhbnQiOiAiUHJvcGhldGljIiwgImNvZGUiOiAiMTg6NCJ9LCB7Im5hbWUiOiAiQW5hcmNoeSIsICJ2YXJpYW50IjogIk11dHVhbGlzbSIsICJjb2RlIjogIjExOjc1In0sIHsibmFtZSI6ICJBc2hlcidzIFJpc2UiLCAidmFyaWFudCI6ICJTbG93IEJ1cm4iLCAiY29kZSI6ICIyNTo3OSJ9LCB7Im5hbWUiOiAiQmFsbGlzdGEiLCAidmFyaWFudCI6ICJQcm9wYWdhdGlvbiIsICJjb2RlIjogIjI0OjcyIn0sIHsibmFtZSI6ICJCaXJ0J3MgQmVlcyIsICJ2YXJpYW50IjogIkhpdmVtaW5kIiwgImNvZGUiOiAiMjI6ODcifSwgeyJuYW1lIjogIkJsb29keSBMdW1iZXJqYWNrIiwgInZhcmlhbnQiOiAiVGltYmVyIiwgImNvZGUiOiAiMTM6NTcifSwgeyJuYW1lIjogIkJvZCIsICJ2YXJpYW50IjogIkFsbCBBcm91bmRlciIsICJjb2RlIjogIjg6NTIifSwgeyJuYW1lIjogIkJvb21zbGFuZyIsICJ2YXJpYW50IjogIkJ1bGxldCBQb2xsaW5hdG9yIiwgImNvZGUiOiAiMjQ6NzQifSwgeyJuYW1lIjogIkJvbm5pZSAmIENseWRlIiwgInZhcmlhbnQiOiAiUGFpciBvZiBUaGlldmVzIiwgImNvZGUiOiAiMjc6NzMifSwgeyJuYW1lIjogIkJ1ZGdldCBEZWl0eSIsICJ2YXJpYW50IjogIkQuTy5QLkUuIEJ1b3lzIiwgImNvZGUiOiAiNTo1OSJ9LCB7Im5hbWUiOiAiQnVnYmVhciIsICJ2YXJpYW50IjogIlJvdGFyeSBHdW4iLCAiY29kZSI6ICIxNzo1NCJ9LCB7Im5hbWUiOiAiQnVsbHkiLCAidmFyaWFudCI6ICJEZWZlbnNlIFByb3RvY2FsIiwgImNvZGUiOiAiNDo3NSJ9LCB7Im5hbWUiOiAiQ2hhaW5ndW4iLCAidmFyaWFudCI6ICJQYWlyIG9mIFRoaWV2ZXMiLCAiY29kZSI6ICIyNzo3MyJ9LCB7Im5hbWUiOiAiQ2h1Y2siLCAidmFyaWFudCI6ICJQaXRjaGVyIiwgImNvZGUiOiAiMTQ6MzQifSwgeyJuYW1lIjogIkNvbGQgU2hvdWxkZXIiLCAidmFyaWFudCI6ICJJY2VkIE91dCIsICJjb2RlIjogIjE3OjU1In0sIHsibmFtZSI6ICJDb21wbGV4IFJvb3QiLCAidmFyaWFudCI6ICJTaWVycGluc2tpIiwgImNvZGUiOiAiMjU6MjAifSwgeyJuYW1lIjogIkNvbnZlcmdlbmNlIiwgInZhcmlhbnQiOiAiQXN5bXB0b3RpYyIsICJjb2RlIjogIjc6NjQifSwgeyJuYW1lIjogIkRhcmtiZWFzdCIsICJ2YXJpYW50IjogIlBhcmxleSIsICJjb2RlIjogIjIwOjY0In0sIHsibmFtZSI6ICJEaXZpZGVkIEZvY3VzIiwgInZhcmlhbnQiOiAiQ29ucXVlcmVyIiwgImNvZGUiOiAiMTQ6MzkifSwgeyJuYW1lIjogIkZpbm5pdHkgWFhYLUwiLCAidmFyaWFudCI6ICJQaXBpbiBIb3QgQmFycmVscyIsICJjb2RlIjogIjE2OjEifSwgeyJuYW1lIjogIkZpcnN0IEltcHJlc3Npb24iLCAidmFyaWFudCI6ICJGaXJtIEhhbmRzaGFrZSIsICJjb2RlIjogIjEzOjg0In0sIHsibmFtZSI6ICJGaXNoZXllIiwgInZhcmlhbnQiOiAiVWx0aW1hIFJhdGlvIFJlZ3VtIiwgImNvZGUiOiAiMjY6NzUifSwgeyJuYW1lIjogIkZvcnNha2VuIENoYW9zIiwgInZhcmlhbnQiOiAiV2lkZSBOZXQiLCAiY29kZSI6ICIxMTo3NyJ9LCB7Im5hbWUiOiAiRy5NLlIiLCAidmFyaWFudCI6ICJCaWcgTmFtZSBIdW50ZXIiLCAiY29kZSI6ICIxNjoyIn0sIHsibmFtZSI6ICJHb2Fsa2VlcGVyIiwgInZhcmlhbnQiOiAiQW1wZXIgQ2FtcGVyIiwgImNvZGUiOiAiMTU6NTYifSwgeyJuYW1lIjogIkdvbGRlbiBHb2QiLCAidmFyaWFudCI6ICJSYWdlIiwgImNvZGUiOiAiNzoxOCJ9LCB7Im5hbWUiOiAiR29yZW1hc3RlciIsICJ2YXJpYW50IjogIkNoaWVmIEV4ZWN1dGlvbiBPZmZpY2VyIiwgImNvZGUiOiAiNzoxIn0sIHsibmFtZSI6ICJIZWxsZmlyZSIsICJ2YXJpYW50IjogIkJ1cm5pbmcgRGVzaXJlIiwgImNvZGUiOiAiMTk6MjAifSwgeyJuYW1lIjogIkhlbGx3YWxrZXIiLCAidmFyaWFudCI6ICJTb290aHNMYXllciIsICJjb2RlIjogIjk6ODJifSwgeyJuYW1lIjogIkhvdCBTbHVnZ2VyIiwgInZhcmlhbnQiOiAiQmxhemluZyBCYXJyZWwiLCAiY29kZSI6ICI5Ojc5In0sIHsibmFtZSI6ICJIdXNreSBGcmllbmQiLCAidmFyaWFudCI6ICJIdXNreSBBdXRvIFR1cnJldCIsICJjb2RlIjogIjExOjc5In0sIHsibmFtZSI6ICJLYWxlaWRvc3Bsb2RlIiwgInZhcmlhbnQiOiAiQ29sb3JmdWwgTWVzcyIsICJjb2RlIjogIjEwOjU2In0sIHsibmFtZSI6ICJLYW9zb24iLCAidmFyaWFudCI6ICJHcmFudGVkIiwgImNvZGUiOiAiMjI6NjYifSwgeyJuYW1lIjogIkthdHdhZ2EncyBSZXZlbmdlIiwgInZhcmlhbnQiOiAiU3Rvcm1jbG91ZCIsICJjb2RlIjogIjI1OjYwIn0sIHsibmFtZSI6ICJLaWNrYmFsbGVyIiwgInZhcmlhbnQiOiAiRm9yY2UgQnVudCIsICJjb2RlIjogIjEwOjcin0sIHsibmFtZSI6ICJLaW5nJ3MgR2FtYml0IiwgInZhcmlhbnQiOiAiSG9seSBIZWxsIiwgImNvZGUiOiAiMzo3NSJ9LCB7Im5hbWUiOiAiTGVhZCBCYWxsb29uIiwgInZhcmlhbnQiOiAiTGlnaHR3ZWlnaHQiLCAiY29kZSI6ICIxMjo1NiJ9LCB7Im5hbWUiOiAiTGluZWJhY2tlciIsICJ2YXJpYW50IjogIkZ1bGwgQ292ZXJhZ2UiLCAiY29kZSI6ICIxMjo1OCJ9LCB7Im5hbWUiOiAiTG9hcm1hc3RlciIsICJ2YXJpYW50IjogIj8/PyIsICJjb2RlIjogIjIwOjQifSwgeyJuYW1lIjogIkx1Y2lhbidzIEZsYW5rIiwgInZhcmlhbnQiOiAiVHJhbXBsZSIsICJjb2RlIjogIjE4OjEifSwgeyJuYW1lIjogIkx1Y2t5IENsb3ZlciIsICJ2YXJpYW50IjogIktpc21ldCIsICJjb2RlIjogIjQ6MSJ9LCB7Im5hbWUiOiAiTHV0eSBNYWRsYWQiLCAidmFyaWFudCI6ICJIb21lbWFkZSBJbmdlbnVpdHkiLCAiY29kZSI6ICIyMDo2In0sIHsibmFtZSI6ICJNYXRhZG9yJ3MgTWF0Y2giLCAidmFyaWFudCI6ICJGaXJld29yayIsICJjb2RlIjogIjIxOjgzIn0sIHsibmFtZSI6ICJNaWRuaWdodCBEZWZpYW5jZSIsICJ2YXJpYW50IjogIkNyb3dkIFNvdXJjZWQiLCAiY29kZSI6ICIxNjo2OCJ9LCB7Im5hbWUiOiAiTXVybXVyIEV2ZW50IiwgInZhcmlhbnQiOiAie1Vua25vd259IiwgImNvZGUiOiAiMTQ6NzYifSwgeyJuYW1lIjogIk5vaXN5IENyaWNrZXQiLCAidmFyaWFudCI6ICJTaWxlbmNlIiwgImNvZGUiOiAiNDo3OSJ9LCB7Im5hbWUiOiAiT2htIEkgR290IiwgInZhcmlhbnQiOiAiRW5lcmd5IFRyYW5zZmVyIiwgImNvZGUiOiAiMjE6NTkifSwgeyJuYW1lIjogIk9uc2xhdWdodCIsICJ2YXJpYW50IjogIktlZXAgSXQgQ29taW5nIiwgImNvZGUiOiAiMjI6NjgifSwgeyJuYW1lIjogIk9zY2FyIE1pa2UiLCAidmFyaWFudCI6ICJGcmFnY2VuZGlhcnkgR3JlbmFkZXMiLCAiY29kZSI6ICIxMzo2NyJ9LCB7Im5hbWUiOiAiT3NjYXIgTWlrZSIsICJ2YXJpYW50IjogIlNwYWNlIExhc2VyIiwgImNvZGUiOiAiMTM6NzUifSwgeyJuYW1lIjogIk9zY2FyIE1pa2UiLCAidmFyaWFudCI6ICJUYWN0aWNhbCBSb3VucyIsICJjb2RlIjogIjEzOjgifSwgeyJuYW1lIjogIlBoYW50b20gRmxhbWUiLCAidmFyaWFudCI6ICJNaWRkYXkiLCAiY29kZSI6ICIzOjc3In0sIHsibmFtZSI6ICJQbGFzbWEgQ29pbCIsICJ2YXJpYW50IjogIlN1cGVyaGVhdGVkIiwgImNvZGUiOiAiMjE6NjIifSwgeyJuYW1lIjogIlBvdGF0byBUaHJvd2VyIiwgInZhcmlhbnQiOiAiU3B1ZCBHdW4iLCAiY29kZSI6ICIxNzo3NyJ9LCB7Im5hbWUiOiAiUHJpbmNlIEhhcm1pbmciLCAidmFyaWFudCI6ICJQYW1wbGVtb3Vzc2UiLCAiY29kZSI6ICIxOToxNyJ9LCB7Im5hbWUiOiAiUXVlZW4ncyBSZXN0IiwgInZhcmlhbnQiOiAiUm95YWwgQXJtb3J5IiwgImNvZGUiOiAiNjo1MiJ9LCB7Im5hbWUiOiAiUmFpbmJvVyBWb21pdCIsICJ2YXJpYW50IjogIkNvbG9yIFNwcmF5Li4uIiwgImNvZGUiOiAiOToxIn0sIHsibmFtZSI6ICJSYW5nZWZpbmRlciIsICJ2YXJpYW50IjogIlByZWNpc2lvbiIsICJjb2RlIjogIjI6NzgifSwgeyJuYW1lIjogIlJvYWNoIiwgInZhcmlhbnQiOiAiRmxlc2ggRWF0ZXJzIiwgImNvZGUiOiAiNjo1NCJ9LCB7Im5hbWUiOiAiUm93YW4ncyBDaGFyZ2UiLCAidmFyaWFudCI6ICJTdGFsa2VyIiwgImNvZGUiOiAiMjc6NzUifSwgeyJuYW1lIjogIlJ1YnknIEdyYXNwIiwgInZhcmlhbnQiOiAiR3Jhc3AiLCAiY29kZSI6ICI1OjY1In0sIHsibmFtZSI6ICJTZXZlbnRoIFNlbnNlIiwgInZhcmlhbnQiOiAiUHJvcHJpb2NlcHRpb24iLCAiY29kZSI6ICIzOjgwIn0sIHsibmFtZSI6ICJTaWRlc2hvdyIsICJ2YXJpYW50IjogIkp1Z2dsZXIiLCAiY29kZSI6ICI1OjY3In0sIHsibmFtZSI6ICJTb25nYmlyZCIsICJ2YXJpYW50IjogIkR1ZWxpbmcgUGlzdG9sIiwgImNvZGUiOiAiMzo3MiJ9LCB7Im5hbWUiOiAiU3RhciBIZWxpeCIsICJ2YXJpYW50IjogIkNvbnN0ZWxsYXRpb24iLCAiY29kZSI6ICIxMzo3NyJ9LCB7Im5hbWUiOiAiU3RvcCBHYXAiLCAidmFyaWFudCI6ICJSZWNvbmZpZ3VyZSIsICJjb2RlIjogIjE2OjcyIn0sIHsibmFtZSI6ICJTdHJheSIsICJ2YXJpYW50IjogIlN0cmF5IiwgImNvZGUiOiAiMjM6MjAifSwgeyJuYW1lIjogIlN3ZWV0IEVtYnJhY2UiLCAidmFyaWFudCI6ICJBZG9yYXRpb24iLCAiY29kZSI6ICIxMDo1OCJ9LCB7Im5hbWUiOiAiU3ltbWV0cnkiLCAidmFyaWFudCI6ICJCaWxhdGVyYWwiLCAiY29kZSI6ICIyNjo3MiJ9LCB7Im5hbWUiOiAiVC5LJ3MgV2F2ZSIsICJ2YXJpYW50IjogIkhlaXJsb29tIiwgImNvZGUiOiAiOTo5MCJ9LCB7Im5hbWUiOiAiVmFtb29zZSIsICJ2YXJpYW50IjogIlNjYXJjZSIsICJjb2RlIjogIjIzOjIxIn0sIHsibmFtZSI6ICJXaGlza2V5IEZveHRyb3QiLCAidmFyaWFudCI6ICJTY3JhcCBDYW5ub24iLCAiY29kZSI6ICIxODo5MiJ9LCB7Im5hbWUiOiAiV29tYm8gQ29tYm8iLCAidmFyaWFudCI6ICJSaXAgUm9ja2V0cyIsICJjb2RlIjogIjE4OjY0In0sIHsibmFtZSI6ICJaaXBwZXIiLCAidmFyaWFudCI6ICJQcmlzb24gUnVsZXMiLCAiY29kZSI6ICIyOjEifV0sCiAgIm9yZG5hbmNlTGVnZW5kYXJ5UGVya3MiOiB7CiAgICAiZ3JlbmFkZVBlcmtzIjogW3sibmFtZSI6ICJHaG9zdCBTa3VsbCIsICJ2YXJpYW50IjogIkhhbGxvd2VlbiBFdmVudCIsICJncm91cCI6ICJHcmVuYWRlIiwgImNvZGUiOiAiMjcyOjExIn0sIHsibmFtZSI6ICJCbG9ja2J1c3RlciIsICJ2YXJpYW50IjogIkdvdCBZb3UgQ292ZXJlZCIsICJncm91cCI6ICJHcmVuYWRlIiwgImNvZGUiOiAiMjkxOjYifSwgeyJuYW1lIjogIkJ1b3kiLCAidmFyaWFudCI6ICJCdW95YW50IiwgImdyb3VwIjogIkdyZW5hZGUiLCAiY29kZSI6ICIyNzg6MTEifSwgeyJuYW1lIjogIkJ1enpheGUiLCAidmFyaWFudCI6ICJNYWtlc2hpZnQiLCAiZ3JvdXAiOiAiR3JlbmFkZSIsICJjb2RlIjogIjI3MDo2In0sIHsibmFtZSI6ICJDaGF1bXVya3kiLCAidmFyaWFudCI6ICJJbmNlc3NhbnQiLCAiZ3JvdXAiOiAiR3JlbmFkZSIsICJjb2RlIjogIjI3Mjo5In0sIHsibmFtZSI6ICJEZXN0cnVjdG8gRGlzY28iLCAidmFyaWFudCI6ICJHcm9vdmUiLCAiZ3JvdXAiOiAiR3JlbmFkZSIsICJjb2RlIjogIjI2MzoxMCJ9LCB7Im5hbWUiOiAiRGlzYyBKb2NrZXkiLCAidmFyaWFudCI6ICJCb3VuY2luZyBCaXNjdWl0cyIsICJncm91cCI6ICJHcmVuYWRlIiwgImNvZGUiOiAiMjc1OjMwIn0sIHsibmFtZSI6ICJGYXVsdHkgRGV0b25hdG9yIiwgInZhcmlhbnQiOiAiU3RpY2t5IFRyaWdnZXIiLCAiZ3JvdXAiOiAiR3JlbmFkZSIsICJjb2RlIjogIjMxMTo2In0sIHsibmFtZSI6ICJGaXJlcG90IiwgInZhcmlhbnQiOiAiU3BpY3kiLCAiZ3JvdXAiOiAiR3JlbmFkZSIsICJjb2RlIjogIjI5ODo2In0sIHsibmFtZSI6ICJGdXNlIiwgInZhcmlhbnQiOiAiRm9ydGlmaWVkIFBvc2l0aW9uIiwgImdyb3VwIjogIkdyZW5hZGUiLCAiY29kZSI6ICIyNzA6OCJ9LCB7Im5hbWUiOiAiSmVsbHkiLCAidmFyaWFudCI6ICJTZWxmLVJlcGxpY2F0aW5nIiwgImdyb3VwIjogIkdyZW5hZGUiLCAiY29kZSI6ICIyNzg6MTAifSwgeyJuYW1lIjogIlJlY3Vyc2l2ZSIsICJ2YXJpYW50IjogIkxvb3BpbmciLCAiZ3JvdXAiOiAiR3JlbmFkZSIsICJjb2RlIjogIjI2MzoxMiJ9LCB7Im5hbWUiOiAiU2hvIEt1bmFpIiwgInZhcmlhbnQiOiAiTmluamEgU3BlZWQiLCAiZ3JvdXAiOiAiR3JlbmFkZSIsICJjb2RlIjogIjI2NzoxMSJ9LCB7Im5hbWUiOiAiU2xpcHB5IiwgInZhcmlhbnQiOiAiU3dvcmRmaXNoIiwgImdyb3VwIjogIkdyZW5hZGUiLCAiY29kZSI6ICIyOTg6OCJ9LCB7Im5hbWUiOiAiU3Bpbm5pbmcgQmxhZGUiLCAidmFyaWFudCI6ICJKdWdnbGVyIiwgImdyb3VwIjogIkdyZW5hZGUiLCAiY29kZSI6ICIyNjc6OSJ9LCB7Im5hbWUiOiAiU3RyZWFtZXIiLCAidmFyaWFudCI6ICJEZWxlZ2F0aW9uIiwgImdyb3VwIjogIkdyZW5hZGUiLCAiY29kZSI6ICIyNzU6MSJ9LCB7Im5hbWUiOiAiU3dhcm0iLCAidmFyaWFudCI6ICJTd29vc2giLCAiZ3JvdXAiOiAiR3JlbmFkZSIsICJjb2RlIjogIjI3Mjo3In0sIHsibmFtZSI6ICJUcmFuc21pc3Npb24iLCAidmFyaWFudCI6ICJQcmUtb3JkZXIiLCAiZ3JvdXAiOiAiR3JlbmFkZSIsICJjb2RlIjogIjI3ODoxNSJ9LCB7Im5hbWUiOiAiVHJhbnNtaXR0ZXIiLCAidmFyaWFudCI6ICJUcmFuc21pc3Npb24iLCAiZ3JvdXAiOiAiR3JlbmFkZSIsICJjb2RlIjogIjI3ODoxNSJ9LCB7Im5hbWUiOiAiVUFWIiwgInZhcmlhbnQiOiAiRGVhdGggRnJvbSBBYm92ZSIsICJncm91cCI6ICJHcmVuYWRlIiwgImNvZGUiOiAiMzExOjgifSwgeyJuYW1lIjogIldhdGVyZmFsbCIsICJ2YXJpYW50IjogIldhdGVyZmFsbCIsICJncm91cCI6ICJHcmVuYWRlIiwgImNvZGUiOiAiMjkxOjgifV0sCiAgICAiaGVhdnlXZWFwb25QZXJrcyI6IFt7Im5hbWUiOiAiQXRsaW5nIEd1biIsICJ2YXJpYW50IjogIldoaXN0bGVyIiwgImdyb3VwIjogIk9yZG5hbmNlIiwgImNvZGUiOiAiMjgyOjI1In0sIHsibmFtZSI6ICJCb3R0bGVkIExpZ2h0bmluZyIsICJ2YXJpYW50IjogIlN0cmlrZSBUd2ljZSIsICJncm91cCI6ICJPcmRuYW5jZSIsICJjb2RlIjogIjI4OToyNiJ9LCB7Im5hbWUiOiAiRGlzYyBKb2NrZXkiLCAidmFyaWFudCI6ICJCb3VuY2luZyBCaXNjdWl0cyIsICJncm91cCI6ICJPcmRuYW5jZSIsICJjb2RlIjogIjI3NTozMCJ9LCB7Im5hbWUiOiAiR2FtbWEgVm9pZCIsICJ2YXJpYW50IjogIlJhZGlhdGlvbiBFeHBvc3VyZSIsICJncm91cCI6ICJPcmRuYW5jZSIsICJjb2RlIjogIjI4OToyNCJ9LCB7Im5hbWUiOiAiSW5rbGluZyIsICJ2YXJpYW50IjogIklua2xpbmciLCAiZ3JvdXAiOiAiT3JkbmFuY2UiLCAiY29kZSI6ICIyODI6MiJ9LCB7Im5hbWUiOiAiUmF2ZW5maXJlIiwgInZhcmlhbnQiOiAiNjIxIiwgImdyb3VwIjogIk9yZG5hbmNlIiwgImNvZGUiOiAiMjczOjQwIn0sIHsibmFtZSI6ICJTaWRld2luZGVyIiwgInZhcmlhbnQiOiAiTUlBIiwgImdyb3VwIjogIk9yZG5hbmNlIiwgImNvZGUiOiAiMjczOjM4In0sIHsibmFtZSI6ICJTcHJlenphdHVyYSIsICJ2YXJpYW50IjogIkd1bmduaXIiLCAiZ3JvdXAiOiAiT3JkbmFuY2UiLCAiY29kZSI6ICIyNzM6MzQifV0KICB9Cn0="));
+
+// DOM Elements Cache
+const dom = {
+    itemTypeSel: document.getElementById('itemTypeSel'),
+    raritySel: document.getElementById('raritySel'),
+    outCode: document.querySelector('#out code'),
+    serial_b85: document.getElementById('serial_b85'),
+    additionalData: document.getElementById('additionalData'),
+    copyFull: document.getElementById('copyFull'),
+    copySerial: document.getElementById('copySerial'),
+    dice: document.getElementById('dice'),
+
+    // Alt Firing Modes
+    filterAltFire: document.getElementById('filterAltFire'),
+    delimAltFire: document.getElementById('delimAltFire'),
+    clearAltFire: document.getElementById('clearAltFire'),
+    availAltFire: document.getElementById('availAltFire'),
+    selAltFire: document.getElementById('selAltFire'),
+    addAltFire: document.getElementById('addAltFire'),
+    remAltFire: document.getElementById('remAltFire'),
+
+    // Legendary Perk Variations
+    filterLegPerkVar: document.getElementById('filterLegPerkVar'),
+    delimLegPerkVar: document.getElementById('delimLegPerkVar'),
+    clearLegPerkVar: document.getElementById('clearLegPerkVar'),
+    availLegPerkVar: document.getElementById('availLegPerkVar'),
+    selLegPerkVar: document.getElementById('selLegPerkVar'),
+    addLegPerkVar: document.getElementById('addLegPerkVar'),
+    remLegPerkVar: document.getElementById('remLegPerkVar'),
+
+    // Ordnance Perks
+    filterOrdPerk: document.getElementById('filterOrdPerk'),
+    delimOrdPerk: document.getElementById('delimOrdPerk'),
+    clearOrdPerk: document.getElementById('clearOrdPerk'),
+    availOrdPerk: document.getElementById('availOrdPerk'),
+    selOrdPerk: document.getElementById('selOrdPerk'),
+    addOrdPerk: document.getElementById('addOrdPerk'),
+    remOrdPerk: document.getElementById('remOrdPerk'),
+};
+
+// State
+let selectedAltFire = [];      // Array of codes (strings like "17:45")
+let selectedLegPerkVar = [];   // Array of codes (strings like "8:54")
+let selectedOrdPerk = [];      // Array of codes (strings like "272:11")
+let rndSeed = Math.floor(1000 + Math.random()*9000); // 4-digit random seed for '2, ####||'
+
+
+/**
+ * Generic Builder UI Logic
+ * Creates functions to manage a dual-list selector for a given dataset.
+ *
+ * @param {string} key - The key in PAYLOAD for the data array (e.g., 'altFiringModes')
+ * @param {string} nameField - The field name for the display text (e.g., 'name')
+ * @param {string} codeField - The field name for the value/code (e.g., 'code')
+ * @param {string} idPrefix - Prefix for DOM element IDs (e.g., 'AltFire')
+ * @returns {object} - An object containing handler functions for this builder section
+ */
+function createBuilder(key, nameField, codeField, idPrefix) {
+    const dataList = PAYLOAD[key] || [];
+    const filterInput = dom[`filter${idPrefix}`];
+    const availList = dom[`avail${idPrefix}`];
+    const selList = dom[`sel${idPrefix}`];
+    let selectedItems = []; // Use a local state array for each builder instance
+
+    // Map code to name for rendering selected items
+    const codeToNameMap = {};
+    dataList.forEach(item => {
+        codeToNameMap[item[codeField]] = item[nameField] + (item.variant ? ` "${item.variant}"` : '') + (item.group ? ` (${item.group})` : '');
+    });
+
+    function populateAvailable() {
+        const query = (filterInput.value || '').toLowerCase();
+        availList.innerHTML = '';
+        dataList.filter(item => {
+            const name = item[nameField] || '';
+            const variant = item.variant || '';
+            const group = item.group || '';
+            const code = item[codeField] || '';
+            const searchText = `${name} ${variant} ${group} {${code}}`.toLowerCase();
+            return !query || searchText.includes(query);
+        }).forEach(item => {
+            const code = item[codeField];
+            const name = item[nameField] + (item.variant ? ` "${item.variant}"` : '') + (item.group ? ` (${item.group})` : '');
+            const o = document.createElement('option');
+            o.value = code;
+            o.textContent = `${name} {${code}}`;
+            availList.appendChild(o);
+        });
+    }
+
+     function renderSelected() {
+        selList.innerHTML = '';
+        selectedItems.forEach((code, index) => {
+            const name = codeToNameMap[code] || 'Unknown Code';
+            const o = document.createElement('option');
+            o.value = code; // Store code
+            o.textContent = `${name} {${code}}`;
+            o.dataset.index = index; // Store original index for removal
+            selList.appendChild(o);
+        });
+        rebuildOutput(); // Update main output whenever selection changes
+    }
+
+
+    function addSelected() {
+        Array.from(availList.selectedOptions).forEach(opt => {
+            selectedItems.push(opt.value); // Add the code string
+        });
+        renderSelected();
+    }
+
+    function removeSelected() {
+        // Get original indices of selected items to remove, sort descending to avoid index shifting issues
+        const indicesToRemove = Array.from(selList.selectedOptions)
+                                    .map(opt => parseInt(opt.dataset.index, 10))
+                                    .sort((a, b) => b - a);
+
+        indicesToRemove.forEach(index => {
+            selectedItems.splice(index, 1); // Remove item by its original index
+        });
+        renderSelected();
+    }
+
+
+    function clearSelected() {
+        selectedItems = [];
+        renderSelected();
+    }
+
+    // Initial population
+    populateAvailable();
+
+    // Event listeners
+    filterInput.addEventListener('input', populateAvailable);
+    dom[`add${idPrefix}`].addEventListener('click', addSelected);
+    dom[`rem${idPrefix}`].addEventListener('click', removeSelected);
+    dom[`clear${idPrefix}`].addEventListener('click', clearSelected);
+    selList.addEventListener('keydown', e => {
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            e.preventDefault();
+            removeSelected();
+        }
+    });
+
+    // Return reference to the selected items array for rebuildOutput
+    return {
+        getSelectedItems: () => selectedItems,
+        clear: clearSelected // Expose clear function if needed externally
+    };
+}
+
+
+// Create builder instances
+const altFireBuilder = createBuilder('altFiringModes', 'name', 'code', 'AltFire');
+const legPerkVarBuilder = createBuilder('legendaryPerkPartVariations', 'name', 'code', 'LegPerkVar');
+const ordPerkBuilder = createBuilder('ordnanceLegendaryPerks', 'name', 'code', 'OrdPerk'); // Needs combined data
+
+
+// Output builder - ADAPT THIS based on desired output format
+function rebuildOutput(){
+  const parts=[];
+  // Basic Info (Example - replace with actual logic if needed)
+  const itemTypeCode = dom.itemTypeSel.options[dom.itemTypeSel.selectedIndex]?.text.substring(0,3).toUpperCase() || 'XXX'; // Example logic
+  const rarityCode = dom.raritySel.options[dom.raritySel.selectedIndex]?.text.substring(0,1).toUpperCase() || 'C'; // Example logic
+
+  // Base structure similar to Enhancement Editor
+  parts.push(`${itemTypeCode}_${rarityCode}, 0, 1, 50| 2, ${rndSeed}||`); // Placeholder base
+
+  // Add selected items from each builder
+  const altFireItems = altFireBuilder.getSelectedItems();
+  const delimAltFire = (dom.delimAltFire.value || ' ').slice(0, 3);
+  if(altFireItems.length) parts.push(` {altFire:[${altFireItems.join(delimAltFire)}]}`);
+
+  const legPerkVarItems = legPerkVarBuilder.getSelectedItems();
+  const delimLegPerkVar = (dom.delimLegPerkVar.value || ' ').slice(0, 3);
+  if(legPerkVarItems.length) parts.push(` {legPerkVar:[${legPerkVarItems.join(delimLegPerkVar)}]}`);
+
+  const ordPerkItems = ordPerkBuilder.getSelectedItems();
+  const delimOrdPerk = (dom.delimOrdPerk.value || ' ').slice(0, 3);
+  if(ordPerkItems.length) parts.push(` {ordPerk:[${ordPerkItems.join(delimOrdPerk)}]}`);
+
+  dom.outCode.textContent = parts.join(' ').trim();
+}
+
+// Events for basic selectors
+dom.itemTypeSel.addEventListener('change', rebuildOutput);
+dom.raritySel.addEventListener('change', rebuildOutput);
+
+// Random Seed Dice Button
+dom.dice.onclick = () => { rndSeed = Math.floor(1000 + Math.random()*9000); rebuildOutput(); };
+
+// --- API Call Logic (Copied from Enhancement_Editor.html, unchanged) ---
+async function callReserialize() {
+  try {
+    const outEl = document.getElementById('out')?.querySelector('code');
+    const serialOut = document.getElementById('serial_b85');
+    const addDataEl = document.getElementById('additionalData');
+    if (!outEl) return;
+    const deserialized = (outEl.textContent || '').trim();
+    if (!deserialized) {
+      if (serialOut) serialOut.textContent = '';
+      if (addDataEl) addDataEl.textContent = '';
+      return;
+    }
+    const resp = await fetch('https://borderlands4-deserializer.nicnl.com/api/v1/reserialize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deserialized })
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    if (serialOut) serialOut.textContent = data.serial_b85 || '';
+    if (addDataEl) addDataEl.textContent = data.additional_data || '';
+  } catch (err) {
+    console.error('Reserialize API error:', err);
+    const serialOut = document.getElementById('serial_b85');
+    if (serialOut) serialOut.textContent = '[API error] ' + (err?.message || String(err));
+  }
+}
+
+// Wire the "Copy Serial" button
+(function wireApiButtons(){
+  const copyBtn = document.getElementById('copySerial');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', async () => {
+      const serialOut = document.getElementById('serial_b85');
+      const text = (serialOut?.textContent || '').trim();
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        copyBtn.textContent = 'Copied!';
+        setTimeout(()=> copyBtn.textContent='Copy Serial', 900);
+      } catch(e){ console.error(e); }
+    });
+  }
+})();
+
+// Auto-refresh the New Serial whenever the editor rebuilds output.
+(function hookRebuildOutput(){
+  const interval = setInterval(() => {
+    if (typeof rebuildOutput === 'function') {
+      clearInterval(interval);
+      const orig = rebuildOutput;
+      window.rebuildOutput = function(){
+        const rv = orig.apply(this, arguments);
+        if (window.__rszTimer) cancelAnimationFrame(window.__rszTimer);
+        window.__rszTimer = requestAnimationFrame(callReserialize);
+        return rv;
+      };
+      // Initial call on load
+      requestAnimationFrame(callReserialize);
+    }
+  }, 50);
+})();
+
+// Add "Copied!" feedback for Copy Output button
+(function wireCopyFull(){
+  const copyBtn = document.getElementById('copyFull');
+  if (!copyBtn) return;
+  copyBtn.addEventListener('click', async () => {
+    try {
+      const outEl = document.getElementById('out')?.querySelector('code');
+      const text = (outEl?.textContent || '').trim();
+      if (!text) return;
+      await navigator.clipboard.writeText(text);
+      const old = copyBtn.textContent;
+      copyBtn.textContent = 'Copied!';
+      setTimeout(()=> copyBtn.textContent = old || 'Copy Output', 900);
+    } catch(e) { console.error(e); }
+  });
+})();
+
+// Initial Setup
+(function init(){
+  rebuildOutput(); // Initial output generation
+})();
+
+</script>
+</body>
+</html>

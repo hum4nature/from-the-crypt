@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BL4 Serial Editor Suite (Comparator)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        :root {
+            --bg-deep-blue: #1a1a2e; --bg-element: #2c2c4d; --border-color: #4b4b7d;
+            --text-primary: #e0e0e0; --text-secondary: #a0a0c0; --accent-orange: #e59400;
+            --accent-orange-hover: #ffb84d; --success-green: #28a745; --danger-red: #e74c3c;
+            --highlight-bg: #e59400; --highlight-text: #1a1a2e;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-deep-blue); color: var(--text-primary); margin: 0; padding: 2rem; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1, h2, h3 { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+        h1 { text-shadow: 0 0 8px var(--accent-orange); }
+        h3 { border-bottom: none; font-family: 'Inter'; margin-top: 0; margin-bottom: 0.5rem; font-size: 1.2rem; color: var(--text-secondary); }
+        h4 { font-family: 'Inter'; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.5rem; color: var(--text-secondary); }
+        /* SURGICAL ADDITION: Added input[type="text"] to this rule for Workstation */
+        textarea, input[type="text"], input[type="number"], select { width: 100%; padding: 0.75rem; background-color: var(--bg-element); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
+        /* SURGICAL ADDITION: Added this rule for Workstation "Name" fields */
+        input[type="text"] { font-family: 'Inter', sans-serif; }
+        select { font-family: 'Inter', sans-serif; }
+        button { padding: 0.5rem 1rem; background-color: var(--accent-orange); color: var(--bg-deep-blue); border: none; border-radius: 6px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; margin-right: 0.5rem; }
+        button:hover { background-color: var(--accent-orange-hover); }
+        button:disabled { background-color: #555; cursor: not-allowed; }
+        .modify-btn, .btn-cancel, .util-btn { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+        .util-btn { background-color: #6c757d; color: white; }
+        .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        .comparison-results { display: none; margin-top: 1.5rem; border-top: 2px solid var(--border-color); padding-top: 1.5rem; }
+        .comparison-block { margin-bottom: 2.5rem; }
+        .comparison-block-header { margin-bottom: 1rem; }
+        .comparison-block-header h3 { margin-bottom: 0.25rem; }
+        .comparison-stats { font-family: 'Inter', sans-serif; font-size: 0.9rem; color: var(--text-secondary); }
+        .comparison-stats span { margin-right: 1.5rem; }
+        .comparison-stats strong { font-weight: 700; }
+        .display-box { padding: 0.75rem; background-color: var(--bg-element); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; font-family: 'Courier New', Courier, monospace; min-height: 40px; white-space: pre-wrap; word-break: break-all; margin-bottom: 0.5rem; }
+        .display-box.editing, .display-box.editing span { border-color: var(--accent-orange); outline: none; box-shadow: 0 0 8px var(--accent-orange); background-color: #3c3c6d; }
+        .diff-highlight { color: var(--danger-red); font-weight: bold; }
+        .added-char { color: var(--accent-orange); font-weight: bold; }
+        .match-char { color: #aaa; }
+        .common-pattern { color: var(--success-green); border: 1px dotted var(--success-green); padding: 0 2px; margin: 0 1px; border-radius: 3px; }
+        .unique-pattern { color: var(--danger-red); border: 1px dotted var(--danger-red); padding: 0 2px; margin: 0 1px; border-radius: 3px; }
+        .stats, .help-text { font-family: 'Inter'; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+        .help-text { margin-top: -0.5rem; }
+        #final-output-container { margin-top: 2rem; padding: 1rem; background-color: var(--bg-element); border: 1px solid var(--success-green); border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 1.1rem; }
+        .final-output-code { color: var(--success-green); font-weight: bold; font-family: 'Courier New', monospace; word-break: break-all; }
+        .btn-cancel { background-color: #6c757d; color: white; }
+        .tabs { border-bottom: 2px solid var(--border-color); margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; }
+        .tab-link { background: none; border: none; color: var(--text-secondary); font-size: 1.1rem; font-weight: 600; padding: 0.75rem 1.5rem; border-radius: 6px 6px 0 0; cursor: pointer; margin-right: 0; }
+        .tab-link:hover { background-color: var(--bg-element); }
+        .tab-link.active { background-color: var(--bg-element); color: var(--accent-orange); border: 2px solid var(--border-color); border-bottom: 2px solid var(--bg-element); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .output-header { border-bottom: 3px solid var(--accent-orange); margin-bottom: 1rem; padding-bottom: 0.5rem; }
+        .output-header h3 { border-bottom: none; margin-bottom: 0.25rem; font-size: 1.5rem; }
+        .serial-count { color: var(--success-green); font-weight: bold; }
+        .output-header .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .output-header .stats { margin-bottom: 0; }
+        #permutator-output { white-space: pre; }
+
+        /* --- STYLES FOR DESERIALIZER TAB --- */
+        /* --- THIS SECTION IS UNTOUCHED --- */
+        #Deserializer * { margin: 0; padding: 0; box-sizing: border-box; }
+        #Deserializer { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #eee; 
+            padding: 20px;
+            border-radius: 0 0 6px 6px; /* Match container style */
+        }
+        #Deserializer .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #1a1a2e;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        #Deserializer h1 {
+            text-align: center;
+            color: #fff;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            /* Reset existing h1 styles */
+            border-bottom: none; 
+        }
+        #Deserializer .section {
+            margin-bottom: 30px;
+        }
+        #Deserializer label {
+            display: block;
+            margin-bottom: 10px;
+            color: #764ba2;
+            font-weight: bold;
+        }
+        #Deserializer textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 15px;
+            background: #0f3460;
+            color: #fff;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            resize: vertical;
+        }
+        #Deserializer textarea:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 20px rgba(118, 75, 162, 0.5);
+        }
+        #Deserializer button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            /* Explicitly set margin for override */
+            margin-right: 0.5rem; 
+        }
+        #Deserializer button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            /* Override existing hover */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        #Deserializer button:active {
+            transform: translateY(0);
+        }
+        #Deserializer .button-container {
+            text-align: center;
+            margin: 25px 0;
+        }
+        #Deserializer .status {
+            text-align: center;
+            padding: 15px;
+            background: #16213e;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-family: monospace;
+        }
+        #Deserializer .status.active {
+            display: block;
+        }
+        #Deserializer .status.success {
+            background: #1a4d3a;
+            color: #4CAF50;
+        }
+        #Deserializer .status.error {
+            background: #4d1a1a;
+            color: #f44336;
+        }
+        #Deserializer .status.processing {
+            background: #3d3d1a;
+            color: #FFD700;
+        }
+        #Deserializer .output-box {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        #Deserializer .help-section {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            border: 2px solid #764ba2;
+        }
+        #Deserializer .help-section.active {
+            display: block;
+        }
+        #Deserializer .help-section h3 {
+            color: #764ba2;
+            margin-bottom: 15px;
+            /* Reset existing h3 styles */
+            border-bottom: none;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 1.2rem;
+            color: #764ba2;
+        }
+        #Deserializer .help-section p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        #Deserializer .help-section code {
+            background: #0f3460;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #4CAF50;
+        }
+        /* --- END OF UNTOUCHED SECTION --- */
+
+
+        /* --- SURGICAL ADDITION: STYLES FOR WORKSTATION TAB --- */
+        #Workstation {
+            font-family: 'Inter', sans-serif;
+        }
+        .workstation-intro, .workstation-example {
+            background-color: var(--bg-deep-blue);
+            padding: 1rem 1.5rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+        .workstation-example h3 {
+            border-bottom: none;
+            margin-top: 0;
+            color: var(--accent-orange);
+        }
+        .workstation-example code {
+            background-color: var(--bg-element);
+            color: var(--text-primary);
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+        /* Style for the example code block highlight */
+        span.ws-highlight {
+            background-color: var(--highlight-bg);
+            color: var(--highlight-text);
+            border-radius: 3px;
+            padding: 0 2px;
+            transition: all 0.1s ease-in-out;
+        }
+        .workstation-example ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .workstation-example ul li {
+            margin-bottom: 0.5rem;
+        }
+        /* Style for the clickable list items */
+        .workstation-example ul li.highlight-trigger {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .workstation-example ul li.highlight-trigger:hover {
+            color: var(--accent-orange-hover);
+        }
+        /* Style for the new workstation help section */
+        #workstation-help-section {
+            background: var(--bg-deep-blue);
+            padding: 1rem 1.5rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            display: none; /* Hidden by default */
+        }
+        #workstation-help-section.active {
+            display: block; /* Shown when active */
+        }
+        .workstation-hr {
+            border: 0;
+            height: 2px;
+            background-color: var(--border-color);
+            margin: 2rem 0;
+        }
+        .workstation-item {
+            background-color: var(--bg-element);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .workstation-item h3 {
+            color: var(--accent-orange);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .workstation-item label {
+            display: block;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+        }
+        .workstation-item textarea {
+            min-height: 60px;
+            font-size: 0.9rem;
+        }
+        .workstation-item .test-code {
+            min-height: 120px;
+            background-color: #1a222e;
+        }
+        .workstation-item .final-code {
+            min-height: 80px;
+            background-color: #1f2b2e; /* A slightly different "final" color */
+            border-color: var(--success-green);
+        }
+        /* Style for the new control buttons */
+        #add-workstation-item-btn {
+            background: var(--accent-orange);
+            color: var(--bg-deep-blue);
+            border: none;
+            padding: 0.5rem 1.5rem;
+            font-size: 1.5rem;
+            border-radius: 50px; /* Rounded button */
+            cursor: pointer;
+            font-weight: 700;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: all 0.2s ease-in-out;
+            margin: 0.5rem;
+        }
+        #add-workstation-item-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            background: var(--accent-orange-hover);
+        }
+        #export-workstation-btn {
+            background: var(--success-green);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: all 0.2s ease-in-out;
+            margin: 0.5rem;
+        }
+        #export-workstation-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            background: #34c759;
+        }
+        /* --- END OF SURGICAL ADDITION --- */
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>BL4 Serial Editor Suite</h1>
+    <div class="tabs">
+        <button class="tab-link" onclick="openTab(event, 'Comparator')">🔬 Comparator & Editor</button>
+        <button class="tab-link" onclick="openTab(event, 'Deserializer')">🔓 Deserializer</button>
+        <!-- SURGICAL ADDITION: New Tab Button -->
+        <button class="tab-link" onclick="openTab(event, 'Workstation')">🗂️ Workstation</button>
+    </div>
+
+    <div id="Comparator" class="tab-content"></div>
+    
+    <!-- DESERIALIZER TAB (UNTOUCHED) -->
+    <div id="Deserializer" class="tab-content">
+        <div class="container">        <h1>🔓 Borderlands 4 Bulk Deserializer</h1>        <p style="text-align: center; color: #aaa; margin-bottom: 20px;">            By @Nicnl | API: <a href="https://borderlands4-deserializer.nicnl.com" target="_blank" style="color: #667eea;">borderlands4-deserializer.nicnl.com</a> |             <button onclick="toggleHelp()" style="background: #764ba2; border: none; color: white; padding: 5px 15px; border-radius: 5px; cursor: pointer;">ℹ️ Help</button>        </p>                <div class="status" id="status"></div>        <div id="help-section" class="help-section">            <h3>🧠 How does it work? How can I use this?</h3>                        <p><strong>1. What are item serials?</strong><br>            The game stores its weapons and items inside "serials" that looks like this:<br>            <code>@Ugy3L+2}TYg%$yC%i7M2gZldO)@}cgb!l34$a-qf{00</code><br><br>            These serials contains core informations about the item (ex: manufacturer, type, level, and its "parts").            However, as you can see... those informations are scrambled, and not easily readable nor modifiable.</p>                        <p><strong>2. What does the deserializer do?</strong><br>            The deserialization tool is available here: <a href="https://borderlands4-deserializer.nicnl.com" target="_blank">borderlands4-deserializer.nicnl.com</a><br>            Basically, it decodes the "scrambled" serials into their core values, making them easy to read.            But most importantly, the deserializer works both ways: you can modify the values and reserialize your item.            This allows you to adjust your trusty Daedalus Darkbeast by putting the glass scope you like best.</p>                        <p><strong>3. Help, I don't understand the output of the deserializer!</strong><br>            Don't worry, it's not very complicated. Here are the basics.<br><br>            We'll start with this serial, a "Ricocheting GCX":<br>            <code>@UgwSAs2}TYg%+Cc1jp~P5)T82}IyDEC3v~`v4>e=}</code><br><br>            Putting it in the deserializer gives the following result:<br>            <code>20, 0, 1, 50| 2, 1439|| {96} {62} {5} {7} {88} {14} {25} {44} {51} {58} {1:12}|</code><br><br>                        <code>20, 0, 1, 50| 2, 1439|| {96} {62} {5} {7} {88} {14} {25} {44} {51} {58} {1:12}|</code><br>            <code>^^</code><br>            This is the manufacturer index: "20" means "daedalus:smg".            (See the "Item Types & Manufacturers" tab at the bottom.)            Usually you don't want to touch this number because it'll break the parts that comes afterwards.</p>                        <p style="text-align: center; color: #4CAF50; font-weight: bold;">                Created by @Nicnl | Tool powered by borderlands4-deserializer.nicnl.com API            </p>        </div>        <div class="section">            <label for="input-data">Paste your Base85 serial strings here (one per line):</label>            <textarea id="input-data" placeholder='Paste your serials here, example:@Ug!pHG2}TYgT$`TI-PE9Jw*U@Ug!pHG2}TYgT$`TI-PE9J*8l@Ug!pHG2}TYgT$`TI-PE9J_W%'></textarea>        </div>        <div class="button-container">            <button onclick="deserialize()">🔓 Deserialize</button>            <button onclick="serialize()" style="background: #4CAF50; margin-left: 10px;">⚙️ Reserialize</button>            <input type="file" id="fileInput" accept=".txt" style="display: none;" onchange="handleFileSelect(event)">            <button onclick="document.getElementById('fileInput').click()" style="background: #16213e; margin-left: 10px;">📂 Load from File...</button>        </div>        <div class="section">            <label for="output-data">Results: <button onclick="copyOutput()" style="background: #4CAF50; padding: 8px 20px; font-size: 0.9em; margin-left: 10px;">📋 Copy Output</button></label>            <textarea id="output-data" class="output-box" readonly placeholder="Results will appear here..."></textarea>        </div>    </div>
+    </div>
+    
+    <!-- SURGICAL ADDITION: New Workstation Tab Content -->
+    <div id="Workstation" class="tab-content">
+        <h2>🗂️ Personal Workstation</h2>
+        <div class="workstation-intro">
+            <p>This is your personal space to modify and test your items!</p>
+            <p>Posted below is an example of a gun fully parted out so you get the idea of how guns are parted together. Underneath the example is a full workstation ready for you to use.</p>
+            <!-- Button uses inline styles to avoid touching any CSS -->
+            <button onclick="toggleWorkstationHelp()" class="ws-item-breakdown-btn" style="margin-top: 1rem; margin-left: 0; background: #4b4b7d; color: white; padding: 0.5rem 1rem; font-size: 0.9rem; margin-right: 0.5rem;">Item Breakdown</button>
+        </div>
+    
+        <div id="workstation-help-section" class="workstation-example">
+            <h3>Example: "Boory" Breakdown</h3>
+            <code id="workstation-example-code" data-original-text="22, 0, 1, 50 2, 3288 {98} {2} {5} {3} {7} {75} {74} {73} {14} {26} {43} {48} {60}">22, 0, 1, 50 2, 3288 {98} {2} {5} {3} {7} {75} {74} {73} {14} {26} {43} {48} {60}</code>
+            <ul>
+                <li class="highlight-trigger" data-highlight="22"><code>22</code> = Item Type</li>
+                <li class="highlight-trigger" data-highlight="0"><code>0</code> = Static [Doesnt Change Ever]</li>
+                <li class="highlight-trigger" data-highlight="1"><code>1</code> = Static [Doesnt Change Ever]</li>
+                <li class="highlight-trigger" data-highlight="50"><code>50</code> = Weapon Level</li>
+                <li class="highlight-trigger" data-highlight="2, 3288"><code>2, 3288</code> = Unique Identifier</li>
+                <li class="highlight-trigger" data-highlight="{98}"><code>{98}</code> = Rarity</li>
+                <li class="highlight-trigger" data-highlight="{2}"><code>{2}</code> = Upper Reciever</li>
+                <li class="highlight-trigger" data-highlight="{5}"><code>{5}</code> = Reciever Attachment</li>
+                <li class="highlight-trigger" data-highlight="{3}"><code>{3}</code> = Lower Reciever</li>
+                <li class="highlight-trigger" data-highlight="{7}"><code>{7}</code> = Barrel</li>
+                <li class="highlight-trigger" data-highlight="{75}"><code>{75}</code> = Blowback Tube [+ Mag Size]</li>
+                <li class="highlight-trigger" data-highlight="{74}"><code>{74}</code> = Top Rail [+ Mag Size]</li>
+                <li class="highlight-trigger" data-highlight="{73}"><code>{73}</code> = Muzzle [+ 32% Crit Damage]</li>
+                <li class="highlight-trigger" data-highlight="{14}"><code>{14}</code> = Double Magazines [+ Damage + Reload Time + Mag Size]</li>
+                <li class="highlight-trigger" data-highlight="{26}"><code>{26}</code> = Glassless Optic/Iron Sights</li>
+                <li class="highlight-trigger" data-highlight="{43}"><code>{43}</code> = Hyperion Grip [- Accuracy]</li>
+                <li class="highlight-trigger" data-highlight="{48}"><code>{48}</code> = Atlas Tracking Grenade</li>
+                <li class="highlight-trigger" data-highlight="{60}"><code>{60}</code> = Pistol Grip With Handstock [+ Fire Rate]</li>
+            </ul>
+            <p>This is how you should aim to breakdown every weapon you test. Good luck!</p>
+        </div>
+
+        <hr class="workstation-hr">
+        
+        <div id="workstation-items-container">
+            <!-- Item 1 -->
+            <div class="workstation-item">
+                <h3>[1]</h3>
+                <label for="ws-1-name">Name:</label>
+                <input type="text" id="ws-1-name" name="ws-1-name">
+                
+                <label for="ws-1-serial">Serial:</label>
+                <textarea id="ws-1-serial" name="ws-1-serial"></textarea>
+                
+                <label for="ws-1-deserial">Deserial:</label>
+                <textarea id="ws-1-deserial" name="ws-1-deserial"></textarea>
+                
+                <label for="ws-1-test">Test:</label>
+                <textarea id="ws-1-test" name="ws-1-test" class="test-code"></textarea>
+                
+                <label for="ws-1-final">Final Code:</label>
+                <textarea id="ws-1-final" name="ws-1-final" class="final-code"></textarea>
+            </div>
+            
+            <!-- Item 2 -->
+            <div class="workstation-item" style="display: none;">
+                <h3>[2]</h3>
+                <label for="ws-2-name">Name:</label>
+                <input type="text" id="ws-2-name" name="ws-2-name">
+                
+                <label for="ws-2-serial">Serial:</label>
+                <textarea id="ws-2-serial" name="ws-2-serial"></textarea>
+                
+                <label for="ws-2-deserial">Deserial:</label>
+                <textarea id="ws-2-deserial" name="ws-2-deserial"></textarea>
+                
+                <label for="ws-2-test">Test:</label>
+                <textarea id="ws-2-test" name="ws-2-test" class="test-code"></textarea>
+                
+                <label for="ws-2-final">Final Code:</label>
+                <textarea id="ws-2-final" name="ws-2-final" class="final-code"></textarea>
+            </div>
+            
+            <!-- Item 3 -->
+            <div class="workstation-item" style="display: none;">
+                <h3>[3]</h3>
+                <label for="ws-3-name">Name:</label>
+                <input type="text" id="ws-3-name" name="ws-3-name">
+                
+                <label for="ws-3-serial">Serial:</label>
+                <textarea id="ws-3-serial" name="ws-3-serial"></textarea>
+                
+                <label for="ws-3-deserial">Deserial:</label>
+                <textarea id="ws-3-deserial" name="ws-3-deserial"></textarea>
+                
+                <label for="ws-3-test">Test:</label>
+                <textarea id="ws-3-test" name="ws-3-test" class="test-code"></textarea>
+                
+                <label for="ws-3-final">Final Code:</label>
+                <textarea id="ws-3-final" name="ws-3-final" class="final-code"></textarea>
+            </div>
+            
+            <!-- Item 4 -->
+            <div class="workstation-item" style="display: none;">
+                <h3>[4]</h3>
+                <label for="ws-4-name">Name:</label>
+                <input type="text" id="ws-4-name" name="ws-4-name">
+                
+                <label for="ws-4-serial">Serial:</label>
+                <textarea id="ws-4-serial" name="ws-4-serial"></textarea>
+                
+                <label for="ws-4-deserial">Deserial:</label>
+                <textarea id="ws-4-deserial" name="ws-4-deserial"></textarea>
+                
+                <label for="ws-4-test">Test:</label>
+                <textarea id="ws-4-test" name="ws-4-test" class="test-code"></textarea>
+                
+                <label for="ws-4-final">Final Code:</label>
+                <textarea id="ws-4-final" name="ws-4-final" class="final-code"></textarea>
+            </div>
+            
+            <!-- Item 5 -->
+            <div class="workstation-item" style="display: none;">
+                <h3>[5]</h3>
+                <label for="ws-5-name">Name:</label>
+                <input type="text" id="ws-5-name" name="ws-5-name">
+                
+                <label for="ws-5-serial">Serial:</label>
+                <textarea id="ws-5-serial" name="ws-5-serial"></textarea>
+                
+                <label for="ws-5-deserial">Deserial:</label>
+                <textarea id="ws-5-deserial" name="ws-5-deserial"></textarea>
+                
+                <label for="ws-5-test">Test:</label>
+                <textarea id="ws-5-test" name="ws-5-test" class="test-code"></textarea>
+                
+                <label for="ws-5-final">Final Code:</label>
+                <textarea id="ws-5-final" name="ws-5-final" class="final-code"></textarea>
+            </div>
+            
+            <!-- Item 6 -->
+            <div class="workstation-item" style="display: none;">
+                <h3>[6]</h3>
+                <label for="ws-6-name">Name:</label>
+                <input type="text" id="ws-6-name" name="ws-6-name">
+                
+                <label for="ws-6-serial">Serial:</label>
+                <textarea id="ws-6-serial" name="ws-6-serial"></textarea>
+                
+                <label for="ws-6-deserial">Deserial:</label>
+                <textarea id="ws-6-deserial" name="ws-6-deserial"></textarea>
+                
+                <label for="ws-6-test">Test:</label>
+                <textarea id="ws-6-test" name="ws-6-test" class="test-code"></textarea>
+                
+                <label for="ws-6-final">Final Code:</label>
+                <textarea id="ws-6-final" name="ws-6-final" class="final-code"></textarea>
+            </div>
+            
+            <!-- Item 7 -->
+            <div class="workstation-item" style="display: none;">
+                <h3>[7]</h3>
+                <label for="ws-7-name">Name:</label>
+                <input type="text" id="ws-7-name" name="ws-7-name">
+                
+                <label for="ws-7-serial">Serial:</label>
+                <textarea id="ws-7-serial" name="ws-7-serial"></textarea>
+                
+                <label for="ws-7-deserial">Deserial:</label>
+                <textarea id="ws-7-deserial" name="ws-7-deserial"></textarea>
+                
+                <label for="ws-7-test">Test:</label>
+                <textarea id="ws-7-test" name="ws-7-test" class="test-code"></textarea>
+                
+                <label for="ws-7-final">Final Code:</label>
+                <textarea id="ws-7-final" name="ws-7-final" class="final-code"></textarea>
+            </div>
+            
+            <!-- Item 8 -->
+            <div class="workstation-item" style="display: none;">
+                <h3>[8]</h3>
+                <label for="ws-8-name">Name:</label>
+                <input type="text" id="ws-8-name" name="ws-8-name">
+                
+                <label for="ws-8-serial">Serial:</label>
+                <textarea id="ws-8-serial" name="ws-8-serial"></textarea>
+                
+                <label for="ws-8-deserial">Deserial:</label>
+                <textarea id="ws-8-deserial" name="ws-8-deserial"></textarea>
+                
+                <label for="ws-8-test">Test:</label>
+                <textarea id="ws-8-test" name="ws-8-test" class="test-code"></textarea>
+                
+                <label for="ws-8-final">Final Code:</label>
+                <textarea id="ws-8-final" name="ws-8-final" class="final-code"></textarea>
+            </div>
+            
+            <!-- Item 9 -->
+            <div class="workstation-item" style="display: none;">
+                <h3>[9]</h3>
+                <label for="ws-9-name">Name:</label>
+                <input type="text" id="ws-9-name" name="ws-9-name">
+                
+                <label for="ws-9-serial">Serial:</label>
+                <textarea id="ws-9-serial" name="ws-9-serial"></textarea>
+                
+                <label for="ws-9-deserial">Deserial:</label>
+                <textarea id="ws-9-deserial" name="ws-9-deserial"></textarea>
+                
+                <label for="ws-9-test">Test:</label>
+                <textarea id="ws-9-test" name="ws-9-test" class="test-code"></textarea>
+                
+                <label for="ws-9-final">Final Code:</label>
+                <textarea id="ws-9-final" name="ws-9-final" class="final-code"></textarea>
+            </div>
+            
+            <!-- Item 10 -->
+            <div class="workstation-item" style="display: none;">
+                <h3>[10]</h3>
+                <label for="ws-10-name">Name:</label>
+                <input type="text" id="ws-10-name" name="ws-10-name">
+                
+                <label for="ws-10-serial">Serial:</label>
+                <textarea id="ws-10-serial" name="ws-10-serial"></textarea>
+                
+                <label for="ws-10-deserial">Deserial:</label>
+                <textarea id="ws-10-deserial" name="ws-10-deserial"></textarea>
+                
+                <label for="ws-10-test">Test:</label>
+                <textarea id="ws-10-test" name="ws-10-test" class="test-code"></textarea>
+                
+                <label for="ws-10-final">Final Code:</label>
+                <textarea id="ws-10-final" name="ws-10-final" class="final-code"></textarea>
+            </div>
+        </div>
+        
+        <div class="workstation-controls" style="text-align: center; margin-top: 2rem;">
+            <button id="add-workstation-item-btn" title="Add another item block">[+]</button>
+            <button id="export-workstation-btn" title="Copy all workstation data to clipboard">Copy Workstation</button>
+        </div>
+    </div>
+    <!-- END OF SURGICAL ADDITION -->
+
+</div>
+
+<script>
+// --- CORE LIBRARIES ---
+const B85_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+-;<=>?@^_`{/}~";
+const B85_REVERSE = new Int16Array(256).fill(-1);
+for(let i=0;i<85;i++)B85_REVERSE[B85_ALPHABET.charCodeAt(i)]=i;
+
+function b85Decode_BL4(s) {
+    if (!s || !s.startsWith("@U")) return null;
+    const serial_part = s.slice(2);
+    
+    const bytes = [];
+    let a = 0 >>> 0, c = 0;
+    const f = () => { bytes.push(a >>> 24 & 255, a >>> 16 & 255, a >>> 8 & 255, a & 255); a = 0; c = 0 };
+    for (let i = 0; i < serial_part.length; i++) {
+        const d = B85_REVERSE[serial_part.charCodeAt(i)];
+        if (d < 0 || d >= 85) return null;
+        a = (a * 85 + d) >>> 0;
+        if (++c === 5) f();
+    }
+    if (c > 0) {
+        for (let k = c; k < 5; k++) a = (a * 85 + 84) >>> 0;
+        if (c > 1) bytes.push(a >>> 24 & 255);
+        if (c > 2) bytes.push(a >>> 16 & 255);
+        if (c > 3) bytes.push(a >>> 8 & 255);
+    }
+    
+    const mirroredBytes = bytes.map(b => {
+        return ((b & 1) << 7) | ((b & 2) << 5) | ((b & 4) << 3) | ((b & 8) << 1) |
+               ((b & 16) >> 1) | ((b & 32) >> 3) | ((b & 64) >> 5) | ((b & 128) >> 7);
+    });
+
+    return mirroredBytes.map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+function b85Encode_BL4(hex) {
+    let bytes = [];
+    for (let i = 0; i < hex.length; i += 2) {
+        bytes.push(parseInt(hex.substr(i, 2), 16));
+    }
+
+    const mirroredBytes = bytes.map(b => {
+         return ((b & 1) << 7) | ((b & 2) << 5) | ((b & 4) << 3) | ((b & 8) << 1) |
+               ((b & 16) >> 1) | ((b & 32) >> 3) | ((b & 64) >> 5) | ((b & 128) >> 7);
+    });
+    
+    let r = [], i = 0;
+    const P = [52200625, 614125, 7225, 85, 1];
+    for (i = 0; i + 3 < mirroredBytes.length; i += 4) {
+        let v = (mirroredBytes[i] << 24 | mirroredBytes[i + 1] << 16 | mirroredBytes[i + 2] << 8 | mirroredBytes[i + 3]) >>> 0;
+        for (let p of P) r.push(B85_ALPHABET[Math.floor(v / p) % 85]);
+    }
+    if (i < mirroredBytes.length) {
+        let m = mirroredBytes.length - i;
+        let b0 = mirroredBytes[i], b1 = m > 1 ? mirroredBytes[i + 1] : 0, b2 = m > 2 ? mirroredBytes[i + 2] : 0;
+        let v = (b0 << 24 | b1 << 16 | b2 << 8) >>> 0;
+        let c = [];
+        for (let p of P) c.push(B85_ALPHABET[Math.floor(v / p) % 85]);
+        r.push(...c.slice(0, m + 1));
+    }
+    return "@U" + r.join("");
+}
+
+function hexToBinary(h){return Array.from(h).map(c=>parseInt(c,16).toString(2).padStart(4,'0')).join('')}
+function binaryToHex(b){let h='';while(b.length%4!==0)b='0'+b;for(let i=0;i<b.length;i+=4){h+=parseInt(b.substring(i,i+4),2).toString(16)}return h}
+function binaryToDna(binary) {
+    const dnaMap = { '00': 'A', '01': 'C', '10': 'G', '11': 'T' };
+    let dna = '';
+    for (let i = 0; i < binary.length; i += 2) {
+        const pair = binary.substr(i, 2);
+        if (pair.length === 2) {
+            dna += dnaMap[pair];
+        }
+    }
+    return dna;
+}
+function dnaToBinary(dna) {
+    const binaryMap = { 'A': '00', 'C': '01', 'G': '10', 'T': '11' };
+    let binary = '';
+    for (let i = 0; i < dna.length; i++) {
+        const base = dna[i].toUpperCase();
+        if (binaryMap[base]) {
+            binary += binaryMap[base];
+        }
+    }
+    return binary;
+}
+function reverseString(str) { return str.split('').reverse().join(''); }
+
+// --- AFFINE GAP ALIGNMENT LOGIC ---
+function affineGapAlignment(seqA, seqB, matchScore = 5, mismatchPenalty = -4, gapOpenPenalty = -15, gapExtendPenalty = -2) {
+    const lenA = seqA.length;
+    const lenB = seqB.length;
+    const M = Array(lenA + 1).fill(null).map(() => Array(lenB + 1).fill(-Infinity));
+    const Ix = Array(lenA + 1).fill(null).map(() => Array(lenB + 1).fill(-Infinity));
+    const Iy = Array(lenA + 1).fill(null).map(() => Array(lenB + 1).fill(-Infinity));
+    M[0][0] = 0;
+    for (let i = 1; i <= lenA; i++) Ix[i][0] = gapOpenPenalty + (i - 1) * gapExtendPenalty;
+    for (let j = 1; j <= lenB; j++) Iy[0][j] = gapOpenPenalty + (j - 1) * gapExtendPenalty;
+    for (let i = 1; i <= lenA; i++) {
+        for (let j = 1; j <= lenB; j++) {
+            const score = seqA[i - 1] === seqB[j - 1] ? matchScore : mismatchPenalty;
+            M[i][j] = score + Math.max(M[i - 1][j - 1], Ix[i - 1][j - 1], Iy[i - 1][j - 1]);
+            Ix[i][j] = Math.max(M[i - 1][j] + gapOpenPenalty, Ix[i - 1][j] + gapExtendPenalty);
+            Iy[i][j] = Math.max(M[i][j - 1] + gapOpenPenalty, Iy[i][j - 1] + gapExtendPenalty);
+        }
+    }
+    let alignedA = '', alignedB = '', i = lenA, j = lenB;
+    let scoreM = M[i][j], scoreIx = Ix[i][j], scoreIy = Iy[i][j];
+    const _M = 0, _Ix = 1, _Iy = 2;
+    let currentMatrix = (scoreM >= scoreIx && scoreM >= scoreIy) ? _M : (scoreIx >= scoreIy ? _Ix : _Iy);
+    while (i > 0 || j > 0) {
+        if (currentMatrix === _M) {
+            const score = (i > 0 && j > 0 && seqA[i - 1] === seqB[j - 1]) ? matchScore : mismatchPenalty;
+            alignedA = seqA[i - 1] + alignedA; alignedB = seqB[j - 1] + alignedB;
+            const prevM = M[i - 1][j - 1], prevIx = Ix[i - 1][j - 1];
+            currentMatrix = (M[i][j] === score + prevM) ? _M : ((M[i][j] === score + prevIx) ? _Ix : _Iy);
+            i--; j--;
+        } else if (currentMatrix === _Ix) {
+            alignedA = seqA[i - 1] + alignedA; alignedB = ' ' + alignedB;
+            currentMatrix = (Ix[i][j] === M[i - 1][j] + gapOpenPenalty) ? _M : _Ix;
+            i--;
+        } else {
+            alignedA = ' ' + alignedA; alignedB = seqB[j - 1] + alignedB;
+            currentMatrix = (Iy[i][j] === M[i][j - 1] + gapOpenPenalty) ? _M : _Iy;
+            j--;
+        }
+    }
+    let comparison = '', matches = 0, differences = 0, additions = 0;
+    for (let k = 0; k < alignedA.length; k++) {
+        if (alignedA[k] === alignedB[k]) { comparison += '='; matches++; }
+        else if (alignedA[k] === ' ' || alignedB[k] === ' ') { comparison += '+'; additions++; }
+        else { comparison += '!'; differences++; }
+    }
+    alignedA = alignedA.replace(/ /g, '\u00A0'); alignedB = alignedB.replace(/ /g, '\u00A0');
+    return { alignedA, alignedB, comparison, stats: { matches, differences, additions, total: alignedA.length } };
+}
+
+// --- STRUCTURAL PATTERN MATCHING LOGIC (OPTIMIZED) ---
+function listCommonPatterns(str1, str2, minLength) {
+    const patterns = new Set();
+    const len1 = str1.length;
+    const len2 = str2.length;
+
+    const substringsOfStr2 = new Set();
+    for (let i = 0; i <= len2 - minLength; i++) {
+        for (let j = i + minLength; j <= len2; j++) {
+            substringsOfStr2.add(str2.substring(i, j));
+        }
+    }
+
+    for (let i = 0; i <= len1 - minLength; i++) {
+        for (let j = i + minLength; j <= len1; j++) {
+            const sub = str1.substring(i, j);
+            if (substringsOfStr2.has(sub)) {
+                patterns.add(sub);
+            }
+        }
+    }
+    return Array.from(patterns);
+}
+
+function sortByLengthDescending(patterns) {
+    return patterns.sort((a, b) => b.length - a.length);
+}
+
+function greedyDeconstruct(inputString, sortedPatterns) {
+    let parts = [[inputString, false]]; 
+
+    for (const pattern of sortedPatterns) {
+        let newParts = [];
+        for (const part of parts) {
+            if (part[1]) {
+                newParts.push(part);
+                continue;
+            }
+
+            const currentString = part[0];
+            const splitPieces = currentString.split(pattern);
+            
+            if (splitPieces.length > 1) {
+                for (let i = 0; i < splitPieces.length; i++) {
+                    if (splitPieces[i]) {
+                        newParts.push([splitPieces[i], false]);
+                    }
+                    if (i < splitPieces.length - 1) {
+                        newParts.push([pattern, true]);
+                    }
+                }
+            } else {
+                newParts.push(part);
+            }
+        }
+        parts = newParts; 
+    }
+    return parts;
+}
+
+
+function formatAlignedSequence(sequence, comparison) {
+    let html = '';
+    for (let k = 0; k < comparison.length; k++) {
+        const char = sequence[k];
+        if (comparison[k] === '!') { html += `<span class="diff-highlight">${char}</span>`; }
+        else if (comparison[k] === '+') { html += `<span class="added-char">${char}</span>`; }
+        else { html += char; }
+    } return html;
+}
+function formatComparisonString(comparison) {
+    let html = '';
+    for (let k = 0; k < comparison.length; k++) {
+        const char = comparison[k];
+        if (char === '!') { html += `<span class="diff-highlight">${char}</span>`; }
+        else if (char === '+') { html += `<span class="added-char">${char}</span>`; }
+        else { html += `<span class="match-char">${char}</span>`; }
+    } return html;
+}
+
+// --- FULL SCRIPT ---
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- SHARED HELPER FUNCTIONS & DEFINITIONS ---
+    let activeEditor = null;
+    let lastComparisonData = { a: null, b: null };
+    let lastPermutationAnalysis = { binA: null, binB: null, diffIndices: [], mode: 'byte' };
+    // SURGICAL ADDITION: Workstation counter
+    let currentWorkstationItem = 1; 
+
+    // --- TAB HANDLING ---
+    window.openTab = (evt, tabName) => {
+        document.querySelectorAll('.tab-content').forEach(tc => tc.style.display = "none");
+        document.querySelectorAll('.tab-link').forEach(tl => tl.classList.remove('active'));
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.classList.add('active');
+    };
+    
+    // --- INJECT HTML FOR COMPARATOR TAB ---
+    document.getElementById('Comparator').innerHTML = `<div class="grid-2-col"><div><label for="serialA-input">Serial 1:</label><textarea id="serialA-input" rows="3">@Uge8s!m/)}}!tgGjNWCv7=um@tAI&bID_4b+=#r\`uMKB6>*(p+_rqq+YC_B)k3RMi~NB{</textarea></div><div><label for="serialB-input">Serial 2:</label><textarea id="serialB-input" rows="3">@Uge8Oqm/)}}!tgGjNWCv7=um@tAI&bID_4b+=#r\`uMKB6>*(p+_rqq+YC_B)k3RMi~NB{</textarea></div></div><button id="compare-btn" style="font-size: 1.2rem; padding: 0.75rem 1.5rem;">🔬 Compare</button><button id="advanced-align-btn" style="padding: 0.5rem 1rem; font-size: 0.9rem; background-color: #4b4b7d; margin-left: 0.5rem;">🧬 Advanced Align</button><button id="structural-analysis-btn" style="padding: 0.5rem 1rem; font-size: 0.9rem; background-color: #00695C; margin-left: 0.5rem;">🧩 Analyze Structure</button><div id="results-container" class="comparison-results"></div><div id="selective-merge-container" style="display:none; margin-top: 1.5rem; padding: 1rem; background-color: #2c2c4d; border-radius: 6px; border: 1px solid var(--border-color);"><h4 style="margin-top:0;">Selective Merge Permutations</h4><label for="merge-sections-input">Target Sections to Merge (from Serial 1):</label><textarea id="merge-sections-input" rows="2" placeholder="Example: s!m, +YC_B)k"></textarea><p class="help-text">Copy/paste differing sections from Serial 1 above, separated by commas. The tool will generate all combinations of these selected differences.</p><button id="base85-permutation-analysis-btn" style="background-color: #a16c00;">Analyze Base85-Level Merge</button><button id="byte-permutation-analysis-btn" style="background-color: #6c757d;">Analyze Byte-Level Merge</button><button id="bit-permutation-analysis-btn" style="background-color: #4b4b7d;">Analyze Bit-Level Merge</button></div><div id="permutation-analysis-results" style="display:none; margin-top: 1rem; padding: 1rem; background-color: #3a3a5a; border-radius: 6px;"></div><div id="final-output-container" style="display: none;"></div><div id="permutation-output-container" style="margin-top: 1.5rem; display: none;"><div class="output-header"><div class="header-content"><div><h3>Generated Merged Serials</h3><p class="stats">Unique Serials Generated: <span class="serial-count" id="serial-count-permutations">0</span></p></div><button class="util-btn copy-all-btn" data-target="permutation-output">Copy All</button></div></div><div id="permutation-output" class="display-box" style="min-height: 200px; max-height: 400px; overflow-y: auto;"></div></div>`;
+    
+    // Activate the first tab
+    document.querySelector('.tab-link').click();
+    
+    // --- ATTACH ALL EVENT LISTENERS ---
+    
+    // --- COMPARATOR ---
+    async function runComparison() {
+        const serialA_input = document.getElementById('serialA-input').value.trim();
+        const serialB_input = document.getElementById('serialB-input').value.trim();
+        const resultsContainer = document.getElementById('results-container');
+        resetAllEditors(); 
+
+        let serialToCompareA, serialToCompareB, deserializedToCompareA, deserializedToCompareB;
+        const serialsToDeserialize = [];
+        const stringsToSerialize = [];
+        let serializeIndexA = -1, serializeIndexB = -1;
+
+        const isA_Base85 = serialA_input.startsWith('@U');
+        if (isA_Base85) {
+            serialToCompareA = serialA_input;
+            serialsToDeserialize.push(serialA_input);
+        } else {
+            deserializedToCompareA = serialA_input;
+            serializeIndexA = stringsToSerialize.push(serialA_input) - 1;
+        }
+
+        const isB_Base85 = serialB_input.startsWith('@U');
+        if (isB_Base85) {
+            serialToCompareB = serialB_input;
+            serialsToDeserialize.push(serialB_input);
+        } else {
+            deserializedToCompareB = serialB_input;
+            serializeIndexB = stringsToSerialize.push(serialB_input) - 1;
+        }
+
+        try {
+            // --- 1. Serialize any deserialized strings ---
+            if (stringsToSerialize.length > 0) {
+                try {
+                    const apiUrl = 'https://borderlands4-deserializer.nicnl.com/api/v1/serialize_bulk';
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(stringsToSerialize)
+                    });
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`API error: ${response.statusText} - ${errorText}`);
+                    }
+                    const result = await response.json();
+                    
+                    if (serializeIndexA !== -1) {
+                        serialToCompareA = result[serializeIndexA];
+                        if (!serialToCompareA) throw new Error('Serial 1 input failed to serialize.');
+                    }
+                    if (serializeIndexB !== -1) {
+                        serialToCompareB = result[serializeIndexB];
+                        if (!serialToCompareB) throw new Error('Serial 2 input failed to serialize.');
+                    }
+                } catch (apiError) {
+                    console.error('Serialization API failed:', apiError);
+                    if (serializeIndexA !== -1) serialToCompareA = 'Error: Serialization Failed';
+                    if (serializeIndexB !== -1) serialToCompareB = 'Error: Serialization Failed';
+                    alert(`Serialization Error: ${apiError.message}`);
+                    return; // Stop comparison if serialization fails
+                }
+            }
+
+            // --- 2. Deserialize any serial strings ---
+            if (serialsToDeserialize.length > 0) {
+                try {
+                    const apiUrl = 'https://borderlands4-deserializer.nicnl.com/api/v1/deserialize_bulk';
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(serialsToDeserialize)
+                    });
+                    if (!response.ok) {
+                         const errorText = await response.text();
+                        throw new Error(`API error: ${response.statusText} - ${errorText}`);
+                    }
+                    const result = await response.json();
+
+                    if (isA_Base85) {
+                        deserializedToCompareA = result[serialToCompareA]?.deserialized || 'Error: Deserialization Failed';
+                    }
+                    if (isB_Base85) {
+                        deserializedToCompareB = result[serialToCompareB]?.deserialized || 'Error: Deserialization Failed';
+                    }
+                } catch (apiError) {
+                    console.error('Deserialization API failed:', apiError);
+                    if (isA_Base85) deserializedToCompareA = `API Error: ${apiError.message}`;
+                    if (isB_Base85) deserializedToCompareB = `API Error: ${apiError.message}`;
+                }
+            }
+
+            // --- 3. Now we have all 4 values. Proceed with local decodes ---
+            const hexA = b85Decode_BL4(serialToCompareA);
+            const hexB = b85Decode_BL4(serialToCompareB);
+            
+            if (!hexA || !hexB) {
+                alert("Error: One or both inputs resulted in an invalid serial. Cannot compare.");
+                return;
+            }
+
+            const binA = hexToBinary(hexA);
+            const binB = hexToBinary(hexB);
+            const dnaA = binaryToDna(binA);
+            const dnaB = binaryToDna(binB);
+            
+            lastComparisonData = {
+                a: { serial: serialToCompareA, deserialized: deserializedToCompareA, hex: hexA, bin: binA, dna: dnaA },
+                b: { serial: serialToCompareB, deserialized: deserializedToCompareB, hex: hexB, bin: binB, dna: dnaB }
+            };
+
+            resultsContainer.innerHTML = 
+                createComparisonBlock('Deserialized', deserializedToCompareA, deserializedToCompareB) +
+                createComparisonBlock('Base85', serialToCompareA, serialToCompareB) +
+                createComparisonBlock('Hexadecimal (Byte-Mirrored)', hexA, hexB) +
+                createComparisonBlock('Binary (Byte-Mirrored)', binA, binB) +
+                createComparisonBlock('Base4 (DNA, Byte-Mirrored)', dnaA, dnaB);
+            
+            attachModifyListeners();
+            resultsContainer.style.display = 'block';
+            document.getElementById('selective-merge-container').style.display = 'block';
+            document.getElementById('permutation-analysis-results').style.display = 'none';
+            document.getElementById('final-output-container').style.display = 'none';
+
+        } catch (e) {
+            resultsContainer.innerHTML = `<p style="color: var(--danger-red);">Error during comparison: ${e.message}</p>`;
+            resultsContainer.style.display = 'block';
+        }
+    }
+
+    function runAdvancedAlignment() {
+        const serialA = document.getElementById('serialA-input').value.trim();
+        const serialB = document.getElementById('serialB-input').value.trim();
+        const resultsContainer = document.getElementById('results-container');
+        resetAllEditors();
+
+        try {
+            const dataA = { serial: serialA, hex: b85Decode_BL4(serialA) };
+            const dataB = { serial: serialB, hex: b85Decode_BL4(serialB) };
+            if (!dataA.hex || !dataB.hex) {
+                alert("Error: Please provide two valid serials.");
+                return;
+            }
+
+            dataA.bin = hexToBinary(dataA.hex);
+            dataB.bin = hexToBinary(dataB.bin);
+            dataA.dna = binaryToDna(dataA.bin); 
+            dataB.dna = binaryToDna(dataB.bin);
+
+            const createAdvancedAlignmentBlock = (title, seqA, seqB) => {
+                const alignmentResult = affineGapAlignment(seqA, seqB);
+                const { stats } = alignmentResult;
+                const formattedA = formatAlignedSequence(alignmentResult.alignedA, alignmentResult.comparison);
+                const formattedB = formatAlignedSequence(alignmentResult.alignedB, alignmentResult.comparison);
+                const formattedComparison = formatComparisonString(alignmentResult.comparison);
+
+                const matchPercent = stats.total > 0 ? ((stats.matches / stats.total) * 100).toFixed(1) : "100.0";
+                const diffPercent = stats.total > 0 ? ((stats.differences / stats.total) * 100).toFixed(1) : "0.0";
+                const gapPercent = stats.total > 0 ? ((stats.additions / stats.total) * 100).toFixed(1) : "0.0";
+
+                const format_id = title.toLowerCase().replace(/\s/g, '-').replace(/[()]/g, '');
+                const id_A = `align-${format_id}-A`;
+                const id_B = `align-${format_id}-B`;
+                const originalTextA = seqA.replace(/ /g, '');
+                const originalTextB = seqB.replace(/ /g, '');
+
+                return `
+                    <div class="comparison-block">
+                        <div class="comparison-block-header">
+                            <h3>${title} Alignment</h3>
+                            <div class="comparison-stats">
+                                <span>Matches: <strong style="color: var(--success-green);">${stats.matches} (${matchPercent}%)</strong></span>
+                                <span>Mismatches: <strong style="color: var(--danger-red);">${stats.differences} (${diffPercent}%)</strong></span>
+                                <span>Gaps: <strong style="color: var(--accent-orange);">${stats.additions} (${gapPercent}%)</strong></span>
+                            </div>
+                        </div>
+                        <div class="display-box" style="white-space: pre; font-size: 0.9em; line-height: 1.6; overflow-x: auto;">
+                            <b>Serial 1: </b><span id="${id_A}" data-original-html='${formattedA}' data-original-text='${originalTextA}'>${formattedA}</span><br>
+                            <b>Serial 2: </b><span id="${id_B}" data-original-html='${formattedB}' data-original-text='${originalTextB}'>${formattedB}</span><br>
+                            <b style="opacity: 0.7;">Compare:  </b>${formattedComparison}
+                        </div>
+                        <div class="button-container">
+                             <button class="modify-btn" data-target-a="${id_A}" data-target-b="${id_B}" data-format="align-${format_id}">Modify</button>
+                        </div>
+                    </div>`;
+            };
+
+            resultsContainer.innerHTML = 
+                createAdvancedAlignmentBlock('Base85', dataA.serial, dataB.serial) +
+                createAdvancedAlignmentBlock('Hexadecimal (Byte-Mirrored)', dataA.hex.replace(/(.{2})/g, '$1 ').trim(), dataB.hex.replace(/(.{2})/g, '$1 ').trim()) +
+                createAdvancedAlignmentBlock('Binary (Byte-Mirrored)', dataA.bin.replace(/(.{8})/g, '$1 ').trim(), dataB.bin.replace(/(.{8})/g, '$1 ').trim()) +
+                createAdvancedAlignmentBlock('Base4 (DNA, Byte-Mirrored)', dataA.dna, dataB.dna);
+            
+            attachModifyListeners();
+            resultsContainer.style.display = 'block';
+            document.getElementById('selective-merge-container').style.display = 'none';
+            document.getElementById('permutation-analysis-results').style.display = 'none';
+        } catch (e) {
+            alert(`Alignment Error: ${e.message}`);
+        }
+    }
+
+    function runStructuralAnalysis() {
+        const serialA = document.getElementById('serialA-input').value.trim();
+        const serialB = document.getElementById('serialB-input').value.trim();
+        const resultsContainer = document.getElementById('results-container');
+        resetAllEditors();
+        resultsContainer.innerHTML = `<p>Running structural analysis... this may take a moment.</p>`;
+        resultsContainer.style.display = 'block';
+
+        setTimeout(() => { 
+            try {
+                const binA = hexToBinary(b85Decode_BL4(serialA));
+                const binB = hexToBinary(b85Decode_BL4(serialB));
+                if (!binA || !binB) {
+                    alert("Error: Please provide two valid serials."); return;
+                }
+                
+                const commonPatterns = sortByLengthDescending(listCommonPatterns(binA, binB, 16));
+
+                if (commonPatterns.length === 0) {
+                     resultsContainer.innerHTML = `<p>No significant common structural patterns (>= 16 bits) found.</p>`;
+                     return;
+                }
+                
+                const partsA = greedyDeconstruct(binA, commonPatterns);
+                const partsB = greedyDeconstruct(binB, commonPatterns);
+
+                const formatParts = (parts) => {
+                    return parts.map(part => {
+                        const className = part[1] ? 'common-pattern' : 'unique-pattern';
+                        return `<span class="${className}">${part[0]}</span>`;
+                    }).join('');
+                };
+
+                const commonCountA = partsA.filter(p => p[1]).length;
+                const commonCountB = partsB.filter(p => p[1]).length;
+                const uniqueCountA = partsA.filter(p => !p[1]).length;
+                const uniqueCountB = partsB.filter(p => !p[1]).length;
+
+                resultsContainer.innerHTML = `
+                    <div class="comparison-block">
+                        <div class="comparison-block-header">
+                            <h3>Structural Analysis (on Byte-Mirrored Binary)</h3>
+                            <div class="comparison-stats">
+                                <span>Serial 1 Chunks: <strong style="color: var(--success-green);">${commonCountA} Common</strong> / <strong style="color: var(--danger-red);">${uniqueCountA} Unique</strong></span>
+                                <span>Serial 2 Chunks: <strong style="color: var(--success-green);">${commonCountB} Common</strong> / <strong style="color: var(--danger-red);">${uniqueCountB} Unique</strong></span>
+                            </div>
+                        </div>
+                        <p class="help-text" style="margin-top: -0.5rem; margin-bottom: 1rem;">Shows how serials are built from common (<span class="common-pattern">green</span>) and unique (<span class="unique-pattern">red</span>) data chunks.</p>
+                        <div class="display-box"><b>Serial 1: </b>${formatParts(partsA)}</div>
+                        <div class="display-box"><b>Serial 2: </b>${formatParts(partsB)}</div>
+                    </div>
+                `;
+            } catch (e) {
+                resultsContainer.innerHTML = `<p style="color: var(--danger-red);">Structural Analysis Error: ${e.message}</p>`;
+            }
+        }, 50);
+    }
+
+    function createComparisonBlock(title, valA, valB) {
+        let matchCount = 0;
+        let diffCount = 0;
+        const lenA = valA.length;
+        const lenB = valB.length;
+        const maxLen = Math.max(lenA, lenB);
+        for (let i = 0; i < maxLen; i++) {
+            if (valA[i] === valB[i]) { matchCount++; }
+            else if (i < lenA && i < lenB) { diffCount++; }
+        }
+        const addedCount = Math.abs(lenA - lenB);
+        const matchPercent = maxLen > 0 ? ((matchCount / maxLen) * 100).toFixed(1) : "100.0";
+        const diffPercent = maxLen > 0 ? ((diffCount / maxLen) * 100).toFixed(1) : "0.0";
+        const addedPercent = maxLen > 0 ? ((addedCount / maxLen) * 100).toFixed(1) : "0.0";
+        const statsHtml = `<div class="comparison-stats"><span>Match: <strong style="color: var(--success-green);">${matchPercent}%</strong></span><span>Diff: <strong style="color: var(--danger-red);">${diffPercent}%</strong></span><span>Added: <strong style="color: var(--accent-orange);">${addedPercent}%</strong></span></div>`;
+        const formatValue = (val) => title.includes('Hex') ? val.replace(/(.{2})/g, '$1 ').trim() : title.includes('Binary') ? val.replace(/(.{8})/g, '$1 ').trim() : val;
+        const generateHtml = (str1, str2) => {
+            let html = '';
+            const max = Math.max(str1.length, str2.length);
+            for(let i = 0; i < max; i++) {
+                if (i >= str1.length) { html += `<span class="added-char">${str2[i]}</span>`; }
+                else if (i >= str2.length) { html += `<span class="diff-highlight">${str1[i]}</span>`; }
+                else { html += (str1[i] === str2[i]) ? str1[i] : `<span class="diff-highlight">${str1[i]}</span>`; }
+            } return html;
+        };
+        const id_title = title.toLowerCase().replace(/\s/g, '-').replace(/[()]/g, '');
+        return `<div class="comparison-block"><div class="comparison-block-header"><h3>${title}</h3>${statsHtml}</div><div class="result-box"><div id="${id_title}-A" class="display-box" data-original-html='${generateHtml(formatValue(valA), formatValue(valB))}'>${generateHtml(formatValue(valA), formatValue(valB))}</div><div class="button-container"><button class="modify-btn" data-target="${id_title}-A" data-format="${id_title}">Modify</button></div></div><div class="result-box"><div id="${id_title}-B" class="display-box" data-original-html='${generateHtml(formatValue(valB), formatValue(valA))}'>${generateHtml(formatValue(valB), formatValue(valA))}</div><div class="button-container"><button class="modify-btn" data-target="${id_title}-B" data-format="${id_title}">Modify</button></div></div></div>`;
+    }
+
+    async function reEncodeValue(modifiedValue, format) {
+        let cleanFormat = format.replace('align-', '');
+
+        if (cleanFormat === 'deserialized') {
+            try {
+                const apiUrl = 'https://borderlands4-deserializer.nicnl.com/api/v1/serialize_bulk';
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify([modifiedValue]) // Send as an array
+                });
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API Error: ${errorText}`);
+                }
+                const result = await response.json();
+                if (result && result['0']) {
+                    return result['0']; // Return the new serial
+                } else {
+                    throw new Error("API did not return a valid serial.");
+                }
+            } catch (e) {
+                // We throw the error so handleModifyClick can catch it
+                throw new Error(`Reserialization failed: ${e.message}`);
+            }
+        }
+
+        let newSerial = '';
+        if (cleanFormat === 'base85') { newSerial = modifiedValue; if(!b85Decode_BL4(newSerial)) throw new Error("Invalid Base85 string."); } 
+        else if (cleanFormat.includes('hexadecimal')) { newSerial = b85Encode_BL4(modifiedValue.replace(/\s/g, '')); } 
+        else if (cleanFormat.includes('binary')) { newSerial = b85Encode_BL4(binaryToHex(modifiedValue.replace(/\s/g, ''))); }
+        else if (cleanFormat.includes('base4-dna')) { const newBinary = dnaToBinary(modifiedValue); newSerial = b85Encode_BL4(binaryToHex(newBinary)); }
+        if (!newSerial) throw new Error("Encoding failed.");
+        return newSerial;
+    }
+    
+    async function handleModifyClick(event) {
+        const btn = event.target;
+        if (activeEditor && activeEditor.button === btn) {
+            const { displayBox, displayBoxA, displayBoxB, format } = activeEditor;
+            let outputHtml = '';
+            let modified = false;
+            if(displayBoxA && displayBoxB) {
+                const currentA = displayBoxA.textContent.replace(/[\s\u00A0]/g, '');
+                const currentB = displayBoxB.textContent.replace(/[\s\u00A0]/g, '');
+                const originalA = displayBoxA.dataset.originalText;
+                const originalB = displayBoxB.dataset.originalText;
+                if (currentA !== originalA) {
+                    try {
+                        const newSerial = await reEncodeValue(currentA, format);
+                        outputHtml += `<div>New Serial 1: <code class="final-output-code">${newSerial}</code></div>`;
+                        modified = true;
+                    } catch (e) { alert(`Re-encoding Error for Serial 1: ${e.message}`); }
+                }
+                if (currentB !== originalB) {
+                     try {
+                        const newSerial = await reEncodeValue(currentB, format);
+                        outputHtml += `<div>New Serial 2: <code class="final-output-code">${newSerial}</code></div>`;
+                        modified = true;
+                    } catch (e) { alert(`Re-encoding Error for Serial 2: ${e.message}`); }
+                }
+            } else {
+                // --- SURGICAL CHANGE ---
+                if (format === 'deserialized') {
+                    // User wants to copy the MODIFIED deserialized text, not re-encode it.
+                    const modifiedValue = displayBox.textContent; // Preserve whitespace for copying
+                    // We need to escape HTML to display it safely in the <code> tag
+                    const escapedValue = modifiedValue.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    
+                    // --- SURGICAL CHANGE ---
+                    // Wrap label in a non-selectable span.
+                    // Put the code in its own block-level code tag for easy selection.
+                    outputHtml = `<div>
+                                    <span style="user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; color: var(--text-secondary);">Modified Deserialized Code:</span>
+                                    <code class="final-output-code" style="white-space: pre-wrap; display: block; margin-top: 0.5rem;">${escapedValue}</code>
+                                  </div>`;
+                    // --- END SURGICAL CHANGE ---
+                    modified = true;
+                } else {
+                    // Original logic for all other formats (Base85, Hex, Binary, etc.)
+                    const modifiedValue = displayBox.textContent.replace(/[\s\u00A0]/g, '');
+                    try {
+                        const newSerial = await reEncodeValue(modifiedValue, format);
+                        outputHtml = `New Serial Code: <code class="final-output-code">${newSerial}</code>`;
+                        modified = true;
+                    } catch (e) { alert(`Re-encoding Error: ${e.message}`); }
+                }
+                // --- END SURGICAL CHANGE ---
+            }
+            if (modified) {
+                const finalOutputContainer = document.getElementById('final-output-container');
+                finalOutputContainer.innerHTML = outputHtml;
+                finalOutputContainer.style.display = 'block';
+                finalOutputContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            resetAllEditors();
+        } else {
+            resetAllEditors();
+            const targetIdA = btn.dataset.targetA, targetIdB = btn.dataset.targetB, targetId = btn.dataset.target;
+            if(targetIdA && targetIdB){
+                const displayBoxA = document.getElementById(targetIdA), displayBoxB = document.getElementById(targetIdB);
+                displayBoxA.contentEditable = true; displayBoxB.contentEditable = true;
+                displayBoxA.parentElement.classList.add('editing'); displayBoxA.focus();
+                activeEditor = { button: btn, displayBoxA, displayBoxB, format: btn.dataset.format };
+            } else {
+                const displayBox = document.getElementById(targetId);
+                displayBox.contentEditable = true; displayBox.classList.add('editing'); displayBox.focus();
+                activeEditor = { button: btn, displayBox, format: btn.dataset.format };
+            }
+            btn.dataset.originalText = btn.textContent;
+            btn.textContent = 'Re-encode';
+            btn.style.backgroundColor = 'var(--success-green)';
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = 'Cancel'; cancelBtn.className = 'btn-cancel modify-btn';
+            btn.insertAdjacentElement('afterend', cancelBtn);
+            cancelBtn.onclick = resetAllEditors;
+            activeEditor.cancelBtn = cancelBtn;
+        }
+    }
+
+    function resetAllEditors() {
+        if (activeEditor) {
+            const { button, cancelBtn, displayBox, displayBoxA, displayBoxB } = activeEditor;
+            if (displayBoxA && displayBoxB) {
+                displayBoxA.contentEditable = false; displayBoxB.contentEditable = false;
+                displayBoxA.parentElement.classList.remove('editing');
+                displayBoxA.innerHTML = displayBoxA.dataset.originalHtml; displayBoxB.innerHTML = displayBoxB.dataset.originalHtml;
+            }
+            if (displayBox) {
+                 displayBox.contentEditable = false; displayBox.classList.remove('editing');
+                 displayBox.innerHTML = displayBox.dataset.originalHtml;
+            }
+            button.textContent = button.dataset.originalText || 'Modify';
+            button.style.backgroundColor = 'var(--accent-orange)'; 
+            if (cancelBtn) cancelBtn.remove();
+        } 
+        activeEditor = null;
+    }
+
+    function attachModifyListeners() { 
+        document.querySelectorAll('.modify-btn').forEach(btn => btn.addEventListener('click', handleModifyClick)); 
+    }
+
+    document.getElementById('compare-btn')?.addEventListener('click', runComparison);
+    document.getElementById('advanced-align-btn')?.addEventListener('click', runAdvancedAlignment);
+    document.getElementById('structural-analysis-btn')?.addEventListener('click', runStructuralAnalysis);
+
+    function analyzePermutations(mode = 'byte') {
+        const sectionsInput = document.getElementById('merge-sections-input').value.trim();
+        const resultsDiv = document.getElementById('permutation-analysis-results');
+        const { a, b } = lastComparisonData;
+        if (!a || !b) { alert('Please run a comparison first.'); return; }
+        let n = 0, uniqueSelectedIndices = [];
+        if (sectionsInput) {
+            const sections = sectionsInput.split(',').map(s => s.trim()).filter(s => s);
+            let selectedIndices = new Set();
+            if (mode === 'base85') {
+                 sections.forEach(section => {
+                    let startIndex = a.serial.indexOf(section); if (startIndex === -1) return;
+                    for(let i = startIndex; i < startIndex + section.length; i++) if(a.serial[i] !== b.serial[i]) selectedIndices.add(i);
+                });
+            } else {
+                sections.forEach(section => {
+                    let startIndex = a.serial.indexOf(section); if (startIndex === -1) return;
+                    const startByte = Math.floor((startIndex - 2) * (a.hex.length / 2 / (a.serial.length - 2)));
+                    const endByte = Math.ceil((startIndex - 2 + section.length) * (a.hex.length / 2 / (a.serial.length - 2)));
+                    for(let i = startByte; i < endByte; i++) {
+                        const byteA = a.hex.substring(i * 2, i * 2 + 2), byteB = b.hex.substring(i * 2, i * 2 + 2);
+                        if(byteA !== byteB) selectedIndices.add(i);
+                    }
+                });
+            }
+             uniqueSelectedIndices = [...selectedIndices];
+        } else {
+            if (mode === 'base85') {
+                for(let i=0; i < a.serial.length; i++) if(a.serial[i] !== b.serial[i]) uniqueSelectedIndices.push(i);
+            } else {
+                const hexA = a.hex.match(/.{1,2}/g), hexB = b.hex.match(/.{1,2}/g);
+                for(let i=0; i < hexA.length; i++) if(hexA[i] !== hexB[i]) uniqueSelectedIndices.push(i);
+            }
+        }
+        if (uniqueSelectedIndices.length === 0) {
+            resultsDiv.innerHTML = `<p>The selected sections do not contain any differences, or the serials are identical.</p>`;
+            resultsDiv.style.display = 'block'; return;
+        }
+        if (mode === 'bit') {
+            let bitDiffCount = 0;
+            uniqueSelectedIndices.forEach(byteIndex => {
+                const startBit = byteIndex * 8;
+                for (let i = 0; i < 8; i++) if (a.bin[startBit + i] !== b.bin[startBit + i]) bitDiffCount++;
+            });
+            n = bitDiffCount;
+        } else { n = uniqueSelectedIndices.length; }
+        lastPermutationAnalysis = { serialA: a.serial, serialB: b.serial, binA: a.bin, binB: b.bin, selectedIndices: uniqueSelectedIndices, mode };
+        const totalPermutations = BigInt(2) ** BigInt(n);
+        const GENERATION_LIMIT = 20;
+        let html = `<p>Using your selection, found <strong>${n.toLocaleString()}</strong> differing ${mode}(s).</p><p>This allows for <strong>${totalPermutations.toLocaleString()}</strong> unique serial permutations.</p>`;
+        if (n > GENERATION_LIMIT) {
+            html += `<p style="color: var(--danger-red);">Generation is disabled for more than ${GENERATION_LIMIT} differing ${mode}s to prevent browser freeze.</p>`;
+        } else {
+            html += `<button id="generate-permutations-btn">Generate All ${totalPermutations.toLocaleString()} Serials</button>`;
+        }
+        resultsDiv.innerHTML = html;
+        resultsDiv.style.display = 'block';
+        const genBtn = document.getElementById('generate-permutations-btn');
+        if (genBtn) genBtn.addEventListener('click', generatePermutations);
+    }
+
+    function generatePermutations() {
+        const btn = document.getElementById('generate-permutations-btn');
+        btn.disabled = true; btn.textContent = 'Generating...';
+        const outputContainer = document.getElementById('permutation-output-container');
+        const outputDiv = document.getElementById('permutation-output');
+        const countSpan = document.getElementById('serial-count-permutations');
+        outputContainer.style.display = 'block'; outputDiv.innerHTML = '';
+        const generatedSerials = new Set();
+        const { serialA, serialB, binA, binB, selectedIndices, mode } = lastPermutationAnalysis;
+        let diffIndices = [];
+        if (mode === 'bit') {
+            selectedIndices.forEach(byteIndex => {
+                const startBit = byteIndex * 8;
+                for (let i = 0; i < 8; i++) {
+                    const currentBit = startBit + i;
+                    if (binA[currentBit] !== binB[currentBit]) diffIndices.push(currentBit);
+                }
+            });
+        } else { diffIndices = selectedIndices; }
+        const n = diffIndices.length;
+        const totalPermutations = BigInt(2) ** BigInt(n);
+        function processChunk(i) {
+            const CHUNK_SIZE = 100;
+            const end = (BigInt(i) + BigInt(CHUNK_SIZE) > totalPermutations) ? totalPermutations : BigInt(i) + BigInt(CHUNK_SIZE);
+            let fragment = document.createDocumentFragment();
+            for (let j = BigInt(i); j < end; j++) {
+                let newSerial;
+                const binaryRepresentation = j.toString(2).padStart(n, '0');
+                if (mode === 'byte') {
+                    const hexBytesA = binA.match(/.{1,8}/g).map(b => parseInt(b, 2).toString(16).padStart(2, '0'));
+                    const hexBytesB = binB.match(/.{1,8}/g).map(b => parseInt(b, 2).toString(16).padStart(2, '0'));
+                    let tempHexArray = [...hexBytesA];
+                    for (let k = 0; k < n; k++) if (binaryRepresentation[k] === '1') tempHexArray[diffIndices[k]] = hexBytesB[diffIndices[k]];
+                    newSerial = b85Encode_BL4(tempHexArray.join(''));
+                } else if (mode === 'bit') {
+                    let tempBinArray = binA.split('');
+                     for (let k = 0; k < n; k++) if (binaryRepresentation[k] === '1') tempBinArray[diffIndices[k]] = binB[diffIndices[k]];
+                    newSerial = b85Encode_BL4(binaryToHex(tempBinArray.join('')));
+                } else {
+                    let tempCharArray = serialA.split('');
+                    for (let k = 0; k < n; k++) if (binaryRepresentation[k] === '1') tempCharArray[diffIndices[k]] = serialB[diffIndices[k]];
+                    newSerial = tempCharArray.join('');
+                    const decoded = b85Decode_BL4(newSerial);
+                    if (!decoded || b85Encode_BL4(decoded) !== newSerial) continue; 
+                }
+                if (!generatedSerials.has(newSerial)) {
+                    generatedSerials.add(newSerial);
+                    const line = document.createElement('div');
+                    line.textContent = newSerial;
+                    fragment.appendChild(line);
+                }
+            }
+            outputDiv.appendChild(fragment);
+            countSpan.textContent = generatedSerials.size.toLocaleString();
+            btn.textContent = `Generating... (${generatedSerials.size.toLocaleString()}/${totalPermutations.toLocaleString()})`;
+            if (end < totalPermutations) {
+                setTimeout(() => processChunk(end), 0);
+            } else { btn.textContent = 'Generation Complete'; }
+        }
+        processChunk(BigInt(0));
+    }
+
+    document.getElementById('base85-permutation-analysis-btn')?.addEventListener('click', () => analyzePermutations('base85'));
+    document.getElementById('byte-permutation-analysis-btn')?.addEventListener('click', () => analyzePermutations('byte'));
+    document.getElementById('bit-permutation-analysis-btn')?.addEventListener('click', () => analyzePermutations('bit'));
+
+    // --- COPY TO CLIPBOARD ---
+    function copyOutputToClipboard(event) {
+        const button = event.target;
+        const targetId = button.dataset.target;
+        const outputElement = document.getElementById(targetId);
+        let textToCopy;
+
+        if (!outputElement) return;
+
+        if (outputElement.tagName === 'TEXTAREA' || outputElement.tagName === 'INPUT') {
+            textToCopy = outputElement.value;
+        } else { // This handles DIVs containing text or other elements
+            textToCopy = Array.from(outputElement.childNodes)
+                .map(node => node.textContent)
+                .join('\n');
+        }
+
+        if (!textToCopy) {
+            button.textContent = 'Nothing to Copy';
+            setTimeout(() => { button.textContent = 'Copy All'; }, 1500);
+            return;
+        }
+
+        const textArea = document.createElement("textarea");
+        textArea.value = textToCopy;
+        
+        // Make it invisible
+        textArea.style.position = 'fixed';
+        textArea.style.top = '-9999px';
+        textArea.style.left = '-9999px';
+
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            document.execCommand('copy');
+            const originalText = button.textContent;
+            button.textContent = 'Copied!';
+            button.style.backgroundColor = 'var(--success-green)';
+            button.style.color = 'var(--text-primary)';
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.style.backgroundColor = ''; // Reverts to stylesheet
+                button.style.color = '';
+            }, 1500);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+            button.textContent = 'Error!';
+            button.style.backgroundColor = 'var(--danger-red)';
+            button.style.color = 'var(--text-primary)';
+             setTimeout(() => {
+                button.textContent = 'Copy All';
+                button.style.backgroundColor = '';
+                button.style.color = '';
+            }, 1500);
+        }
+
+        document.body.removeChild(textArea);
+    }
+
+    document.body.addEventListener('click', (event) => {
+        if (event.target.classList.contains('copy-all-btn')) {
+            copyOutputToClipboard(event);
+        }
+    });
+
+    // --- SURGICAL ADDITION: Workstation Add Item Function ---
+    document.getElementById('add-workstation-item-btn')?.addEventListener('click', () => {
+        if (currentWorkstationItem < 10) {
+            currentWorkstationItem++;
+            const nextItem = document.querySelector(`#workstation-items-container .workstation-item:nth-child(${currentWorkstationItem})`);
+            if (nextItem) {
+                nextItem.style.display = 'block';
+                nextItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            if (currentWorkstationItem === 10) {
+                document.getElementById('add-workstation-item-btn').style.display = 'none';
+            }
+        }
+    });
+
+    // --- SURGICAL ADDITION: Workstation "Copy" Function ---
+    document.getElementById('export-workstation-btn')?.addEventListener('click', () => {
+        let exportContent = "";
+        
+        for (let i = 1; i <= currentWorkstationItem; i++) {
+            const name = document.getElementById(`ws-${i}-name`)?.value || '';
+            const serial = document.getElementById(`ws-${i}-serial`)?.value || '';
+            const deserial = document.getElementById(`ws-${i}-deserial`)?.value || '';
+            const test = document.getElementById(`ws-${i}-test`)?.value || '';
+            const finalCode = document.getElementById(`ws-${i}-final`)?.value || '';
+
+            // Only add item if it has any content
+            if (name || serial || deserial || test || finalCode) {
+                // Add a newline before this item if it's not the first one
+                if (exportContent !== "") {
+                    exportContent += "\n\n"; // Add extra space between items
+                }
+                
+                // Format as requested
+                exportContent += `[${i}]\n`;
+                exportContent += `Name: ${name}\n`;
+                exportContent += `Serial: ${serial}\n`;
+                exportContent += `Deserial: ${deserial}\n`;
+                exportContent += `Test: ${test}\n`;
+                exportContent += `Final Code: ${finalCode}`;
+            }
+        }
+        
+        if (exportContent === "") {
+            // No data to copy
+            const btn = document.getElementById('export-workstation-btn');
+            btn.textContent = "No Data!";
+            btn.style.background = "var(--danger-red)";
+            setTimeout(() => {
+                btn.textContent = "Copy Workstation";
+                btn.style.background = ""; // Revert to original
+            }, 2000);
+            return;
+        }
+
+        // Copy to clipboard
+        navigator.clipboard.writeText(exportContent).then(() => {
+            // Success feedback on the button
+            const btn = document.getElementById('export-workstation-btn');
+            btn.textContent = "Copied!";
+            btn.style.background = "#34c759"; // Keep hover green
+            setTimeout(() => {
+                btn.textContent = "Copy Workstation";
+                btn.style.background = ""; // Revert to original
+            }, 2000);
+        }).catch(err => {
+            // Error feedback on the button
+            console.error('Failed to copy workstation data: ', err);
+            const btn = document.getElementById('export-workstation-btn');
+            btn.textContent = "Copy Failed!";
+            btn.style.background = "var(--danger-red)";
+            setTimeout(() => {
+                btn.textContent = "Copy Workstation";
+                btn.style.background = ""; // Revert to original
+            }, 2000);
+        });
+    });
+
+    // --- SURGICAL ADDITION: Workstation Help Toggle Function ---
+    window.toggleWorkstationHelp = () => {
+        const helpSection = document.getElementById('workstation-help-section');
+        helpSection.classList.toggle('active');
+    };
+
+    // --- SURGICAL ADDITION: Workstation Example Highlighter ---
+    document.getElementById('workstation-help-section')?.addEventListener('click', (event) => {
+        const trigger = event.target.closest('li.highlight-trigger');
+        if (!trigger) return;
+
+        const textToHighlight = trigger.dataset.highlight;
+        if (!textToHighlight) return;
+
+        const codeBlock = document.getElementById('workstation-example-code');
+        const originalText = codeBlock.dataset.originalText;
+
+        // Reset text to original
+        codeBlock.innerHTML = originalText;
+
+        // Apply new highlight
+        const highlightedHtml = originalText.replace(textToHighlight, (match) => {
+            return `<span class="ws-highlight">${match}</span>`;
+        });
+        
+        codeBlock.innerHTML = highlightedHtml;
+    });
+    // --- END OF SURGICAL ADDITIONS ---
+
+});
+
+// --- FUNCTIONS FOR DESERIALIZER TAB ---
+// --- THIS SECTION IS UNTOUCHED ---
+function toggleHelp() {
+    const helpSection = document.getElementById('help-section');
+    helpSection.classList.toggle('active');
+}
+
+async function deserialize() {
+    const inputData = document.getElementById('input-data').value.trim();
+    const outputTextarea = document.getElementById('output-data');
+    const statusDiv = document.getElementById('status');
+    if (!inputData) {
+        statusDiv.className = 'status active error';
+        statusDiv.textContent = '❌ Please enter some serials to deserialize!';
+        return;
+    }
+    statusDiv.className = 'status active processing';
+    statusDiv.textContent = '⏳ Deserializing...';
+    try {
+        // Split by newline and clean - just get the raw strings
+        const serials = inputData.split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0);
+        console.log('Sending ' + serials.length + ' serials to API');
+        // Make API call to https://borderlands4-deserializer.nicnl.com/api/v1/deserialize_bulk
+        const apiUrl = 'https://borderlands4-deserializer.nicnl.com/api/v1/deserialize_bulk';
+        console.log('Calling API:', apiUrl);
+        console.log('Payload:', serials.slice(0, 3));
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(serials)
+        });
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+        }
+        const result = await response.json();
+        console.log('API returned:', Object.keys(result).length, 'items');
+        // Format output to show only deserialized strings, one per line
+        let formattedOutput = '';
+        for (const [serial, data] of Object.entries(result)) {
+            if (data && data.deserialized) {
+                formattedOutput += data.deserialized + '\n';
+            }
+        }
+        outputTextarea.value = formattedOutput;
+        // Extract and display perk IDs found
+        extractPerkIds(result);
+        statusDiv.className = 'status active success';
+        statusDiv.textContent = `✅ Successfully deserialized ${Object.keys(result).length} items!`;
+        
+    } catch (error) {
+        console.error('Error:', error);
+        statusDiv.className = 'status active error';
+        statusDiv.textContent = `❌ Error: ${error.message}`;
+        outputTextarea.value = `Error: ${error.message}`;
+    }
+}
+function extractPerkIds(resultData) {
+    const perkIds = new Set();
+    const perkDetails = [];
+    // The result is a dictionary where keys are serials and values are the deserialized data
+    for (const [serial, data] of Object.entries(resultData)) {
+        if (!data) continue;
+        // Check for firmware
+        if (data.firmware) {
+            perkIds.add('firmware_' + data.firmware);
+            perkDetails.push({
+                serial: serial.substring(0, 30) + '...',
+                type: 'firmware',
+                id: data.firmware
+            });
+        }
+        // Check for rarity
+        if (data.rarity) {
+            perkIds.add('rarity_' + data.rarity);
+            perkDetails.push({
+                serial: serial.substring(0, 30) + '...',
+                type: 'rarity',
+                id: data.rarity
+            });
+        }
+        // Check for stat groups
+        if (data.stat_groups) {
+            data.stat_groups.forEach(group => {
+                if (group.stats) {
+                    group.stats.forEach(stat => {
+                        if (stat.stat_id) {
+                            perkIds.add('stat_' + stat.stat_id);
+                            perkDetails.push({
+                                serial: serial.substring(0, 30) + '...',
+                                type: 'stat',
+                                id: stat.stat_id
+                            });
+                        }
+                    });
+                }
+            });
+        }
+    }
+    console.log('Found perk IDs:', Array.from(perkIds).sort());
+    console.log('Perk details:', perkDetails);
+    // Show found perk IDs in status
+    if (perkIds.size > 0) {
+        const statusDiv = document.getElementById('status');
+        statusDiv.textContent += '\n\n📊 Found Perk IDs: ' + Array.from(perkIds).sort().join(', ');
+    }
+}
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const content = e.target.result;
+            const statusDiv = document.getElementById('status');
+            // Check if it's YAML format
+            if (content.includes('inventory:') || content.includes('backpack:')) {
+                // Parse YAML to extract serials
+                const serials = extractSerialsFromYAML(content);
+                document.getElementById('input-data').value = serials.join('\n');
+                statusDiv.className = 'status active success';
+                statusDiv.textContent = `✅ Loaded ${file.name} - Extracted ${serials.length} serials from backpack`;
+            } else {
+                // Plain text file
+                document.getElementById('input-data').value = content;
+                statusDiv.className = 'status active success';
+                statusDiv.textContent = '✅ Loaded ' + file.name + ' (' + file.size + ' bytes)';
+            }
+        };
+        reader.readAsText(file);
+    }
+}
+function extractSerialsFromYAML(yamlContent) {
+    const serials = [];
+    // Extract serial: '...' patterns
+    const serialPattern = /serial:\s+'@([^']+)'/g;
+    let match;
+    while ((match = serialPattern.exec(yamlContent)) !== null) {
+        serials.push('@' + match[1]);
+    }
+    return serials;
+}
+async function serialize() {
+    const inputData = document.getElementById('input-data').value.trim();
+    const outputTextarea = document.getElementById('output-data');
+    const statusDiv = document.getElementById('status');
+    if (!inputData) {
+        statusDiv.className = 'status active error';
+        statusDiv.textContent = '❌ Please enter deserialized strings to serialize!';
+        return;
+    }
+    statusDiv.className = 'status active processing';
+    statusDiv.textContent = '⏳ Serializing...';
+    try {
+        // Split by newline and clean
+        const deserializedStrings = inputData.split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0);
+        console.log('Sending ' + deserializedStrings.length + ' strings to serialize API');
+        // Make API call to serialize
+        const apiUrl = 'https://borderlands4-deserializer.nicnl.com/api/v1/serialize_bulk';
+        console.log('Calling Serialize API:', apiUrl);
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(deserializedStrings)
+        });
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+        }
+        const result = await response.json();
+        console.log('API returned serials:', Object.keys(result).length);
+        // Display serials one per line
+        let formattedOutput = '';
+        for (const [index, serial] of Object.entries(result)) {
+            formattedOutput += serial + '\n';
+        }
+        outputTextarea.value = formattedOutput;
+        statusDiv.className = 'status active success';
+        statusDiv.textContent = `✅ Successfully serialized ${Object.keys(result).length} items!`;
+    } catch (error) {
+        console.error('Error:', error);
+        statusDiv.className = 'status active error';
+        statusDiv.textContent = `❌ Error: ${error.message}`;
+        outputTextarea.value = `Error: ${error.message}`;
+    }
+}
+async function copyOutput() {
+    const outputTextarea = document.getElementById('output-data');
+    if (!outputTextarea.value.trim()) {
+        alert('No output to copy!');
+        return;
+    }
+    try {
+        // Try modern clipboard API first
+        await navigator.clipboard.writeText(outputTextarea.value);
+        const statusDiv = document.getElementById('status');
+        statusDiv.className = 'status active success';
+        statusDiv.textContent = '📋 Copied to clipboard!';
+        setTimeout(() => {
+            statusDiv.className = 'status';
+        }, 2000);
+    } catch (err) {
+        // Fallback to old method
+        outputTextarea.select();
+        document.execCommand('copy');
+        const statusDiv = document.getElementById('status');
+        statusDiv.className = 'status active success';
+        statusDiv.textContent = '📋 Copied to clipboard!';
+        setTimeout(() => {
+            statusDiv.className = 'status';
+        }, 2000);
+    }
+}
+</script>
+</body>
+</html>
