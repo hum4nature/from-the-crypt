@@ -77,6 +77,20 @@
          /* Loading state - hides main content */
         .loading #mainContent { opacity: 0; pointer-events: none; }
         .loading #inputCard { opacity: 0; pointer-events: none; }
+        /* Message Area Styling */
+        #message-area {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none; /* Hidden by default */
+            font-size: 14px;
+            font-weight: bold;
+            transition: opacity 0.3s ease-in-out;
+        }
+        #message-area.error { background-color: var(--danger-red); color: white; }
+        #message-area.success { background-color: var(--success-green); color: white; }
+        #message-area.visible { display: block; }
+        #message-area code { background: rgba(0,0,0,0.2); padding: 2px 4px; border-radius: 4px; font-size: 0.9em;}
     </style>
 </head>
 <body class="loading">
@@ -87,10 +101,10 @@
     <!-- Input Serial Section -->
     <div class="card" id="inputCard">
         <div class="row" style="justify-content: space-between; align-items: center;">
-             <label>Input Base Serial String (Paste Base85 or Deserialized Parts)</label>
-             <button class="small" id="checkAndBuildBtn" title="Check input type (Base85 or Parts) and generate output string">⚙️ Check & Build</button>
+             <label>Input Base Serial String (Auto-detects Base85 or Deserialized Parts)</label>
+             <!-- Removed the "Load & Build" button -->
         </div>
-        <code id="inputSerialCode" contenteditable="plaintext-only" title="Enter Base85 or Deserialized Header+Parts. Click 'Check & Build' to process."></code>
+        <code id="inputSerialCode" contenteditable="plaintext-only" title="Paste Base85 or Deserialized Header+Parts. Auto-detects on input."></code>
     </div>
     
     <!-- Output + API (Sticky) -->
@@ -240,31 +254,37 @@
     let rebuildTimer;
     let lastGeneratedOutput = '';
     let isManualEditMode = false;
+    let inputDetectionTimer; // Debounce timer for auto-detection
 
-    // --- DOM Elements Cache ---
+    // --- DOM Elements Cache (to be populated on DOMContentLoaded) ---
     const dom = {};
     
-    // --- Initialization Check Function (to be called inside DOMContentLoaded) ---
-    function initializeDomElements() {
-        dom.body = document.body;
-        dom.messageArea = document.getElementById('message-area');
-        dom.itemTypeSel = document.getElementById('itemTypeSel');
-        dom.raritySel = document.getElementById('raritySel');
-        dom.outWrapper = document.getElementById('out');
-        dom.outCode = document.querySelector('#out code');
-        dom.inputSerialCode = document.getElementById('inputSerialCode');
-        dom.serial_b85 = document.getElementById('serial_b85');
-        dom.additionalData = document.getElementById('additionalData');
-        dom.copyFull = document.getElementById('copyFull');
-        dom.copySerial = document.getElementById('copySerial');
-        dom.dice = document.getElementById('dice');
-        dom.copyFullStatus = document.getElementById('copyFullStatus');
-        dom.copyApiStatus = document.getElementById('copyApiStatus');
-        dom.undoEditBtn = document.getElementById('undoEdit');
-        dom.reserializeManualBtn = document.getElementById('reserializeManual');
-        dom.checkAndBuildBtn = document.getElementById('checkAndBuildBtn'); // New button
-    }
-
+    // --- Initialization Function ---
+    document.addEventListener('DOMContentLoaded', () => {
+        // This is the *only* safe time to assign DOM elements
+        Object.assign(dom, {
+            body: document.body,
+            messageArea: document.getElementById('message-area'),
+            itemTypeSel: document.getElementById('itemTypeSel'),
+            raritySel: document.getElementById('raritySel'),
+            outWrapper: document.getElementById('out'),
+            outCode: document.querySelector('#out code'),
+            inputSerialCode: document.getElementById('inputSerialCode'),
+            serial_b85: document.getElementById('serial_b85'),
+            additionalData: document.getElementById('additionalData'),
+            copyFull: document.getElementById('copyFull'),
+            copySerial: document.getElementById('copySerial'),
+            dice: document.getElementById('dice'),
+            copyFullStatus: document.getElementById('copyFullStatus'),
+            copyApiStatus: document.getElementById('copyApiStatus'),
+            undoEditBtn: document.getElementById('undoEdit'),
+            reserializeManualBtn: document.getElementById('reserializeManual'),
+            // checkAndBuildBtn: document.getElementById('checkAndBuildBtn'), // Button is removed
+        });
+        
+        // Start the app's loading process
+        initializeApp();
+    });
 
     // --- Utility Functions ---
     function showMessage(message, isError = true) {
@@ -294,67 +314,76 @@
         }, 1500);
     }
     
-    // --- Condensing Logic (same as previous) ---
+    // --- Condensing Logic ---
     function getPartId(code) {
+        // Find {ID: or {ID}
         const match = code.match(/\{(\d+)/);
         return match ? match[1] : null;
     }
     function getPartValue(code) {
+        // Find :VALUE}
         const match = code.match(/:\s*([^}]+)}/);
         if (match) {
-            return match[1].trim(); 
+            return match[1].trim(); // This is a key-value part
         }
+        // Fallback for simple parts like {217}
         const singleMatch = code.match(/\{(\d+)\}/);
-        if (singleMatch) {
-            return singleMatch[1]; 
+        if (singleMatch && !code.includes(':')) {
+            return null; // It's a simple part, not a key-value part
         }
-        return null; 
+        return null; // Malformed or no value
     }
 
     function condenseParts(parts) {
         if (!parts || parts.length === 0) return [];
 
-        const grouped = {};
-        const simpleParts = []; 
+        const grouped = {}; // { 'ID': ['VALUE1', 'VALUE2', ...] }
+        const simpleParts = new Set(); // Use a Set to handle duplicate simple parts like {217}
+        const malformedParts = []; // Fails parsing
 
         parts.forEach(code => {
             const id = getPartId(code);
-            const isValuePart = code.includes(':'); 
+            const value = getPartValue(code); // Is null for simple parts
             
-            if (id) {
-                if (isValuePart) {
-                    const value = getPartValue(code);
-                     if (value) {
-                         if (!grouped[id]) grouped[id] = [];
-                         grouped[id].push(value);
-                     } else {
-                         simpleParts.push(code);
-                     }
-                } else {
-                    simpleParts.push(code);
-                }
+            if (id && value) {
+                // This is a key:value part, e.g., {1:12} or {247:[...]}
+                if (!grouped[id]) grouped[id] = [];
+                grouped[id].push(value);
+            } else if (id && !value && !code.includes(':')) {
+                // This is a simple part, e.g., {217}
+                simpleParts.add(code);
             } else {
-                 simpleParts.push(code);
+                 // Malformed or unknown, e.g., "15," or "foo"
+                 // Only add if it's not just an empty string
+                 if (code) malformedParts.push(code);
             }
         });
 
         const finalParts = [];
+        // Add simple parts first (often rarity, etc.)
+        finalParts.push(...Array.from(simpleParts));
+
+        // Add grouped parts
         for (const id in grouped) {
             const values = grouped[id];
             if (values.length === 0) continue;
 
             if (values.length === 1) {
+                // Single part: return to original format {ID:VALUE}
                 finalParts.push(`{${id}:${values[0]}}`);
             } else {
+                // Multiple parts: condense to {ID:[VALUE1 VALUE2 ...]}
                 finalParts.push(`{${id}:[${values.join(' ')}]}`);
             }
         }
         
-        finalParts.push(...simpleParts);
+        // Add back any parts we couldn't parse (should be none, but safe)
+        finalParts.push(...malformedParts);
+        
         return finalParts;
     }
 
-    // --- Generic Builder UI Logic (omitted for brevity) ---
+    // --- Generic Builder UI Logic ---
     function createBuilder(key, nameField, codeField, idPrefix) {
         const dataList = PAYLOAD[key] || [];
         const filterInput = document.getElementById(`filter${idPrefix}`);
@@ -429,7 +458,6 @@
              }
         }
 
-
         function addSelected() {
             Array.from(availList.selectedOptions).forEach(opt => selectedItems.push(opt.value));
             renderSelected();
@@ -463,51 +491,38 @@
         selList.addEventListener('dblclick', removeSelected);
         availList.addEventListener('dblclick', addSelected);
 
-
         return { getSelectedItems: () => selectedItems, clear: clearSelected };
     }
 
 
     // --- Input Detection & Routing ---
     function isBase85Serial(input) {
-        const cleanedInput = input.trim();
-        if (cleanedInput.length < 50) return false;
-        // Check for markers OR Base85 start character
+        const cleanedInput = input.trim(); // Handle leading/trailing spaces
+        if (cleanedInput.length < 50) return false; // Too short to be a valid serial
+        // Check for Base85 markers
         const startsWithMarker = cleanedInput.startsWith('@') || cleanedInput.startsWith('U');
-        // Check for common deserialized separators to avoid false positives
+        // Check if it looks like a part string, to avoid false positives
         const looksLikePartString = cleanedInput.includes(',') || cleanedInput.includes('{') || cleanedInput.includes('|');
         
         return startsWithMarker && !looksLikePartString;
     }
 
-    // Main synchronous handler for the new dedicated button
-    async function handleCheckAndBuild() {
+    // Main handler for the "Input" event
+    async function handleInputDetection() {
         const input = dom.inputSerialCode.textContent.trim();
         
-        // 1. Clear any pending API calls/status and output boxes
+        // This stops the rebuild/API call race condition
         clearTimeout(apiCallTimer);
-        dom.serial_b85.textContent = '';
-        dom.additionalData.textContent = '';
-        dom.copySerial.disabled = true;
-
-        if (!input) {
-            // Input is empty: just run standard rebuild with default header and selected parts
-            console.log("Input is empty. Running default rebuild.");
-            triggerDebouncedRebuild(); 
-            return;
-        }
-
+        clearTimeout(rebuildTimer);
+        
         if (isBase85Serial(input)) {
-            // 2. Found Base85: Route to Deserialize
-            console.log("Input detected as Base85. Routing to deserialize API.");
+            // Found Base85: Route to Deserialize.
+            // Do *not* call rebuild. deserializeBase85 will handle output.
+            console.log("Input detected as Base85. Deserializing...");
             await deserializeBase85(input);
-            // After deserialization, the inputSerialCode content changes,
-            // which SHOULD trigger the next rebuild automatically if done via input.textContent.
-            // Since we rely on the manual button now, we call rebuild explicitly after success.
-            triggerDebouncedRebuild(); 
         } else {
-            // 3. Not Base85: Route to normal rebuild flow (assumed deserialized parts string/header)
-            console.log("Input detected as Part Serial Header. Routing to rebuild output.");
+            // Not Base85: Route to normal rebuild flow
+            console.log("Input detected as Part Serial. Rebuilding output...");
             triggerDebouncedRebuild();
         }
     }
@@ -530,40 +545,34 @@
             
             let baseHeader = '';
             
+            // This rebuild logic now ONLY runs on Part Strings (or empty)
+            // It assumes baseInput is NOT Base85
             if (baseInput) {
                 // --- Use User's Input as Base ---
-                // 1a. Clean the input aggressively: remove '@' and pipes, and normalize spaces.
-                const preCleanedInput = baseInput.replace(/@/g, '')
-                                                .replace(/\|/g, '')
+                const preCleanedInput = baseInput.replace(/@/g, '') // Strip @ just in case
+                                                .replace(/\|/g, '') // Strip pipes
                                                 .replace(/\s+/g, ' ').trim();
                 
                 const inputParts = preCleanedInput.split(/\s+/).filter(p => p.length > 0);
                 
                 const headerParts = [];
                 const inputDynamicParts = [];
-
                 let foundPart = false;
+
                 inputParts.forEach(p => {
-                    // Part detection: anything that starts with { and ends with } is considered a part
                     if (p.startsWith('{') && p.endsWith('}')) {
                         foundPart = true;
                         inputDynamicParts.push(p);
                     } else if (!foundPart) {
-                        headerParts.push(p); // Header before any part block
+                        headerParts.push(p);
                     }
+                    // Discard any text after the first part block that isn't a part
                 });
-
+                
                 baseHeader = headerParts.join(' '); 
-                
-                // Combine existing parts from input with newly selected parts
                 const dynamicList = [...inputDynamicParts, ...rawParts];
-                
-                // Condense the combined dynamic parts list
                 const condensedDynamicParts = condenseParts(dynamicList);
-                
-                // Recombine: Header + Condensed Parts
                 parts = [baseHeader, ...condensedDynamicParts].filter(p => p.length > 0);
-
 
             } else {
                 // --- Generated Base Serial (If Input is Empty) ---
@@ -582,12 +591,10 @@
             }
             
             // 3. Final Assembly: Join and add the mandatory pipe
-            // Ensure no trailing space before the pipe.
             const newOutput = parts.join(' ').trim() + '|';
             
             lastGeneratedOutput = newOutput;
 
-            // Update textContent only if the user is not currently editing it
             if (document.activeElement !== dom.outCode) {
                  dom.outCode.textContent = newOutput;
                  if (isManualEditMode) {
@@ -631,7 +638,7 @@
         const url = 'https://borderlands4-deserializer.nicnl.com/api/v1/deserialize';
         
         try {
-            // CRITICAL FIX: Strip the '@' prefix and trim whitespace before sending Base85 serial to API
+            // CRITICAL FIX: Strip the '@' prefix and trim whitespace
             const cleanSerialB85 = serialB85.trim().replace(/^@/, '');
 
             const resp = await fetch(url, {
@@ -656,27 +663,32 @@
                  throw new Error("API returned an empty deserialized string.");
             }
 
-            // SUCCESS: Place the deserialized code into the Input Base Serial Box
-            // This synchronously updates the input content.
-            dom.inputSerialCode.textContent = deserializedCode.trim();
+            // SUCCESS: Place the deserialized code directly into the OUTPUT Box
+            dom.outCode.textContent = deserializedCode.trim() + '|';
+            lastGeneratedOutput = dom.outCode.textContent; // Set as last generated
+            isManualEditMode = false; // Not in manual mode
+            dom.outCode.classList.remove('manual-edit');
+            dom.outWrapper.classList.remove('manual-edit');
             
-            // Now, immediately trigger the rebuild flow since the input has changed
-            triggerDebouncedRebuild(); 
+            // Clear any existing parts from builders (optional, but good for clean slate)
+            Object.values(builders).forEach(b => b.clear()); 
 
-            showMessage('✅ Serial deserialized and loaded!', false);
+            showMessage('✅ Serial deserialized! Output box updated.', false);
+
+            // NOW, trigger the reserialize call to validate the new output
+            triggerDebouncedApiCall();
 
         } catch (err) {
             showMessage(`Deserialization Error: <code>${err.message}</code>. Check Base85 syntax.`, true);
             console.error('Deserialize API error:', err);
-            // On failure, clear the input box to force user intervention
-            dom.inputSerialCode.textContent = '';
         }
     }
 
 
     async function callReserialize() {
-      if (dom.serial_b85) dom.serial_b85.textContent = 'Fetching...';
-      if (dom.additionalData) dom.additionalData.textContent = '';
+      if (!dom.serial_b85) return; 
+      dom.serial_b85.textContent = 'Fetching...';
+      dom.additionalData.textContent = '';
       dom.copySerial.disabled = true;
 
       try {
@@ -701,14 +713,14 @@
         }
 
         const data = await resp.json();
-        if (dom.serial_b85) dom.serial_b85.textContent = data.serial_b85 || '[No serial returned]';
-        if (dom.additionalData) dom.additionalData.textContent = data.additional_data || '[No details]';
+        dom.serial_b85.textContent = data.serial_b85 || '[No serial returned]';
+        dom.additionalData.textContent = data.additional_data || '[No details]';
         dom.copySerial.disabled = !data.serial_b85;
 
       } catch (err) {
         console.error('Reserialize API error:', err);
-        if (dom.serial_b85) dom.serial_b85.textContent = `[API error: ${err.message}]`;
-        if (dom.additionalData) dom.additionalData.textContent = '';
+        dom.serial_b85.textContent = `[API error: ${err.message}]`;
+        dom.additionalData.textContent = '';
         dom.copySerial.disabled = true;
         showMessage(`API Error: ${err.message}`, true);
       }
@@ -716,7 +728,8 @@
 
     // --- Initialization ---
     async function initializeApp() {
-        initializeDomElements(); // Setup DOM references early
+        // DOM elements are now assigned in the DOMContentLoaded listener
+        
         dom.body.classList.add('loading');
         try {
             const response = await fetch('bl4_parts_data.json');
@@ -745,8 +758,13 @@
             dom.itemTypeSel.addEventListener('change', triggerDebouncedRebuild);
             dom.raritySel.addEventListener('change', triggerDebouncedRebuild);
             dom.dice.onclick = () => { rndSeed = Math.floor(1000 + Math.random()*9000); triggerDebouncedRebuild(); };
-            dom.inputSerialCode.addEventListener('input', handleCheckAndBuild); // CRITICAL: New manual/auto routing button handler
-            dom.checkAndBuildBtn.addEventListener('click', handleCheckAndBuild); // Hook the dedicated button to the main handler
+            
+            // Auto-detection listener
+            dom.inputSerialCode.addEventListener('input', () => {
+                // Debounce the input detection
+                clearTimeout(inputDetectionTimer);
+                inputDetectionTimer = setTimeout(handleInputDetection, 300); // 300ms delay
+            });
             
             // Manual Edit Handling
             dom.outCode.addEventListener('input', () => {
@@ -801,9 +819,7 @@
         }
     }
 
-    // Start the app
-    document.addEventListener('DOMContentLoaded', initializeApp);
-
 </script>
 </body>
 </html>
+
