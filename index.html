@@ -102,7 +102,7 @@
     <div class="card" id="inputCard">
         <div class="row" style="justify-content: space-between; align-items: center;">
              <label>Input Base Serial String (Base85 or Deserialized Parts)</label>
-             <button class.="small" id="deserializeBtn" title="Deserialize Base85 to Part String" style="font-size: 12px; padding: 8px 12px;">🔗 Deserialize Base85</button>
+             <button class="small" id="deserializeBtn" title="Deserialize Base85 string from this input box" style="font-size: 12px; padding: 8px 12px;">🔗 Deserialize Base85</button>
         </div>
         <code id="inputSerialCode" contenteditable="plaintext-only" title="Paste Base85 and click 'Deserialize', OR paste Deserialized parts to use as a base."></code>
     </div>
@@ -498,46 +498,12 @@
     function isBase85Serial(input) {
         const cleanedInput = input.trim(); // Handle leading/trailing spaces
         // Base85 serials are long and start with @ or U (in some contexts, but @ is the standard prefix)
-        return cleanedInput.length > 50 && (cleanedInput.startsWith('@') || cleanedInput.startsWith('U'));
+        // Also check that it *doesn't* look like a part string, just in case
+        const looksLikePartString = cleanedInput.includes(',') || cleanedInput.includes('{') || cleanedInput.includes('|');
+        return cleanedInput.length > 50 && (cleanedInput.startsWith('@') || cleanedInput.startsWith('U')) && !looksLikePartString;
     }
 
-    // Main handler for the "Load & Build" button
-    async function handleCheckAndBuild() {
-        const input = dom.inputSerialCode.textContent.trim();
-        
-        clearTimeout(apiCallTimer); // Stop any pending API calls
-        dom.serial_b85.textContent = '';
-        dom.additionalData.textContent = '';
-        dom.copySerial.disabled = true;
-
-        if (!input) {
-            // Input is empty: just run standard rebuild with default header
-            console.log("Input is empty. Running default rebuild.");
-            triggerDebouncedRebuild(); 
-            return;
-        }
-
-        if (isBase85Serial(input)) {
-            // 2. Found Base85: Route to Deserialize
-            console.log("Input detected as Base85. Deserializing...");
-            // This will update inputSerialCode on success
-            const success = await deserializeBase85(input); 
-            // If deserialize was successful, it will have updated the input box.
-            // Now, we must run rebuildOutput to process this new part string.
-            if (success) {
-                // Clear parts from builders, as they are now defined by the deserialized string
-                Object.values(builders).forEach(b => b.clear());
-                // Rebuild output based on the *new* content of inputSerialCode
-                triggerDebouncedRebuild();
-            }
-        } else {
-            // 3. Not Base85: Route to normal rebuild flow
-            console.log("Input detected as Part Serial Header. Rebuilding output.");
-            triggerDebouncedRebuild();
-        }
-    }
-
-
+    
     function rebuildOutput() {
         try {
             const baseInput = dom.inputSerialCode.textContent.trim();
@@ -555,10 +521,12 @@
             
             let baseHeader = '';
             
+            // This rebuild logic now ONLY runs on Part Strings (or empty)
+            // It assumes baseInput is NOT Base85
             if (baseInput && !isBase85Serial(baseInput)) { // Process only if it's NOT Base85
                 // --- Use User's Input as Base ---
-                const preCleanedInput = baseInput.replace(/@/g, '')
-                                                .replace(/\|/g, '')
+                const preCleanedInput = baseInput.replace(/@/g, '') // Strip @ just in case
+                                                .replace(/\|/g, '') // Strip all pipes
                                                 .replace(/\s+/g, ' ').trim();
                 
                 const inputParts = preCleanedInput.split(/\s+/).filter(p => p.length > 0);
@@ -572,8 +540,11 @@
                         foundPart = true;
                         inputDynamicParts.push(p);
                     } else if (!foundPart) {
+                        // This is part of the header (e.g., "299," "0," "1," "50|" "2," "332||")
+                        // We must rejoin them carefully
                         headerParts.push(p);
                     }
+                    // Discard any text after the first part block that isn't a part
                 });
                 
                 baseHeader = headerParts.join(' '); 
@@ -602,7 +573,8 @@
             // 3. Final Assembly: Join and add the mandatory pipe
             // Only update if parts were actually generated
             if (parts.length > 0) {
-                const newOutput = parts.join(' ').trim() + '|';
+                // Ensure a single trailing pipe
+                const newOutput = parts.join(' ').trim().replace(/\|/g, '') + '|';
                 lastGeneratedOutput = newOutput;
 
                 if (document.activeElement !== dom.outCode) {
@@ -615,8 +587,9 @@
                 }
             } else if (!baseInput) {
                 // Handle case where input is empty and no parts are selected
-                dom.outCode.textContent = `0, 1, 1, 50| 2, ${rndSeed}|| {0}|`; // Default empty
-                lastGeneratedOutput = dom.outCode.textContent;
+                const defaultOutput = `0, 1, 1, 50| 2, ${rndSeed}|| {0}|`;
+                dom.outCode.textContent = defaultOutput;
+                lastGeneratedOutput = defaultOutput;
             }
             
             dom.messageArea.style.display = 'none';
@@ -679,14 +652,24 @@
                  throw new Error("API returned an empty deserialized string.");
             }
 
-            // SUCCESS: Place the deserialized code into the *Input* Box
-            // This is the new flow:
-            dom.inputSerialCode.textContent = deserializedCode.trim();
+            // SUCCESS: Place the deserialized code directly into the OUTPUT Box
+            const finalOutput = deserializedCode.trim() + '|';
+            dom.outCode.textContent = finalOutput;
+            lastGeneratedOutput = finalOutput; // Set as last generated
+            isManualEditMode = false; // Not in manual mode
+            dom.outCode.classList.remove('manual-edit');
+            dom.outWrapper.classList.remove('manual-edit');
             
             // Clear any existing parts from builders
             Object.values(builders).forEach(b => b.clear()); 
+            
+            // Also update the *input* box with the deserialized code so rebuilds work
+            dom.inputSerialCode.textContent = deserializedCode.trim();
 
-            showMessage('✅ Serial deserialized! Input box updated. Ready to build.', false);
+            showMessage('✅ Serial deserialized! Output box updated.', false);
+            
+            // NOW, trigger the reserialize call to validate the new output
+            triggerDebouncedApiCall(); // This will call callReserialize
             return true; // Signal success
 
         } catch (err) {
@@ -771,8 +754,16 @@
             dom.raritySel.addEventListener('change', triggerDebouncedRebuild);
             dom.dice.onclick = () => { rndSeed = Math.floor(1000 + Math.random()*9000); triggerDebouncedRebuild(); };
             
-            // This is the manual "Load & Build" button
-            dom.checkAndBuildBtn.addEventListener('click', handleCheckAndBuild);
+            // This is the manual "Deserialize" button
+            dom.deserializeBtn.addEventListener('click', () => {
+                 const input = dom.inputSerialCode.textContent.trim();
+                 if (isBase85Serial(input)) {
+                     deserializeBase85(input);
+                 } else {
+                     showMessage("Input does not look like a Base85 serial. Paste a serial starting with '@' or 'U'.", true);
+                 }
+            });
+
             // This listener handles manual typing of *part strings*
             dom.inputSerialCode.addEventListener('input', () => {
                 const input = dom.inputSerialCode.textContent.trim();
