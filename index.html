@@ -279,7 +279,6 @@
             copyApiStatus: document.getElementById('copyApiStatus'),
             undoEditBtn: document.getElementById('undoEdit'),
             reserializeManualBtn: document.getElementById('reserializeManual'),
-            // checkAndBuildBtn: document.getElementById('checkAndBuildBtn'), // Button is removed
         });
         
         // Start the app's loading process
@@ -728,12 +727,12 @@
 
     // --- Initialization ---
     async function initializeApp() {
-        // DOM elements are now assigned in the DOMContentLoaded listener
+        // initializeDomElements() is called first by DOMContentLoaded
         
         dom.body.classList.add('loading');
         try {
             const response = await fetch('bl4_parts_data.json');
-            if (!response.ok) throw new Error(`HTTP error ${response.status} fetching <code>bl4_parts_data.json</code>. You must host this file on GitHub Pages alongside index.html.`);
+            if (!response.ok) throw new Error(`HTTP error ${response.status} fetching A. You must host this file on GitHub Pages alongside index.html.`);
 
             try { PAYLOAD = await response.json(); }
             catch (jsonError) { throw new Error(`Failed to parse <code>bl4_parts_data.json</code>: ${jsonError.message}. Check JSON syntax.`); }
