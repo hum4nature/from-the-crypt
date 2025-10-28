@@ -87,10 +87,10 @@
     <!-- Input Serial Section -->
     <div class="card" id="inputCard">
         <div class="row" style="justify-content: space-between; align-items: center;">
-             <label>Input Base Serial String (Base85 or Deserialized)</label>
-             <!-- Removed the explicit Deserialize Button for auto-detection -->
+             <label>Input Base Serial String (Paste Base85 or Deserialized Parts)</label>
+             <button class="small" id="checkAndBuildBtn" title="Check input type (Base85 or Parts) and generate output string">⚙️ Check & Build</button>
         </div>
-        <code id="inputSerialCode" contenteditable="plaintext-only" title="Enter a base serial string here. Selected parts will be appended to this string."></code>
+        <code id="inputSerialCode" contenteditable="plaintext-only" title="Enter Base85 or Deserialized Header+Parts. Click 'Check & Build' to process."></code>
     </div>
     
     <!-- Output + API (Sticky) -->
@@ -242,28 +242,32 @@
     let isManualEditMode = false;
 
     // --- DOM Elements Cache ---
-    const dom = {
-        body: document.body,
-        messageArea: document.getElementById('message-area'),
-        itemTypeSel: document.getElementById('itemTypeSel'),
-        raritySel: document.getElementById('raritySel'),
-        outWrapper: document.getElementById('out'),
-        outCode: document.querySelector('#out code'),
-        inputSerialCode: document.getElementById('inputSerialCode'),
-        serial_b85: document.getElementById('serial_b85'),
-        additionalData: document.getElementById('additionalData'),
-        copyFull: document.getElementById('copyFull'),
-        copySerial: document.getElementById('copySerial'),
-        dice: document.getElementById('dice'),
-        copyFullStatus: document.getElementById('copyFullStatus'),
-        copyApiStatus: document.getElementById('copyApiStatus'),
-        undoEditBtn: document.getElementById('undoEdit'),
-        reserializeManualBtn: document.getElementById('reserializeManual'),
-    };
+    const dom = {};
+    
+    // --- Initialization Check Function (to be called inside DOMContentLoaded) ---
+    function initializeDomElements() {
+        dom.body = document.body;
+        dom.messageArea = document.getElementById('message-area');
+        dom.itemTypeSel = document.getElementById('itemTypeSel');
+        dom.raritySel = document.getElementById('raritySel');
+        dom.outWrapper = document.getElementById('out');
+        dom.outCode = document.querySelector('#out code');
+        dom.inputSerialCode = document.getElementById('inputSerialCode');
+        dom.serial_b85 = document.getElementById('serial_b85');
+        dom.additionalData = document.getElementById('additionalData');
+        dom.copyFull = document.getElementById('copyFull');
+        dom.copySerial = document.getElementById('copySerial');
+        dom.dice = document.getElementById('dice');
+        dom.copyFullStatus = document.getElementById('copyFullStatus');
+        dom.copyApiStatus = document.getElementById('copyApiStatus');
+        dom.undoEditBtn = document.getElementById('undoEdit');
+        dom.reserializeManualBtn = document.getElementById('reserializeManual');
+        dom.checkAndBuildBtn = document.getElementById('checkAndBuildBtn'); // New button
+    }
+
 
     // --- Utility Functions ---
     function showMessage(message, isError = true) {
-        // Ensure message area exists before trying to write to it
         if (!dom.messageArea) return console.error("Message area not initialized.");
         
         console.log(isError ? "Error:" : "Status:", message.replace(/<code>(.*?)<\/code>/g, '$1'));
@@ -465,23 +469,44 @@
 
 
     // --- Input Detection & Routing ---
-    // Function to check if input looks like a Base85 serial (starts with @ or U, and is long enough)
     function isBase85Serial(input) {
         const cleanedInput = input.trim();
         if (cleanedInput.length < 50) return false;
+        // Check for markers OR Base85 start character
         const startsWithMarker = cleanedInput.startsWith('@') || cleanedInput.startsWith('U');
+        // Check for common deserialized separators to avoid false positives
         const looksLikePartString = cleanedInput.includes(',') || cleanedInput.includes('{') || cleanedInput.includes('|');
         
         return startsWithMarker && !looksLikePartString;
     }
 
-    // Main handler to route input based on type
-    function handleInputDetection() {
+    // Main synchronous handler for the new dedicated button
+    async function handleCheckAndBuild() {
         const input = dom.inputSerialCode.textContent.trim();
+        
+        // 1. Clear any pending API calls/status and output boxes
+        clearTimeout(apiCallTimer);
+        dom.serial_b85.textContent = '';
+        dom.additionalData.textContent = '';
+        dom.copySerial.disabled = true;
+
+        if (!input) {
+            // Input is empty: just run standard rebuild with default header and selected parts
+            console.log("Input is empty. Running default rebuild.");
+            triggerDebouncedRebuild(); 
+            return;
+        }
+
         if (isBase85Serial(input)) {
+            // 2. Found Base85: Route to Deserialize
             console.log("Input detected as Base85. Routing to deserialize API.");
-            deserializeBase85(input);
+            await deserializeBase85(input);
+            // After deserialization, the inputSerialCode content changes,
+            // which SHOULD trigger the next rebuild automatically if done via input.textContent.
+            // Since we rely on the manual button now, we call rebuild explicitly after success.
+            triggerDebouncedRebuild(); 
         } else {
+            // 3. Not Base85: Route to normal rebuild flow (assumed deserialized parts string/header)
             console.log("Input detected as Part Serial Header. Routing to rebuild output.");
             triggerDebouncedRebuild();
         }
@@ -491,7 +516,6 @@
     function rebuildOutput() {
         try {
             const baseInput = dom.inputSerialCode.textContent.trim();
-            const inputHasContent = baseInput.length > 0;
             
             let parts = [];
             let rawParts = [];
@@ -506,7 +530,7 @@
             
             let baseHeader = '';
             
-            if (inputHasContent) {
+            if (baseInput) {
                 // --- Use User's Input as Base ---
                 // 1a. Clean the input aggressively: remove '@' and pipes, and normalize spaces.
                 const preCleanedInput = baseInput.replace(/@/g, '')
@@ -558,6 +582,7 @@
             }
             
             // 3. Final Assembly: Join and add the mandatory pipe
+            // Ensure no trailing space before the pipe.
             const newOutput = parts.join(' ').trim() + '|';
             
             lastGeneratedOutput = newOutput;
@@ -606,8 +631,8 @@
         const url = 'https://borderlands4-deserializer.nicnl.com/api/v1/deserialize';
         
         try {
-            // CRITICAL FIX: Strip the '@' prefix before sending Base85 serial to API
-            const cleanSerialB85 = serialB85.startsWith('@') ? serialB85.substring(1) : serialB85;
+            // CRITICAL FIX: Strip the '@' prefix and trim whitespace before sending Base85 serial to API
+            const cleanSerialB85 = serialB85.trim().replace(/^@/, '');
 
             const resp = await fetch(url, {
                 method: 'POST',
@@ -632,16 +657,19 @@
             }
 
             // SUCCESS: Place the deserialized code into the Input Base Serial Box
+            // This synchronously updates the input content.
             dom.inputSerialCode.textContent = deserializedCode.trim();
             
-            // This event immediately triggers handleInputDetection again, which routes to triggerDebouncedRebuild.
-            dom.inputSerialCode.dispatchEvent(new Event('input')); 
+            // Now, immediately trigger the rebuild flow since the input has changed
+            triggerDebouncedRebuild(); 
 
             showMessage('✅ Serial deserialized and loaded!', false);
 
         } catch (err) {
             showMessage(`Deserialization Error: <code>${err.message}</code>. Check Base85 syntax.`, true);
             console.error('Deserialize API error:', err);
+            // On failure, clear the input box to force user intervention
+            dom.inputSerialCode.textContent = '';
         }
     }
 
@@ -688,26 +716,7 @@
 
     // --- Initialization ---
     async function initializeApp() {
-        // Move DOM setup here to guarantee element existence
-        Object.assign(dom, {
-            body: document.body,
-            messageArea: document.getElementById('message-area'),
-            itemTypeSel: document.getElementById('itemTypeSel'),
-            raritySel: document.getElementById('raritySel'),
-            outWrapper: document.getElementById('out'),
-            outCode: document.querySelector('#out code'),
-            inputSerialCode: document.getElementById('inputSerialCode'),
-            serial_b85: document.getElementById('serial_b85'),
-            additionalData: document.getElementById('additionalData'),
-            copyFull: document.getElementById('copyFull'),
-            copySerial: document.getElementById('copySerial'),
-            dice: document.getElementById('dice'),
-            copyFullStatus: document.getElementById('copyFullStatus'),
-            copyApiStatus: document.getElementById('copyApiStatus'),
-            undoEditBtn: document.getElementById('undoEdit'),
-            reserializeManualBtn: document.getElementById('reserializeManual'),
-        });
-        
+        initializeDomElements(); // Setup DOM references early
         dom.body.classList.add('loading');
         try {
             const response = await fetch('bl4_parts_data.json');
@@ -736,7 +745,8 @@
             dom.itemTypeSel.addEventListener('change', triggerDebouncedRebuild);
             dom.raritySel.addEventListener('change', triggerDebouncedRebuild);
             dom.dice.onclick = () => { rndSeed = Math.floor(1000 + Math.random()*9000); triggerDebouncedRebuild(); };
-            dom.inputSerialCode.addEventListener('input', handleInputDetection);
+            dom.inputSerialCode.addEventListener('input', handleCheckAndBuild); // CRITICAL: New manual/auto routing button handler
+            dom.checkAndBuildBtn.addEventListener('click', handleCheckAndBuild); // Hook the dedicated button to the main handler
             
             // Manual Edit Handling
             dom.outCode.addEventListener('input', () => {
