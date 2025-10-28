@@ -101,10 +101,10 @@
     <!-- Input Serial Section -->
     <div class="card" id="inputCard">
         <div class="row" style="justify-content: space-between; align-items: center;">
-             <label>Input Base Serial String (Auto-detects Base85 or Deserialized Parts)</label>
-             <!-- Removed the "Load & Build" button -->
+             <label>Input Base Serial String (Base85 or Deserialized Parts)</label>
+             <button class.="small" id="deserializeBtn" title="Deserialize Base85 to Part String" style="font-size: 12px; padding: 8px 12px;">🔗 Deserialize Base85</button>
         </div>
-        <code id="inputSerialCode" contenteditable="plaintext-only" title="Paste Base85 or Deserialized Header+Parts. Auto-detects on input."></code>
+        <code id="inputSerialCode" contenteditable="plaintext-only" title="Paste Base85 and click 'Deserialize', OR paste Deserialized parts to use as a base."></code>
     </div>
     
     <!-- Output + API (Sticky) -->
@@ -119,7 +119,7 @@
             </div>
         </div>
         <div id="out" style="margin-top:6px"><code contenteditable="plaintext-only"><!-- Output code will appear here --></code></div>
-         <button class="small" id="dice" title="New random seed">🎲 New Seed</button>
+         <button class="small" id="dice" title="New random seed" style="font-size: 12px; padding: 8px 12px; width: fit-content; min-width: auto;">🎲 New Seed</button>
     </div>
 
     <div class="card" id="apiCard" style="margin-bottom:14px">
@@ -254,7 +254,6 @@
     let rebuildTimer;
     let lastGeneratedOutput = '';
     let isManualEditMode = false;
-    let inputDetectionTimer; // Debounce timer for auto-detection
 
     // --- DOM Elements Cache (to be populated on DOMContentLoaded) ---
     const dom = {};
@@ -279,6 +278,7 @@
             copyApiStatus: document.getElementById('copyApiStatus'),
             undoEditBtn: document.getElementById('undoEdit'),
             reserializeManualBtn: document.getElementById('reserializeManual'),
+            deserializeBtn: document.getElementById('deserializeBtn'),
         });
         
         // Start the app's loading process
@@ -364,7 +364,7 @@
 
         // Add grouped parts
         for (const id in grouped) {
-            const values = grouped[id];
+            const values = [...new Set(grouped[id])]; // Remove duplicate values for the same ID
             if (values.length === 0) continue;
 
             if (values.length === 1) {
@@ -497,31 +497,42 @@
     // --- Input Detection & Routing ---
     function isBase85Serial(input) {
         const cleanedInput = input.trim(); // Handle leading/trailing spaces
-        if (cleanedInput.length < 50) return false; // Too short to be a valid serial
-        // Check for Base85 markers
-        const startsWithMarker = cleanedInput.startsWith('@') || cleanedInput.startsWith('U');
-        // Check if it looks like a part string, to avoid false positives
-        const looksLikePartString = cleanedInput.includes(',') || cleanedInput.includes('{') || cleanedInput.includes('|');
-        
-        return startsWithMarker && !looksLikePartString;
+        // Base85 serials are long and start with @ or U (in some contexts, but @ is the standard prefix)
+        return cleanedInput.length > 50 && (cleanedInput.startsWith('@') || cleanedInput.startsWith('U'));
     }
 
-    // Main handler for the "Input" event
-    async function handleInputDetection() {
+    // Main handler for the "Load & Build" button
+    async function handleCheckAndBuild() {
         const input = dom.inputSerialCode.textContent.trim();
         
-        // This stops the rebuild/API call race condition
-        clearTimeout(apiCallTimer);
-        clearTimeout(rebuildTimer);
-        
+        clearTimeout(apiCallTimer); // Stop any pending API calls
+        dom.serial_b85.textContent = '';
+        dom.additionalData.textContent = '';
+        dom.copySerial.disabled = true;
+
+        if (!input) {
+            // Input is empty: just run standard rebuild with default header
+            console.log("Input is empty. Running default rebuild.");
+            triggerDebouncedRebuild(); 
+            return;
+        }
+
         if (isBase85Serial(input)) {
-            // Found Base85: Route to Deserialize.
-            // Do *not* call rebuild. deserializeBase85 will handle output.
+            // 2. Found Base85: Route to Deserialize
             console.log("Input detected as Base85. Deserializing...");
-            await deserializeBase85(input);
+            // This will update inputSerialCode on success
+            const success = await deserializeBase85(input); 
+            // If deserialize was successful, it will have updated the input box.
+            // Now, we must run rebuildOutput to process this new part string.
+            if (success) {
+                // Clear parts from builders, as they are now defined by the deserialized string
+                Object.values(builders).forEach(b => b.clear());
+                // Rebuild output based on the *new* content of inputSerialCode
+                triggerDebouncedRebuild();
+            }
         } else {
-            // Not Base85: Route to normal rebuild flow
-            console.log("Input detected as Part Serial. Rebuilding output...");
+            // 3. Not Base85: Route to normal rebuild flow
+            console.log("Input detected as Part Serial Header. Rebuilding output.");
             triggerDebouncedRebuild();
         }
     }
@@ -544,12 +555,10 @@
             
             let baseHeader = '';
             
-            // This rebuild logic now ONLY runs on Part Strings (or empty)
-            // It assumes baseInput is NOT Base85
-            if (baseInput) {
+            if (baseInput && !isBase85Serial(baseInput)) { // Process only if it's NOT Base85
                 // --- Use User's Input as Base ---
-                const preCleanedInput = baseInput.replace(/@/g, '') // Strip @ just in case
-                                                .replace(/\|/g, '') // Strip pipes
+                const preCleanedInput = baseInput.replace(/@/g, '')
+                                                .replace(/\|/g, '')
                                                 .replace(/\s+/g, ' ').trim();
                 
                 const inputParts = preCleanedInput.split(/\s+/).filter(p => p.length > 0);
@@ -565,15 +574,15 @@
                     } else if (!foundPart) {
                         headerParts.push(p);
                     }
-                    // Discard any text after the first part block that isn't a part
                 });
                 
                 baseHeader = headerParts.join(' '); 
+                // Combine parts from input AND parts from builders
                 const dynamicList = [...inputDynamicParts, ...rawParts];
                 const condensedDynamicParts = condenseParts(dynamicList);
                 parts = [baseHeader, ...condensedDynamicParts].filter(p => p.length > 0);
 
-            } else {
+            } else if (!baseInput) { // Only run if input is empty
                 // --- Generated Base Serial (If Input is Empty) ---
                 const typeMap = { gun: 1, shield: 2, grenade: 3, classmod: 4, enhancement: 5 };
                 const itemTypeId = typeMap[dom.itemTypeSel.value] || 0;
@@ -588,20 +597,28 @@
                 const condensedDynamicParts = condenseParts(rawParts);
                 parts.push(...condensedDynamicParts);
             }
+            // If it *is* Base85, we don't build, we wait for deserialize to finish.
             
             // 3. Final Assembly: Join and add the mandatory pipe
-            const newOutput = parts.join(' ').trim() + '|';
-            
-            lastGeneratedOutput = newOutput;
+            // Only update if parts were actually generated
+            if (parts.length > 0) {
+                const newOutput = parts.join(' ').trim() + '|';
+                lastGeneratedOutput = newOutput;
 
-            if (document.activeElement !== dom.outCode) {
-                 dom.outCode.textContent = newOutput;
-                 if (isManualEditMode) {
-                     isManualEditMode = false;
-                     dom.outCode.classList.remove('manual-edit');
-                     dom.outWrapper.classList.remove('manual-edit');
-                 }
+                if (document.activeElement !== dom.outCode) {
+                    dom.outCode.textContent = newOutput;
+                    if (isManualEditMode) {
+                        isManualEditMode = false;
+                        dom.outCode.classList.remove('manual-edit');
+                        dom.outWrapper.classList.remove('manual-edit');
+                    }
+                }
+            } else if (!baseInput) {
+                // Handle case where input is empty and no parts are selected
+                dom.outCode.textContent = `0, 1, 1, 50| 2, ${rndSeed}|| {0}|`; // Default empty
+                lastGeneratedOutput = dom.outCode.textContent;
             }
+            
             dom.messageArea.style.display = 'none';
 
         } catch (err) {
@@ -662,24 +679,20 @@
                  throw new Error("API returned an empty deserialized string.");
             }
 
-            // SUCCESS: Place the deserialized code directly into the OUTPUT Box
-            dom.outCode.textContent = deserializedCode.trim() + '|';
-            lastGeneratedOutput = dom.outCode.textContent; // Set as last generated
-            isManualEditMode = false; // Not in manual mode
-            dom.outCode.classList.remove('manual-edit');
-            dom.outWrapper.classList.remove('manual-edit');
+            // SUCCESS: Place the deserialized code into the *Input* Box
+            // This is the new flow:
+            dom.inputSerialCode.textContent = deserializedCode.trim();
             
-            // Clear any existing parts from builders (optional, but good for clean slate)
+            // Clear any existing parts from builders
             Object.values(builders).forEach(b => b.clear()); 
 
-            showMessage('✅ Serial deserialized! Output box updated.', false);
-
-            // NOW, trigger the reserialize call to validate the new output
-            triggerDebouncedApiCall();
+            showMessage('✅ Serial deserialized! Input box updated. Ready to build.', false);
+            return true; // Signal success
 
         } catch (err) {
             showMessage(`Deserialization Error: <code>${err.message}</code>. Check Base85 syntax.`, true);
             console.error('Deserialize API error:', err);
+            return false; // Signal failure
         }
     }
 
@@ -732,7 +745,7 @@
         dom.body.classList.add('loading');
         try {
             const response = await fetch('bl4_parts_data.json');
-            if (!response.ok) throw new Error(`HTTP error ${response.status} fetching A. You must host this file on GitHub Pages alongside index.html.`);
+            if (!response.ok) throw new Error(`HTTP error ${response.status} fetching <code>bl4_parts_data.json</code>. You must host this file on GitHub Pages alongside index.html.`);
 
             try { PAYLOAD = await response.json(); }
             catch (jsonError) { throw new Error(`Failed to parse <code>bl4_parts_data.json</code>: ${jsonError.message}. Check JSON syntax.`); }
@@ -758,11 +771,15 @@
             dom.raritySel.addEventListener('change', triggerDebouncedRebuild);
             dom.dice.onclick = () => { rndSeed = Math.floor(1000 + Math.random()*9000); triggerDebouncedRebuild(); };
             
-            // Auto-detection listener
+            // This is the manual "Load & Build" button
+            dom.checkAndBuildBtn.addEventListener('click', handleCheckAndBuild);
+            // This listener handles manual typing of *part strings*
             dom.inputSerialCode.addEventListener('input', () => {
-                // Debounce the input detection
-                clearTimeout(inputDetectionTimer);
-                inputDetectionTimer = setTimeout(handleInputDetection, 300); // 300ms delay
+                const input = dom.inputSerialCode.textContent.trim();
+                if (!isBase85Serial(input)) {
+                    // Only trigger rebuild if it's NOT a Base85
+                    triggerDebouncedRebuild();
+                }
             });
             
             // Manual Edit Handling
