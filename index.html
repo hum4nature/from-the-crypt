@@ -73,21 +73,22 @@
         .manual-edit-indicator { display: none; font-size: 11px; color: var(--edit-yellow); margin-left: 8px; }
         .outCard.manual-edit .manual-edit-indicator { display: inline; }
 
-        /* --- Loading Overlay & Spinner Styles --- */
-        /* ... existing loader styles ... */
-        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; z-index: 9999; }
-        .loading-overlay.show { display: flex; }
-        .spinner { border: 4px solid rgba(255, 255, 255, 0.2); border-top: 4px solid var(--accent-orange); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* --- REMOVED Loading Overlay & Spinner Styles --- */
+        /* .loading-overlay {...} */
+        /* .loading-overlay.show {...} */
+        /* .spinner {...} */
+        /* @keyframes spin {...} */
+        /* --- END REMOVED Styles --- */
 
-        /* --- Message Toast Styles --- */
-        /* ... existing toast styles ... */
+        /* --- Message Toast Styles (Unchanged) --- */
         .message-toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); display: none; align-items: center; gap: 10px; z-index: 10000; opacity: 0; transition: opacity 0.3s ease, bottom 0.3s ease; font-size: 15px; }
         .message-toast.show { display: flex; opacity: 1; bottom: 30px; }
         .message-toast.success { background: rgba(40, 167, 69, 0.9); border: 1px solid var(--success-green); color: #fff; }
         .message-toast.error { background: rgba(231, 76, 60, 0.9); border: 1px solid var(--danger-red); color: #fff; }
         .message-toast.info { background: rgba(44, 44, 77, 0.95); border: 1px solid var(--line); color: var(--ink); }
         .toast-icon { font-size: 1.2em; line-height: 1; }
+        /* --- END Message Toast Styles --- */
+
 
         /* Responsive Adjustments */
         @media (max-width: 768px) {
@@ -124,11 +125,12 @@
         <label for="baseSerial">Input Base Serial String (@U or Deserialized)</label>
         <textarea id="baseSerial" rows="3" placeholder="Paste @U... serial (click Deserialize first) OR deserialized format like: 9, 0, 1, 50| 2, 1626|| {80} {2}|"></textarea>
         <div class="input-button-group">
-            <button id="applyInputBtn">Apply Input & Rebuild</button>
+            <!-- MODIFIED: Button Text Changed -->
+            <button id="applyInputBtn">Apply Code Block</button>
             <button id="deserializeBtn">Deserialize Serial Code</button>
         </div>
         <p style="margin-top: 10px; opacity: 0.8; font-size: 0.9em; color: var(--muted);">
-            If pasting a <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">@U...</code> serial, click "Deserialize" first, then "Apply Input".
+            If pasting a <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">@U...</code> serial, click "Deserialize" first, then "Apply Code Block".
         </p>
     </div>
     <!-- END MODIFIED Input Serial Section -->
@@ -278,13 +280,8 @@
 
 </div> <!-- End container -->
 
-<!-- HTML: Loading Overlay and Message Toast (Unchanged) -->
-<div id="loadingOverlay" class="loading-overlay">
-    <div style="text-align: center;">
-        <div class="spinner"></div>
-        <p style="margin-top: 20px; font-size: 1.2em;">Processing...</p>
-    </div>
-</div>
+<!-- REMOVED HTML: Loading Overlay -->
+<!-- <div id="loadingOverlay" class="loading-overlay"> ... </div> -->
 <div id="messageToast" class="message-toast">
     <span id="toastIcon" class="toast-icon">✓</span>
     <span id="toastText">Success!</span>
@@ -300,9 +297,9 @@
     let lastGeneratedOutput = '';
     let isManualEditMode = false;
     let messageTimeout;
-    let currentBaseInputString = ''; // NEW: Store the applied base input
+    let currentBaseInputString = ''; // Store the applied base input
 
-    // --- DOM Elements Cache (ADD baseSerial, applyInputBtn, deserializeBtn; REMOVE inputSerialCode) ---
+    // --- DOM Elements Cache (REMOVE loadingOverlay) ---
     const dom = {
         body: document.body,
         messageArea: document.getElementById('message-area'),
@@ -310,7 +307,7 @@
         raritySel: document.getElementById('raritySel'),
         outWrapper: document.getElementById('out'),
         outCode: document.querySelector('#out code'),
-        baseSerial: document.getElementById('baseSerial'), // NEW
+        baseSerial: document.getElementById('baseSerial'),
         serial_b85: document.getElementById('serial_b85'),
         additionalData: document.getElementById('additionalData'),
         copyFull: document.getElementById('copyFull'),
@@ -320,16 +317,18 @@
         copyApiStatus: document.getElementById('copyApiStatus'),
         undoEditBtn: document.getElementById('undoEdit'),
         reserializeManualBtn: document.getElementById('reserializeManual'),
-        applyInputBtn: document.getElementById('applyInputBtn'), // NEW
-        deserializeBtn: document.getElementById('deserializeBtn'), // NEW
-        loadingOverlay: document.getElementById('loadingOverlay'),
+        applyInputBtn: document.getElementById('applyInputBtn'),
+        deserializeBtn: document.getElementById('deserializeBtn'),
+        // loadingOverlay: document.getElementById('loadingOverlay'), // REMOVED
         messageToast: document.getElementById('messageToast'),
         toastIcon: document.getElementById('toastIcon'),
         toastText: document.getElementById('toastText')
     };
 
-    // --- Utility Functions (showLoading, showMessage, showCopyStatus - unchanged) ---
-    function showLoading(show) { /* ... unchanged ... */ if (!dom.loadingOverlay) return; if (show) dom.loadingOverlay.classList.add('show'); else dom.loadingOverlay.classList.remove('show'); }
+    // --- Utility Functions (REMOVE showLoading) ---
+    // function showLoading(show) { ... } // REMOVED
+
+    // showMessage function using toasts (Unchanged)
     function showMessage(text, type = 'info', duration = 3000) { /* ... unchanged toast logic ... */ if (!dom.messageToast || !dom.toastIcon || !dom.toastText) { console.warn("Toast elements not found, using fallback message area."); const oldMessageArea = document.getElementById('message-area'); if (oldMessageArea) { oldMessageArea.innerHTML = text.replace(/<code>(.*?)<\/code>/g, '$1'); oldMessageArea.className = `message-area visible ${type === 'success' ? 'success' : type === 'error' ? 'error' : ''}`; oldMessageArea.style.display = 'block'; if (type !== 'error') { clearTimeout(oldMessageArea.timer); oldMessageArea.timer = setTimeout(() => { oldMessageArea.style.display = 'none'; oldMessageArea.classList.remove('visible'); }, duration); } } return; } clearTimeout(messageTimeout); dom.toastIcon.textContent = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'; dom.toastText.innerHTML = text; dom.messageToast.className = `message-toast ${type} show`; messageTimeout = setTimeout(() => { dom.messageToast.classList.remove('show'); }, duration); }
     function showCopyStatus(statusElement, message) { /* ... unchanged ... */ if (!statusElement) return; statusElement.textContent = message; statusElement.classList.add('visible'); clearTimeout(statusElement.timer); statusElement.timer = setTimeout(() => { statusElement.classList.remove('visible'); }, 1500); }
 
@@ -343,87 +342,8 @@
     function getPartId(code) { /* ... unchanged ... */ const match = code.match(/\{(\d+)/); return match ? match[1] : null; }
     function condenseParts(parts) { /* ... unchanged ... */ if (!parts || parts.length === 0) return []; const grouped = {}; const individualParts = []; parts.forEach(code => { const match = code.match(/^\{(\d+)(:\s*([^}\[\]]+)|:\s*\[([^\]]+)\])?\s*\}$/); if (match) { const id = match[1]; if (!grouped[id]) grouped[id] = []; grouped[id].push(code.trim()); } else if (typeof code === 'string' && code.trim().length > 0 && !code.includes('||')) { individualParts.push(code.trim()); } }); const condensedParts = []; for (const id in grouped) { const codes = grouped[id]; if (codes.length === 1) { condensedParts.push(codes[0]); } else { let values = []; let isSimpleIdOnly = true; codes.forEach(code => { const valueMatch = code.match(/:\s*([^}\[\]]+)\s*\}$/); const arrayMatch = code.match(/:\s*\[([^\]]+)\]\s*\}$/); const simpleIdMatch = code.match(/^\{(\d+)\}$/); if (arrayMatch) { values.push(...arrayMatch[1].trim().split(/\s+/).filter(v => v)); isSimpleIdOnly = false; } else if (valueMatch) { values.push(valueMatch[1].trim()); isSimpleIdOnly = false; } else if (!simpleIdMatch) { individualParts.push(code); } }); if (isSimpleIdOnly && codes.length > 0) { condensedParts.push(codes[0]); } else if (values.length > 0) { const uniqueValues = [...new Set(values)]; if (uniqueValues.length === 1 && codes.length > 1) { condensedParts.push(`{${id}:[${uniqueValues[0]}]}`); } else if (uniqueValues.length > 0) { condensedParts.push(`{${id}:[${uniqueValues.join(' ')}]}`); } else if (codes.length > 0) { condensedParts.push(codes[0]); } } else if (codes.length > 0 && !isSimpleIdOnly) { condensedParts.push(codes[0]); } } } return [...condensedParts, ...individualParts]; }
 
-    // --- Output Rebuilding (MODIFIED to read from currentBaseInputString) ---
-    function rebuildOutput() {
-        try {
-            rndSeed = Math.floor(1000 + Math.random() * 9000);
-
-            const allSelectedParts = [];
-            const baseInput = currentBaseInputString; // *** MODIFIED: Read from global var ***
-
-            let header = '';
-            let dynamicParts = [];
-
-            if (baseInput) {
-                // Parse baseInput (logic remains the same as before, but uses the variable)
-                const headerMatch = baseInput.match(/^([^\{]*\|\|\s*)/);
-                if (headerMatch) {
-                    header = headerMatch[0].trim();
-                    const remaining = baseInput.substring(headerMatch[0].length).trim();
-                    dynamicParts = remaining ? remaining.split(/\s+/).filter(p => p.length > 0) : [];
-                } else {
-                     const firstBlockIndex = baseInput.indexOf('{');
-                     if (firstBlockIndex === 0) {
-                         header = '';
-                         dynamicParts = baseInput.split(/\s+/).filter(p => p.length > 0);
-                     } else if (firstBlockIndex > 0) {
-                          header = baseInput.substring(0, firstBlockIndex).trim();
-                          dynamicParts = baseInput.substring(firstBlockIndex).trim().split(/\s+/).filter(p => p.length > 0);
-                     } else {
-                          header = baseInput;
-                          dynamicParts = [];
-                     }
-                }
-                if (header) allSelectedParts.push(header);
-                allSelectedParts.push(...dynamicParts);
-
-            } else {
-                // Generate Base Header if no baseInput applied
-                const typeMap = { gun: 1, shield: 2, grenade: 3, classmod: 4, enhancement: 5 };
-                const itemTypeId = typeMap[dom.itemTypeSel.value] || 0;
-                header = `${itemTypeId}, 0, 1, 50| 2, ${rndSeed}||`;
-                allSelectedParts.push(header);
-                const rarityCodeMap = { common: 217, uncommon: 218, rare: 219, epic: 220, legendary: 999 };
-                const rarityPart = `{${rarityCodeMap[dom.raritySel.value] || 0}}`;
-                allSelectedParts.push(rarityPart);
-            }
-
-            // Collect parts from ALL builders
-            Object.values(builders).forEach(builder => {
-                if (typeof builder.getSelectedItems === 'function') {
-                    allSelectedParts.push(...builder.getSelectedItems());
-                }
-            });
-
-            // Condense parts (logic unchanged)
-            const identifiedHeader = allSelectedParts[0].includes('||') ? allSelectedParts[0].trim() : '';
-            const partsToProcess = identifiedHeader ? allSelectedParts.slice(1) : allSelectedParts;
-            const condensedDynamicParts = condenseParts(partsToProcess);
-
-            // Recombine header and parts (logic unchanged)
-            const finalParts = [];
-            if (identifiedHeader) finalParts.push(identifiedHeader);
-            finalParts.push(...condensedDynamicParts);
-            let newOutput = finalParts.join(' ').trim();
-            if (condensedDynamicParts.length > 0 && !newOutput.endsWith('|')) { newOutput += '|'; }
-            else if (!identifiedHeader && condensedDynamicParts.length > 0 && !newOutput.endsWith('|')) { newOutput += '|'; }
-            newOutput = newOutput.replace(/\s{2,}/g, ' ');
-
-            lastGeneratedOutput = newOutput;
-
-            // Update output display if not manually editing (logic unchanged)
-            if (document.activeElement !== dom.outCode) {
-                 dom.outCode.textContent = newOutput;
-                 if (isManualEditMode) { isManualEditMode = false; dom.outCode.classList.remove('manual-edit'); dom.outWrapper.classList.remove('manual-edit'); dom.outWrapper.querySelector('.manual-edit-indicator').style.display = 'none'; }
-            }
-
-        } catch (err) {
-            showMessage(`Error generating output: <code>${err.message}</code>. Check builder setup and data.`, 'error');
-            console.error("Output Generation Error:", err);
-            dom.outCode.textContent = '[Error generating output]';
-            lastGeneratedOutput = '';
-        }
-    }
+    // --- Output Rebuilding (unchanged logic) ---
+    function rebuildOutput() { /* ... unchanged ... */ try { rndSeed = Math.floor(1000 + Math.random() * 9000); const allSelectedParts = []; const baseInput = currentBaseInputString; let header = ''; let dynamicParts = []; if (baseInput) { const headerMatch = baseInput.match(/^([^\{]*\|\|\s*)/); if (headerMatch) { header = headerMatch[0].trim(); const remaining = baseInput.substring(headerMatch[0].length).trim(); dynamicParts = remaining ? remaining.split(/\s+/).filter(p => p.length > 0) : []; } else { const firstBlockIndex = baseInput.indexOf('{'); if (firstBlockIndex === 0) { header = ''; dynamicParts = baseInput.split(/\s+/).filter(p => p.length > 0); } else if (firstBlockIndex > 0) { header = baseInput.substring(0, firstBlockIndex).trim(); dynamicParts = baseInput.substring(firstBlockIndex).trim().split(/\s+/).filter(p => p.length > 0); } else { header = baseInput; dynamicParts = []; } } if (header) allSelectedParts.push(header); allSelectedParts.push(...dynamicParts); } else { const typeMap = { gun: 1, shield: 2, grenade: 3, classmod: 4, enhancement: 5 }; const itemTypeId = typeMap[dom.itemTypeSel.value] || 0; header = `${itemTypeId}, 0, 1, 50| 2, ${rndSeed}||`; allSelectedParts.push(header); const rarityCodeMap = { common: 217, uncommon: 218, rare: 219, epic: 220, legendary: 999 }; const rarityPart = `{${rarityCodeMap[dom.raritySel.value] || 0}}`; allSelectedParts.push(rarityPart); } Object.values(builders).forEach(builder => { if (typeof builder.getSelectedItems === 'function') { allSelectedParts.push(...builder.getSelectedItems()); } }); const identifiedHeader = allSelectedParts[0].includes('||') ? allSelectedParts[0].trim() : ''; const partsToProcess = identifiedHeader ? allSelectedParts.slice(1) : allSelectedParts; const condensedDynamicParts = condenseParts(partsToProcess); const finalParts = []; if (identifiedHeader) finalParts.push(identifiedHeader); finalParts.push(...condensedDynamicParts); let newOutput = finalParts.join(' ').trim(); if (condensedDynamicParts.length > 0 && !newOutput.endsWith('|')) { newOutput += '|'; } else if (!identifiedHeader && condensedDynamicParts.length > 0 && !newOutput.endsWith('|')) { newOutput += '|'; } newOutput = newOutput.replace(/\s{2,}/g, ' '); lastGeneratedOutput = newOutput; if (document.activeElement !== dom.outCode) { dom.outCode.textContent = newOutput; if (isManualEditMode) { isManualEditMode = false; dom.outCode.classList.remove('manual-edit'); dom.outWrapper.classList.remove('manual-edit'); dom.outWrapper.querySelector('.manual-edit-indicator').style.display = 'none'; } } } catch (err) { showMessage(`Error generating output: <code>${err.message}</code>. Check builder setup and data.`, 'error'); console.error("Output Generation Error:", err); dom.outCode.textContent = '[Error generating output]'; lastGeneratedOutput = ''; } }
 
 
     // --- Debounced Triggers (unchanged) ---
@@ -431,123 +351,82 @@
     function triggerDebouncedApiCall() { /* ... unchanged ... */ clearTimeout(apiCallTimer); if (!isManualEditMode) { apiCallTimer = setTimeout(callReserialize, 400); } }
     function rebuildOutputAndCallApi() { /* ... unchanged ... */ rebuildOutput(); triggerDebouncedApiCall(); }
 
-    // --- NEW: deserializeSerial Function (Adapted from editor_index.html) ---
+    // --- deserializeSerial Function (MODIFIED to remove showLoading) ---
     async function deserializeSerial() {
         const input = dom.baseSerial.value.trim();
-        if (!input) {
-            showMessage('Please enter a serial code in the input box first.', 'error');
-            return;
-        }
-
-        // Only try to deserialize if it looks like a B85 serial
-        if (!input.startsWith('@U')) {
-            showMessage('Input does not look like a B85 serial (must start with @U). Cannot deserialize.', 'error');
-            return;
-        }
-
-        showLoading(true);
+        if (!input) { showMessage('Please enter a serial code in the input box first.', 'error'); return; }
+        if (!input.startsWith('@U')) { showMessage('Input does not look like a B85 serial (must start with @U). Cannot deserialize.', 'error'); return; }
+        // showLoading(true); // REMOVED
         try {
-            const serial = input; // Assume input is already clean B85
-            const response = await fetch(`${API_BASE_URL}/deserialize_bulk`, { // Use constant from v3.5
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify([serial])
-            });
-
-            if (!response.ok) {
-                 const errorText = await response.text();
-                 throw new Error(`Deserialize request failed: ${response.status} - ${errorText}`);
-            }
-
-            const result = await response.json();
-            const firstKey = Object.keys(result)[0];
-
-            if (result[firstKey] && result[firstKey].success !== false && result[firstKey].deserialized) { // Check success flag if available
-                const deserialized = result[firstKey].deserialized;
-                dom.baseSerial.value = deserialized; // Update the textarea
-                showMessage('✅ Deserialization successful! Now click "Apply Input & Rebuild" to continue.', 'success', 4000);
-            } else {
-                throw new Error(result[firstKey]?.error || 'Deserialization failed: API did not return expected data.');
-            }
-        } catch (error) {
-            console.error('Deserialize API Error:', error);
-            showMessage('Deserialization failed: ' + error.message, 'error', 5000);
-        } finally {
-            showLoading(false);
-        }
+            const serial = input;
+            const response = await fetch(`${API_BASE_URL}/deserialize_bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify([serial]) });
+            if (!response.ok) { const errorText = await response.text(); throw new Error(`Deserialize request failed: ${response.status} - ${errorText}`); }
+            const result = await response.json(); const firstKey = Object.keys(result)[0];
+            if (result[firstKey] && result[firstKey].success !== false && result[firstKey].deserialized) {
+                const deserialized = result[firstKey].deserialized; dom.baseSerial.value = deserialized;
+                showMessage('✅ Deserialization successful! Now click "Apply Code Block" to continue.', 'success', 4000);
+            } else { throw new Error(result[firstKey]?.error || 'Deserialization failed: API did not return expected data.'); }
+        } catch (error) { console.error('Deserialize API Error:', error); showMessage('Deserialization failed: ' + error.message, 'error', 5000);
+        } // REMOVED finally { showLoading(false); }
     }
-    // Define API_BASE_URL if not already defined globally (copied from editor_index.html)
     const API_BASE_URL = 'https://borderlands4-deserializer.nicnl.com/api/v1';
 
-    // --- NEW: applyInput Function (Adapted from editor_index.html parseSerial) ---
-    function applyInput() {
-        const input = dom.baseSerial.value.trim();
-        if (!input) {
-            showMessage('Input box is empty. Paste a deserialized string or deserialize a @U code first.', 'error');
-            return;
-        }
+    // --- applyInput Function (unchanged) ---
+    function applyInput() { /* ... unchanged ... */ const input = dom.baseSerial.value.trim(); if (!input) { showMessage('Input box is empty. Paste a deserialized string or deserialize a @U code first.', 'error'); return; } if (input.startsWith('@U')) { showMessage('⚠️ Input looks like a B85 serial! Please click "Deserialize Serial Code" first, then "Apply Code Block".', 'error', 5000); return; } const deserializedPattern = /\|\|/; if (!deserializedPattern.test(input)) { showMessage('⚠️ Invalid format! Expected deserialized format containing "||". Please check input or deserialize first.', 'error', 5000); return; } currentBaseInputString = input; showMessage('Input applied successfully. Rebuilding...', 'success', 2000); rebuildOutputAndCallApi(); }
 
-        // Prevent applying if it looks like a B85 serial
-        if (input.startsWith('@U')) {
-            showMessage('⚠️ Input looks like a B85 serial! Please click "Deserialize Serial Code" first, then "Apply Input".', 'error', 5000);
-            return;
-        }
 
-        // Basic validation for deserialized format (must contain ||)
-        const deserializedPattern = /\|\|/;
-        if (!deserializedPattern.test(input)) {
-            showMessage('⚠️ Invalid format! Expected deserialized format containing "||". Please check input or deserialize first.', 'error', 5000);
-            return;
-        }
-
-        // Store the validated input and trigger rebuild
-        currentBaseInputString = input;
-        showMessage('Input applied successfully. Rebuilding...', 'success', 2000);
-        rebuildOutputAndCallApi(); // Trigger the rebuild process
+    // --- API Logic (callReserialize - MODIFIED to remove showLoading) ---
+    async function callReserialize() {
+        if (dom.serial_b85) dom.serial_b85.textContent = 'Fetching...';
+        if (dom.additionalData) dom.additionalData.textContent = '';
+        dom.copySerial.disabled = true;
+        // showLoading(true); // REMOVED
+        try {
+            const outText = (dom.outCode?.textContent || '').trim();
+            if (!outText || outText === '[Error generating output]' || !outText.endsWith('|')) {
+                if (dom.serial_b85) dom.serial_b85.textContent = '[No valid serial to send]';
+                showMessage('No valid serial to send to API', 'info');
+                return;
+            }
+            const resp = await fetch('https://borderlands4-deserializer.nicnl.com/api/v1/reserialize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deserialized: outText }) });
+            if (!resp.ok) { let errorText = `HTTP ${resp.status} - ${resp.statusText}`; try { const errorData = await resp.json(); errorText += `: ${errorData.error || errorData.message || 'Unknown API error'}`; } catch (_) {} throw new Error(errorText); }
+            const data = await resp.json();
+            if (dom.serial_b85) dom.serial_b85.textContent = data.serial_b85 || '[No serial returned]';
+            if (dom.additionalData) dom.additionalData.textContent = data.additional_data || '[No details]';
+            dom.copySerial.disabled = !data.serial_b85;
+        } catch (err) {
+            console.error('Reserialize API error:', err);
+            if (dom.serial_b85) dom.serial_b85.textContent = `[API error: ${err.message}]`;
+            if (dom.additionalData) dom.additionalData.textContent = '';
+            dom.copySerial.disabled = true;
+            if (!err.message.includes('aborted')) { showMessage(`API Error: ${err.message}`, 'error'); }
+        } // REMOVED finally { showLoading(false); }
     }
 
-
-    // --- API Logic (callReserialize - unchanged) ---
-    async function callReserialize() { /* ... unchanged ... */ if (dom.serial_b85) dom.serial_b85.textContent = 'Fetching...'; if (dom.additionalData) dom.additionalData.textContent = ''; dom.copySerial.disabled = true; showLoading(true); try { const outText = (dom.outCode?.textContent || '').trim(); if (!outText || outText === '[Error generating output]' || !outText.endsWith('|')) { if (dom.serial_b85) dom.serial_b85.textContent = '[No valid serial to send]'; showMessage('No valid serial to send to API', 'info'); return; } const resp = await fetch('https://borderlands4-deserializer.nicnl.com/api/v1/reserialize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deserialized: outText }) }); if (!resp.ok) { let errorText = `HTTP ${resp.status} - ${resp.statusText}`; try { const errorData = await resp.json(); errorText += `: ${errorData.error || errorData.message || 'Unknown API error'}`; } catch (_) {} throw new Error(errorText); } const data = await resp.json(); if (dom.serial_b85) dom.serial_b85.textContent = data.serial_b85 || '[No serial returned]'; if (dom.additionalData) dom.additionalData.textContent = data.additional_data || '[No details]'; dom.copySerial.disabled = !data.serial_b85; } catch (err) { console.error('Reserialize API error:', err); if (dom.serial_b85) dom.serial_b85.textContent = `[API error: ${err.message}]`; if (dom.additionalData) dom.additionalData.textContent = ''; dom.copySerial.disabled = true; if (!err.message.includes('aborted')) { showMessage(`API Error: ${err.message}`, 'error'); } } finally { showLoading(false); } }
-
-    // --- Initialization (MODIFIED Event Listeners) ---
+    // --- Initialization (MODIFIED to remove showLoading) ---
     async function initializeApp() {
-        dom.body.classList.add('loading');
-        currentBaseInputString = ''; // Initialize base input string
+        // dom.body.classList.add('loading'); // Can remove initial loading class too if desired
+        currentBaseInputString = '';
         try {
-            // Fetch and parse data (unchanged)
-            const response = await fetch('bl4_parts_data.json');
-            if (!response.ok) throw new Error(`HTTP error ${response.status} fetching <code>bl4_parts_data.json</code>.`);
-            try { PAYLOAD = await response.json(); }
-            catch (jsonError) { throw new Error(`Failed to parse <code>bl4_parts_data.json</code>: ${jsonError.message}.`); }
-            const requiredKeys = ['altFireModes', 'magazineModes', 'legendaryPerks', 'ordnancePerks'];
-            const missingKeys = requiredKeys.filter(key => !PAYLOAD[key] || !Array.isArray(PAYLOAD[key]));
-            if (missingKeys.length > 0) throw new Error(`Data Validation Error: Key(s) <code>${missingKeys.join(', ')}</code> missing/invalid in JSON.`);
+            // ... (Fetch, parse, validate data - unchanged) ...
+            const response = await fetch('bl4_parts_data.json'); if (!response.ok) throw new Error(`HTTP error ${response.status} fetching <code>bl4_parts_data.json</code>.`); try { PAYLOAD = await response.json(); } catch (jsonError) { throw new Error(`Failed to parse <code>bl4_parts_data.json</code>: ${jsonError.message}.`); } const requiredKeys = ['altFireModes', 'magazineModes', 'legendaryPerks', 'ordnancePerks']; const missingKeys = requiredKeys.filter(key => !PAYLOAD[key] || !Array.isArray(PAYLOAD[key])); if (missingKeys.length > 0) throw new Error(`Data Validation Error: Key(s) <code>${missingKeys.join(', ')}</code> missing/invalid in JSON.`);
 
-            // Initialize builders (unchanged)
-            document.querySelectorAll('.builderSection').forEach(section => { /* ... unchanged ... */ const key = section.dataset.key; const nameField = section.dataset.nameField; const codeField = section.dataset.codeField; const idPrefix = section.dataset.idPrefix; if (key && nameField && codeField && idPrefix && PAYLOAD[key]) { try { builders[key] = createBuilder(key, nameField, codeField, idPrefix); } catch (builderError) { throw new Error(`Failed to init builder for ${key}: ${builderError.message}`); } } else { console.warn("Skipping builder section, missing data or attributes:", section, key); } });
+            // ... (Initialize builders - unchanged) ...
+            document.querySelectorAll('.builderSection').forEach(section => { const key = section.dataset.key; const nameField = section.dataset.nameField; const codeField = section.dataset.codeField; const idPrefix = section.dataset.idPrefix; if (key && nameField && codeField && idPrefix && PAYLOAD[key]) { try { builders[key] = createBuilder(key, nameField, codeField, idPrefix); } catch (builderError) { throw new Error(`Failed to init builder for ${key}: ${builderError.message}`); } } else { console.warn("Skipping builder section, missing data or attributes:", section, key); } });
 
-            // --- Setup Event Listeners (MODIFIED) ---
+            // --- Setup Event Listeners (Unchanged) ---
             dom.itemTypeSel.addEventListener('change', triggerDebouncedRebuild);
             dom.raritySel.addEventListener('change', triggerDebouncedRebuild);
             dom.dice.onclick = () => { rndSeed = Math.floor(1000 + Math.random()*9000); triggerDebouncedRebuild(); };
-            // REMOVED: Listener for inputSerialCode
-
-            // NEW: Listeners for new buttons
             dom.applyInputBtn.addEventListener('click', applyInput);
             dom.deserializeBtn.addEventListener('click', deserializeSerial);
-
-            // Manual Edit Handling (unchanged)
             dom.outCode.addEventListener('input', () => { isManualEditMode = true; dom.outCode.classList.add('manual-edit'); dom.outWrapper.classList.add('manual-edit'); dom.outWrapper.querySelector('.manual-edit-indicator').style.display = 'inline'; clearTimeout(apiCallTimer); });
             dom.undoEditBtn.addEventListener('click', () => { if (lastGeneratedOutput) { dom.outCode.textContent = lastGeneratedOutput; isManualEditMode = false; dom.outCode.classList.remove('manual-edit'); dom.outWrapper.classList.remove('manual-edit'); dom.outWrapper.querySelector('.manual-edit-indicator').style.display = 'none'; triggerDebouncedApiCall(); showCopyStatus(dom.copyFullStatus, 'Edit Undone'); } else { showCopyStatus(dom.copyFullStatus, 'No history!'); } });
             dom.reserializeManualBtn.addEventListener('click', callReserialize);
+            dom.copyFull.addEventListener('click', async () => { try { const text = (dom.outCode?.textContent || '').trim(); if (!text || text.startsWith('[')) return showMessage('No output to copy!', 'error'); await navigator.clipboard.writeText(text); showMessage('Output copied!', 'success'); } catch(e) { console.error('Copy Output failed:', e); showMessage('Copy failed!', 'error'); } });
+            dom.copySerial.addEventListener('click', async () => { try { const text = (dom.serial_b85?.textContent || '').trim(); if (!text || text.startsWith('[')) return showMessage('No API serial to copy!', 'error'); await navigator.clipboard.writeText(text); showMessage('API serial copied!', 'success'); } catch(e) { console.error('Copy API Serial failed:', e); showMessage('Copy failed!', 'error'); } });
 
-            // Copy Buttons (unchanged, still use toasts)
-             dom.copyFull.addEventListener('click', async () => { try { const text = (dom.outCode?.textContent || '').trim(); if (!text || text.startsWith('[')) return showMessage('No output to copy!', 'error'); await navigator.clipboard.writeText(text); showMessage('Output copied!', 'success'); } catch(e) { console.error('Copy Output failed:', e); showMessage('Copy failed!', 'error'); } });
-             dom.copySerial.addEventListener('click', async () => { try { const text = (dom.serial_b85?.textContent || '').trim(); if (!text || text.startsWith('[')) return showMessage('No API serial to copy!', 'error'); await navigator.clipboard.writeText(text); showMessage('API serial copied!', 'success'); } catch(e) { console.error('Copy API Serial failed:', e); showMessage('Copy failed!', 'error'); } });
-
-             // Setup Collapsible Sections (unchanged)
-             setupCollapsibleSections();
+            setupCollapsibleSections(); // Unchanged call
 
             // Initial build and API call (unchanged)
             rebuildOutput();
@@ -555,13 +434,11 @@
 
         } catch (error) {
             showMessage(error.message, 'error', 10000);
-             document.querySelectorAll('input, select, button, [contenteditable]').forEach(el => el.disabled = true);
-             if (dom.baseSerial) dom.baseSerial.disabled = true; // Disable new textarea on error
-             if (dom.outCode) dom.outCode.contentEditable = false;
-        } finally {
-             dom.body.classList.remove('loading');
-             showLoading(false);
-        }
+            document.querySelectorAll('input, select, button, [contenteditable]').forEach(el => el.disabled = true);
+            if (dom.baseSerial) dom.baseSerial.disabled = true;
+            if (dom.outCode) dom.outCode.contentEditable = false;
+        } // REMOVED finally { showLoading(false); }
+          // REMOVED: body classList remove loading
     }
 
     // Start the app
