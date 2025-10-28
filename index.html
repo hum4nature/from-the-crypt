@@ -74,6 +74,8 @@
         .copy-status.visible { opacity: 1; }
         .manual-edit-indicator { font-size: 12px; color: var(--edit-yellow); margin-left: auto; display: none; }
         .manual-edit .manual-edit-indicator { display: inline; }
+         /* Loading state - hides main content */
+        .loading #mainContent { opacity: 0; pointer-events: none; }
     </style>
 </head>
 <body class="loading">
@@ -256,10 +258,9 @@
         copyApiStatus: document.getElementById('copyApiStatus'),
         undoEditBtn: document.getElementById('undoEdit'),
         reserializeManualBtn: document.getElementById('reserializeManual'),
-        // deserializeBtn is removed from DOM cache as it's removed from HTML
     };
 
-    // --- Utility Functions (omitted for brevity, content is correct) ---
+    // --- Utility Functions ---
     function showMessage(message, isError = true) {
         console.log(isError ? "Error:" : "Status:", message.replace(/<code>(.*?)<\/code>/g, '$1'));
         dom.messageArea.innerHTML = message;
@@ -345,16 +346,132 @@
         return finalParts;
     }
 
+    // --- Generic Builder UI Logic (omitted for brevity) ---
+    function createBuilder(key, nameField, codeField, idPrefix) {
+        const dataList = PAYLOAD[key] || [];
+        const filterInput = document.getElementById(`filter${idPrefix}`);
+        const availList = document.getElementById(`avail${idPrefix}`);
+        const selList = document.getElementById(`sel${idPrefix}`);
+        const addBtn = document.getElementById(`add${idPrefix}`);
+        const remBtn = document.getElementById(`rem${idPrefix}`);
+        const clearBtn = document.getElementById(`clear${idPrefix}`);
+
+        if (!filterInput || !availList || !selList || !addBtn || !remBtn || !clearBtn) {
+            const missing = ['filter', 'avail', 'sel', 'add', 'rem', 'clear']
+                            .filter(suffix => !document.getElementById(`${suffix}${idPrefix}`))
+                            .map(suffix => `<code>${suffix}${idPrefix}</code>`)
+                            .join(', ');
+            throw new Error(`Initialization Error: Missing DOM elements for builder prefix <code>${idPrefix}</code>: ${missing}. Check HTML IDs.`);
+        }
+
+        let selectedItems = [];
+        const codeToNameMap = {};
+
+        if (!Array.isArray(dataList)) {
+            throw new Error(`Data Validation Error: Expected an array for key <code>${key}</code> in JSON data, but got <code>${typeof dataList}</code>.`);
+        }
+
+        dataList.forEach(item => {
+            const code = item[codeField];
+            if (code === undefined || code === null) return;
+            const name = item[nameField] || 'Unnamed Item';
+            const variant = item.variant ? ` "${item.variant}"` : '';
+            const group = item.group ? ` (${item.group})` : '';
+            codeToNameMap[code] = `${name}${variant}${group}`;
+        });
+
+        function populateAvailable() {
+            const fragment = document.createDocumentFragment();
+            const query = (filterInput.value || '').toLowerCase();
+            availList.innerHTML = '';
+            (dataList || [])
+                .filter(item => {
+                    const code = item[codeField];
+                    if (code === undefined || code === null) return false;
+                    const name = codeToNameMap[code] || '';
+                    const searchText = `${name} ${code}`.toLowerCase();
+                    return !query || searchText.includes(query);
+                })
+                .forEach(item => {
+                    const code = item[codeField];
+                    const displayName = codeToNameMap[code];
+                    const o = document.createElement('option');
+                    o.value = code;
+                    o.textContent = `${displayName} ${code}`;
+                    fragment.appendChild(o);
+                });
+            availList.appendChild(fragment);
+        }
+
+        function renderSelected() {
+            const scrollState = { top: selList.scrollTop, left: selList.scrollLeft };
+            selList.innerHTML = '';
+            selectedItems.forEach((code, index) => {
+                const name = codeToNameMap[code] || 'Unknown Code';
+                const o = document.createElement('option');
+                o.value = code;
+                o.textContent = `${name} ${code}`;
+                o.dataset.index = index;
+                selList.appendChild(o);
+            });
+             selList.scrollTop = scrollState.top;
+             selList.scrollLeft = scrollState.left;
+             if (!isManualEditMode) {
+                 triggerDebouncedRebuild();
+             }
+        }
+
+
+        function addSelected() {
+            Array.from(availList.selectedOptions).forEach(opt => selectedItems.push(opt.value));
+            renderSelected();
+        }
+
+        function removeSelected() {
+            const indicesToRemove = Array.from(selList.selectedOptions)
+                                        .map(opt => parseInt(opt.dataset.index, 10))
+                                        .filter(index => !isNaN(index))
+                                        .sort((a, b) => b - a);
+            indicesToRemove.forEach(index => {
+                if (index >= 0 && index < selectedItems.length) selectedItems.splice(index, 1);
+            });
+            renderSelected();
+        }
+
+        function clearSelected() {
+            selectedItems = [];
+            renderSelected();
+        }
+
+        populateAvailable();
+
+        filterInput.addEventListener('input', populateAvailable);
+        addBtn.addEventListener('click', addSelected);
+        remBtn.addEventListener('click', removeSelected);
+        clearBtn.addEventListener('click', clearSelected);
+        selList.addEventListener('keydown', e => {
+            if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); removeSelected(); }
+        });
+        selList.addEventListener('dblclick', removeSelected);
+        availList.addEventListener('dblclick', addSelected);
+
+
+        return { getSelectedItems: () => selectedItems, clear: clearSelected };
+    }
+
+
     // --- Input Detection & Routing ---
     // Function to check if input looks like a Base85 serial (starts with @ or U, and is long enough)
     function isBase85Serial(input) {
         const cleanedInput = input.trim();
         // Base85 serials are generally long and start with known markers
         if (cleanedInput.length < 50) return false;
+        // Check for markers OR Base85 start character
         const startsWithMarker = cleanedInput.startsWith('@') || cleanedInput.startsWith('U');
-        // Simple check to ensure it doesn't look like a deserialized string header (e.g., "15, 0, 1, 50|")
-        const looksLikeBase85 = !cleanedInput.includes(',') && !cleanedInput.includes('{') && !cleanedInput.includes('|');
-        return startsWithMarker && looksLikeBase85;
+        // Check for common deserialized separators to avoid false positives
+        const looksLikePartString = cleanedInput.includes(',') || cleanedInput.includes('{') || cleanedInput.includes('|');
+        
+        return startsWithMarker && !looksLikePartString;
     }
 
     // Main handler to route input based on type
@@ -600,11 +717,8 @@
             dom.itemTypeSel.addEventListener('change', triggerDebouncedRebuild);
             dom.raritySel.addEventListener('change', triggerDebouncedRebuild);
             dom.dice.onclick = () => { rndSeed = Math.floor(1000 + Math.random()*9000); triggerDebouncedRebuild(); };
-            dom.inputSerialCode.addEventListener('input', handleInputDetection); // Use the new detection handler
+            dom.inputSerialCode.addEventListener('input', handleInputDetection);
             
-            // [dom.deserializeBtn listener removed as button is removed]
-
-
             // Manual Edit Handling
             dom.outCode.addEventListener('input', () => {
                 isManualEditMode = true;
