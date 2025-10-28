@@ -102,7 +102,7 @@
             </div>
         </div>
         <div id="out" style="margin-top:6px"><code contenteditable="plaintext-only"><!-- Output code will appear here --></code></div>
-         <button class="small" id="dice" title="New random seed">🎲 New Seed</button>
+         <button class="small" id="dice" title="New random seed" style="margin-top: 10px; width: fit-content;">🎲 New Seed</button>
     </div>
 
     <div class="card" id="apiCard" style="margin-bottom:14px">
@@ -162,7 +162,7 @@
                 <div class="buttons">
                     <button id="addAltFire" title="Add Selected">»</button>
                     <button id="remAltFire" title="Remove Selected">«</button>
-                </div>
+                </diV>
                 <select id="selAltFire" multiple size="8" aria-label="Selected Alt Fire Modes"></select>
             </div>
              <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
@@ -181,7 +181,7 @@
                 <div class="buttons">
                     <button id="addMagMode" title="Add Selected">»</button>
                     <button id="remMagMode" title="Remove Selected">«</button>
-                </div>
+                </diV>
                 <select id="selMagMode" multiple size="8" aria-label="Selected Magazine/Ammo Modes"></select>
             </div>
              <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
@@ -285,9 +285,8 @@
         }, 1500);
     }
 
-    // --- Generic Builder UI Logic (omitted for brevity, assume contents are present) ---
+    // --- Generic Builder UI Logic (for brevity, omitting the internal function bodies which are fixed) ---
     function createBuilder(key, nameField, codeField, idPrefix) {
-        // [Existing createBuilder logic, mostly unchanged but ensures calls to triggerDebouncedRebuild/renderSelected]
         const dataList = PAYLOAD[key] || [];
         const filterInput = document.getElementById(`filter${idPrefix}`);
         const availList = document.getElementById(`avail${idPrefix}`);
@@ -399,21 +398,23 @@
         return { getSelectedItems: () => selectedItems, clear: clearSelected };
     }
 
+
     // --- Condensing Logic ---
     function getPartId(code) {
+        // Extracts the ID from {ID:VALUE} or {ID}
         const match = code.match(/\{(\d+)/);
         return match ? match[1] : null;
     }
     function getPartValue(code) {
-        // Look for {ID:VALUE} pattern, capturing VALUE
+        // Extracts the VALUE from {ID:VALUE}
         const match = code.match(/:\s*([^}]+)}/);
         if (match) {
-            return match[1].trim(); // Returns VALUE
+            return match[1].trim(); 
         }
-        // Look for {ID} pattern, capturing ID. This handles single-value codes.
+        // Extracts ID from {ID}
         const singleMatch = code.match(/\{(\d+)\}/);
         if (singleMatch) {
-            return singleMatch[1]; // Returns ID (which acts as the single value)
+            return singleMatch[1]; 
         }
         return null; 
     }
@@ -423,23 +424,28 @@
         if (!parts || parts.length === 0) return [];
 
         const grouped = {};
-        const simpleParts = []; // For codes that are already condensed or are single {ID} blocks
+        const simpleParts = []; 
 
         parts.forEach(code => {
             const id = getPartId(code);
-            const value = getPartValue(code);
+            // Must check if the code contains a colon to determine if it's a value part
+            const isValuePart = code.includes(':'); 
             
-            if (id && value) {
-                // If it contains a colon, it's a multi-part structure and can be grouped
-                if (code.includes(':')) {
-                    if (!grouped[id]) grouped[id] = [];
-                    grouped[id].push(value);
+            if (id) {
+                if (isValuePart) {
+                    const value = getPartValue(code);
+                     if (value) {
+                         if (!grouped[id]) grouped[id] = [];
+                         grouped[id].push(value);
+                     } else {
+                         simpleParts.push(code); // Malformed value part
+                     }
                 } else {
-                    // It's a simple {ID} block (e.g., {217} or {999}), keep it separate
+                    // Simple {ID} block (e.g., {217} or {999})
                     simpleParts.push(code);
                 }
             } else {
-                 // Malformed code or complex block, keep as is
+                 // Malformed code, keep as is
                  simpleParts.push(code);
             }
         });
@@ -455,7 +461,6 @@
                 finalParts.push(`{${id}:${values[0]}}`);
             } else {
                 // Multiple parts: condense to {ID:[VALUE1 VALUE2 ...]}
-                // NOTE: We trust the values are clean single numbers/strings now
                 finalParts.push(`{${id}:[${values.join(' ')}]}`);
             }
         }
@@ -485,27 +490,28 @@
             
             if (inputHasContent) {
                 // --- Use User's Input as Base ---
-                // Clean the input aggressively: normalize spaces, strip internal pipes/braces for processing
-                const cleanedInput = baseInput.replace(/\s+/g, ' ').replace(/\{/g, ' {').replace(/\}/g, '} ').trim();
-                const inputParts = cleanedInput.split(/\s+/).filter(p => p.length > 0);
+                // 1a. Clean the input aggressively: remove '@', pipes, and normalize spaces.
+                const preCleanedInput = baseInput.replace(/@/g, '')
+                                                .replace(/\|/g, '')
+                                                .replace(/\s+/g, ' ').trim();
                 
-                // Separate header from existing parts in the user's input
+                const inputParts = preCleanedInput.split(/\s+/).filter(p => p.length > 0);
+                
                 const headerParts = [];
                 const inputDynamicParts = [];
 
                 let foundPart = false;
                 inputParts.forEach(p => {
+                    // Part detection: anything that starts with { and ends with } is considered a part
                     if (p.startsWith('{') && p.endsWith('}')) {
                         foundPart = true;
                         inputDynamicParts.push(p);
                     } else if (!foundPart) {
-                        headerParts.push(p);
-                    } else {
-                        // Anything after the first part block that isn't a part block is ignored or treated as malformed trail
+                        headerParts.push(p); // Header before any part block
                     }
                 });
 
-                baseHeader = headerParts.join(' ');
+                baseHeader = headerParts.join(' '); // Reconstruct cleaned header
                 
                 // Combine existing parts from input with newly selected parts
                 const dynamicList = [...inputDynamicParts, ...rawParts];
@@ -515,6 +521,7 @@
                 
                 // Recombine: Header + Condensed Parts
                 parts = [baseHeader, ...condensedDynamicParts].filter(p => p.length > 0);
+
 
             } else {
                 // --- Generated Base Serial (If Input is Empty) ---
@@ -533,7 +540,6 @@
             }
             
             // 3. Final Assembly: Join and add the mandatory pipe
-            // Ensure no excess spaces or pipes from empty components
             const newOutput = parts.join(' ').trim() + '|';
             
             lastGeneratedOutput = newOutput;
@@ -613,7 +619,7 @@
             // Clear selections (this triggers rebuildOutput)
             Object.values(builders).forEach(b => b.clear());
 
-            showMessage('✅ Serial deserialized and loaded!', false);
+            showMessage('✅ Serial deserialized and loaded! Now editing output.', false);
 
         } catch (err) {
             showMessage(`Deserialization Error: <code>${err.message}</code>. Check Base85 syntax.`, true);
