@@ -25,91 +25,44 @@
         .wrap { white-space: normal; word-break: break-word; }
 
         /* Generic Builder Style */
-        .builderSection .row.titleRow { justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: nowrap; /* Prevent title/controls wrapping */ }
-        .builderSection .row.titleRow > div:first-child { font-weight: 700; color: var(--muted); font-size: 14px; white-space: nowrap; } /* Section title */
-        .builderSection .row.filterRow { justify-content: flex-end; gap: 8px; flex-grow: 1; /* Allow controls to take space */ }
-        .builderSection .row.filterRow input[type="text"] { flex-grow: 1; min-width: 150px; } /* Allow filter to grow */
-        .builderSection .row.filterRow input.delimiter { width: 100px; flex-grow: 0; display: none; /* Hide delimiter for now */ }
+        .builderSection .row.titleRow { justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: nowrap; }
+        .builderSection .row.titleRow > div:first-child { font-weight: 700; color: var(--muted); font-size: 14px; white-space: nowrap; }
+        .builderSection .row.filterRow { justify-content: flex-end; gap: 8px; flex-grow: 1; }
+        .builderSection .row.filterRow input[type="text"] { flex-grow: 1; min-width: 150px; }
+        .builderSection .row.filterRow input.delimiter { width: 100px; flex-grow: 0; display: none; }
         .builderSection .row.selects { margin-top: 8px; display: flex; gap: 10px; align-items: stretch; }
-        .builderSection select { flex: 1; min-height: 220px; width: 100%; border-radius: 8px;} /* Ensure selects take full width */
+        .builderSection select { flex: 1; min-height: 220px; width: 100%; border-radius: 8px;}
         .builderSection .buttons { display: flex; flex-direction: column; gap: 8px; justify-content: center; width: 56px; align-items: center; }
         .builderSection .tip { margin-top: 10px; font-size: 12px; color: var(--muted); }
 
-        .outCard code { display: block; overflow: auto; width: 100%; white-space: pre-wrap; word-break: break-all; max-height: 200px; background: #0c121b; padding: 10px; border-radius: 8px; border: 2px solid var(--line); transition: border-color 0.3s ease;}
+        /* Output Box Styling */
+        .outCard code {
+            display: block; overflow: auto; width: 100%; white-space: pre-wrap; word-break: break-all;
+            max-height: 100px; /* Reduced max height */
+            min-height: 50px;
+            background: #0c121b; padding: 10px; border-radius: 8px; border: 2px solid var(--line); transition: border-color 0.3s ease;
+        }
         .outCard code[contenteditable="true"]:focus { outline: none; border-color: var(--edit-yellow); }
-        .outCard code.manual-edit { border-color: var(--edit-yellow); } /* Style when manually edited */
+        .outCard code.manual-edit { border-color: var(--edit-yellow); }
 
         #apiCard code { max-height: 100px; }
-
-        /* Sticky behavior */
         .sticky { position: sticky; top: 10px; z-index: 20; }
-
-         /* Error/Status Message Styling */
-        #message-area {
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            display: none; /* Hidden by default */
-            font-size: 14px;
-            font-weight: bold;
-            transition: opacity 0.3s ease-in-out;
-        }
-        #message-area.error { background-color: var(--danger-red); color: white; }
-        #message-area.success { background-color: var(--success-green); color: white; }
-        #message-area.visible { display: block; }
-        #message-area code { background: rgba(0,0,0,0.2); padding: 2px 4px; border-radius: 4px; font-size: 0.9em;}
-
-        /* Loading state */
-        .loading #mainContent { opacity: 0.5; pointer-events: none; }
-
-
-        /* Mobile adjustments */
-        @media (max-width: 1024px) {
-            body { padding: 14px; }
-            .card { padding: 12px; border-radius: 12px; }
-            .row { gap: 8px; }
-            .sticky { position: static !important; } /* Disable sticky on smaller screens */
+        
+         /* Input Serial Box Styling */
+        #inputSerialCode {
+            width: 100%; min-height: 40px; margin-top: 6px; padding: 8px 10px;
+            background: #141c27; /* Slightly lighter background */
+            color: var(--ink); border: 1px solid var(--line); border-radius: 8px;
+            font-family: monospace; font-size: 0.9em;
         }
 
+        /* Responsive Adjustments */
         @media (max-width: 768px) {
-            body { padding: 12px; font-size: 15px;}
-            h2 { font-size: 18px; margin-bottom: 10px; }
-
-            .builderSection .row.titleRow { flex-wrap: wrap; } /* Allow title and controls to wrap */
-            .builderSection .row.filterRow { width: 100%; justify-content: space-between; margin-top: 8px;} /* Full width controls */
-             .builderSection .row.filterRow input[type="text"] { min-width: 120px; }
-             .builderSection .row.filterRow input.delimiter { width: 80px; display: none; } /* Hide delimiter */
-
-            .builderSection .row.selects { flex-direction: column; gap: 8px; }
-            .builderSection select { min-height: 25vh; }
-            .builderSection .buttons { flex-direction: row; width: 100%; }
-
-            .outCard code, #apiCard code { max-height: 25vh; }
-            label { font-size: 13px; }
-            button.small { min-height: 40px; min-width: 40px; }
-            .outCard .row { flex-wrap: nowrap; } /* Keep output controls together */
+            .outCard code { max-height: 120px; }
+            .outCard .row { flex-wrap: wrap; }
+            .outCard .row button.small { min-height: 30px; } /* Smaller button size */
+            #dice { padding: 4px 8px !important; font-size: 12px !important; } /* Smaller dice button text */
         }
-
-        @media (max-width: 480px) {
-            h2 { font-size: 16px; }
-            .row { gap: 6px; }
-            .builderSection select { min-height: 22vh; }
-             .builderSection .row.filterRow input[type="text"] { min-width: 100px; }
-             .builderSection .row.filterRow input.delimiter { width: 70px; display: none; } /* Hide delimiter */
-            .outCard .row { gap: 4px; } /* Reduce gap for smaller buttons */
-            button.small { font-size: 12px; min-width: auto; padding: 6px 8px;}
-        }
-         /* Simple Status Message Styling (replaces .status) */
-        .copy-status {
-            font-size: 12px;
-            color: var(--success-green);
-            margin-left: 8px;
-            opacity: 0;
-            transition: opacity 0.3s ease-out;
-        }
-        .copy-status.visible { opacity: 1; }
-        .manual-edit-indicator { font-size: 12px; color: var(--edit-yellow); margin-left: auto; display: none; }
-        .manual-edit .manual-edit-indicator { display: inline; } /* Show indicator when edited */
     </style>
 </head>
 <body class="loading"> <!-- Start with loading class -->
@@ -117,6 +70,12 @@
     <div id="message-area"></div> <!-- Universal Message/Error display area -->
     <h2>BL4 Weapon Part Editor (Hosted)</h2>
 
+    <!-- Input Serial Section -->
+    <div class="card" id="inputCard">
+        <label>Input Base Serial String (Editable)</label>
+        <code id="inputSerialCode" contenteditable="plaintext-only" title="Enter a base serial string here. Selected parts will be appended to this string."></code>
+    </div>
+    
     <!-- Output + API (Sticky) -->
     <div class="card outCard sticky">
         <div class="row" style="justify-content: space-between; align-items: center;">
@@ -128,7 +87,6 @@
                  <span id="copyFullStatus" class="copy-status"></span>
             </div>
         </div>
-        <!-- Added contenteditable="plaintext-only" for better plain text pasting -->
         <div id="out" style="margin-top:6px"><code contenteditable="plaintext-only"><!-- Output code will appear here --></code></div>
          <button class="small" id="dice" title="New random seed" style="margin-top: 10px; width: fit-content;">🎲 New Seed</button>
     </div>
@@ -176,13 +134,12 @@
              </div>
         </div>
 
-        <!-- Alt Firing Modes Builder -->
+        <!-- Builder Sections (Removed delimiter inputs in HTML for simplicity) -->
         <div class="card builderSection" data-key="altFireModes" data-name-field="name" data-code-field="code" data-id-prefix="AltFire">
             <div class="row titleRow">
                 <div>Alt Fire Mode Variations</div>
                 <div class="row filterRow">
                     <input id="filterAltFire" placeholder="Filter..." type="text"/>
-                    <input id="delimAltFire" class="delimiter" placeholder="Delimiter" title="Output Delimiter" value=" " type="text"/> <!-- Keep but hide via CSS -->
                     <button class="small" id="clearAltFire" title="Clear Selected">❌</button>
                 </div>
             </div>
@@ -194,16 +151,14 @@
                 </div>
                 <select id="selAltFire" multiple size="8" aria-label="Selected Alt Fire Modes"></select>
             </div>
-             <div class="tip">Hold Ctrl/Cmd/Shift to select multiple. Use Del/Backspace to remove from selected list. Double-click to add/remove.</div>
+             <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
         </div>
 
-        <!-- Magazine / Ammo Mode Builder -->
         <div class="card builderSection" data-key="magazineModes" data-name-field="name" data-code-field="code" data-id-prefix="MagMode">
              <div class="row titleRow">
                 <div>Magazine / Ammo Mode Variations</div>
                  <div class="row filterRow">
                     <input id="filterMagMode" placeholder="Filter..." type="text"/>
-                    <input id="delimMagMode" class="delimiter" placeholder="Delimiter" title="Output Delimiter" value=" " type="text"/> <!-- Keep but hide via CSS -->
                     <button class="small" id="clearMagMode" title="Clear Selected">❌</button>
                 </div>
             </div>
@@ -215,16 +170,14 @@
                 </div>
                 <select id="selMagMode" multiple size="8" aria-label="Selected Magazine/Ammo Modes"></select>
             </div>
-             <div class="tip">Hold Ctrl/Cmd/Shift to select multiple. Use Del/Backspace to remove from selected list. Double-click to add/remove.</div>
+             <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
         </div>
 
-        <!-- Legendary Perk Part Variations Builder -->
         <div class="card builderSection" data-key="legendaryPerks" data-name-field="name" data-code-field="code" data-id-prefix="LegPerk">
              <div class="row titleRow">
                  <div>Legendary Perk Part Variations</div>
                  <div class="row filterRow">
                     <input id="filterLegPerk" placeholder="Filter..." type="text"/>
-                    <input id="delimLegPerk" class="delimiter" placeholder="Delimiter" title="Output Delimiter" value=" " type="text"/> <!-- Keep but hide via CSS -->
                     <button class="small" id="clearLegPerk" title="Clear Selected">❌</button>
                 </div>
             </div>
@@ -236,16 +189,14 @@
                 </div>
                 <select id="selLegPerk" multiple size="8" aria-label="Selected Legendary Perks"></select>
             </div>
-             <div class="tip">Hold Ctrl/Cmd/Shift to select multiple. Use Del/Backspace to remove from selected list. Double-click to add/remove.</div>
+             <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
         </div>
 
-        <!-- Ordnance Legendary Perks Builder -->
         <div class="card builderSection" data-key="ordnancePerks" data-name-field="name" data-code-field="code" data-id-prefix="OrdPerk">
              <div class="row titleRow">
                 <div>Ordnance Legendary Perks (Heavy/Grenade)</div>
                  <div class="row filterRow">
                     <input id="filterOrdPerk" placeholder="Filter..." type="text"/>
-                    <input id="delimOrdPerk" class="delimiter" placeholder="Delimiter" title="Output Delimiter" value=" " type="text"/> <!-- Keep but hide via CSS -->
                     <button class="small" id="clearOrdPerk" title="Clear Selected">❌</button>
                 </div>
             </div>
@@ -257,7 +208,7 @@
                 </div>
                 <select id="selOrdPerk" multiple size="8" aria-label="Selected Ordnance Perks"></select>
             </div>
-             <div class="tip">Hold Ctrl/Cmd/Shift to select multiple. Use Del/Backspace to remove from selected list. Double-click to add/remove.</div>
+             <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
         </div>
 
     </div> <!-- End mainContent -->
@@ -266,12 +217,12 @@
 <script>
     // Global variables
     let PAYLOAD = {};
-    const builders = {}; // Stores builder instances { key: instance }
+    const builders = {};
     let rndSeed = Math.floor(1000 + Math.random() * 9000);
-    let apiCallTimer; // Debounce timer for API calls
-    let rebuildTimer; // Debounce timer for rebuildOutput
-    let lastGeneratedOutput = ''; // Store the last output generated by the script
-    let isManualEditMode = false; // Track if user is editing the output box
+    let apiCallTimer;
+    let rebuildTimer;
+    let lastGeneratedOutput = '';
+    let isManualEditMode = false;
 
     // --- DOM Elements Cache ---
     const dom = {
@@ -279,8 +230,9 @@
         messageArea: document.getElementById('message-area'),
         itemTypeSel: document.getElementById('itemTypeSel'),
         raritySel: document.getElementById('raritySel'),
-        outWrapper: document.getElementById('out'), // Get the wrapper div
+        outWrapper: document.getElementById('out'),
         outCode: document.querySelector('#out code'),
+        inputSerialCode: document.getElementById('inputSerialCode'), // New: Input Base Code
         serial_b85: document.getElementById('serial_b85'),
         additionalData: document.getElementById('additionalData'),
         copyFull: document.getElementById('copyFull'),
@@ -318,7 +270,7 @@
         }, 1500);
     }
 
-    // --- Generic Builder UI Logic (minor update for robustness) ---
+    // --- Generic Builder UI Logic (unchanged from previous working version) ---
     function createBuilder(key, nameField, codeField, idPrefix) {
         const dataList = PAYLOAD[key] || [];
         const filterInput = document.getElementById(`filter${idPrefix}`);
@@ -353,10 +305,9 @@
         });
 
         function populateAvailable() {
-            // Optimization: DocumentFragment to reduce reflows
             const fragment = document.createDocumentFragment();
             const query = (filterInput.value || '').toLowerCase();
-            availList.innerHTML = ''; // Clear previous options efficiently
+            availList.innerHTML = '';
             (dataList || [])
                 .filter(item => {
                     const code = item[codeField];
@@ -371,11 +322,10 @@
                     const o = document.createElement('option');
                     o.value = code;
                     o.textContent = `${displayName} ${code}`;
-                    fragment.appendChild(o); // Add to fragment
+                    fragment.appendChild(o);
                 });
-            availList.appendChild(fragment); // Append fragment once
+            availList.appendChild(fragment);
         }
-
 
         function renderSelected() {
             const scrollState = { top: selList.scrollTop, left: selList.scrollLeft };
@@ -390,7 +340,7 @@
             });
              selList.scrollTop = scrollState.top;
              selList.scrollLeft = scrollState.left;
-             if (!isManualEditMode) { // Only trigger rebuild if not manually editing
+             if (!isManualEditMode) {
                  triggerDebouncedRebuild();
              }
         }
@@ -432,11 +382,10 @@
 
         return { getSelectedItems: () => selectedItems, clear: clearSelected };
     }
-
-    // --- Output Builder (Corrected Format and Condensing Logic) ---
-
-    // Utility function to get the first ID from a part code, e.g., "{17:45}" -> "17"
+    
+    // --- Condensing Logic ---
     function getPartId(code) {
+        // Matches the ID in {ID:VALUE} or {ID}
         const match = code.match(/\{(\d+)/);
         return match ? match[1] : null;
     }
@@ -444,7 +393,10 @@
     function condenseParts(parts) {
         if (!parts || parts.length === 0) return [];
 
-        const grouped = {}; // { 'ID': ['{ID:VAL}', '{ID:VAL}', ...] }
+        // Group parts by their primary ID
+        const grouped = {};
+        const individualParts = [];
+
         parts.forEach(code => {
             const id = getPartId(code);
             if (id) {
@@ -453,91 +405,119 @@
                 }
                 grouped[id].push(code);
             } else {
-                // For parts that don't match {ID:VALUE} pattern (e.g. "{999}"), treat them as individual blocks
-                if (!grouped['__single__']) {
-                    grouped['__single__'] = [];
-                }
-                grouped['__single__'].push(code);
+                // If it doesn't match the {ID:VALUE} format (e.g., plain {999} or malformed)
+                individualParts.push(code);
             }
         });
 
-        const finalParts = [];
+        const condensedParts = [];
 
-        // Process grouped parts
         for (const id in grouped) {
-            if (id === '__single__') {
-                finalParts.push(...grouped[id]);
-                continue;
-            }
-
             const codes = grouped[id];
             if (codes.length === 1) {
-                // If only one, output as simple code: {ID:VALUE}
-                finalParts.push(codes[0]);
+                // If only one, keep as simple code: {ID:VALUE}
+                condensedParts.push(codes[0]);
             } else {
                 // If multiple, condense: {ID:[VALUE1 VALUE2 ...]}
                 const values = codes.map(code => {
                     // Extract value: "{ID:VALUE}" -> "VALUE"
                     const match = code.match(/:\s*([^}]+)/);
-                    return match ? match[1].trim() : null;
-                }).filter(v => v !== null).map(v => v.replace(/\{|\}/g, '')); // Remove internal braces/pipes if present
+                    if (match) {
+                        return match[1].trim(); // Get the part after the colon
+                    }
+                    // If it's a simple {ID} block (shouldn't happen for condensing, but safe fallback)
+                    return ''; 
+                }).filter(v => v !== ''); 
 
                 if (values.length > 0) {
-                    finalParts.push(`{${id}:[${values.join(' ')}]}`);
+                    // Join values with space as the delimiter inside the array brackets
+                    condensedParts.push(`{${id}:[${values.join(' ')}]}`);
                 }
             }
         }
-
-        return finalParts;
+        
+        // Add back any parts that weren't condensed
+        condensedParts.push(...individualParts);
+        return condensedParts;
     }
 
 
     function rebuildOutput() {
         try {
             const allSelectedParts = [];
-            // --- Base Serial Structure (Placeholder - Needs Real BL4 Logic) ---
-            let manufacturerCode = 0;
-            let itemTypeId = 0;
-            let rarityPartCode = '';
+            const baseInput = dom.inputSerialCode.textContent.trim();
 
-            // Use simple placeholders for base data
-            const typeMap = { gun: 1, shield: 2, grenade: 3, classmod: 4, enhancement: 5 };
-            itemTypeId = typeMap[dom.itemTypeSel.value] || 0;
-            const rarityCodeMap = { common: 217, uncommon: 218, rare: 219, epic: 220, legendary: 999 };
-            rarityPartCode = `{${rarityCodeMap[dom.raritySel.value] || 0}}`;
+            let baseParts = [];
+            let header = '';
+            let rarityPart = '';
+            let dynamicParts = [];
 
-            // 1. Construct the base part (HIGHLY SPECULATIVE)
-            allSelectedParts.push(`${manufacturerCode}, ${itemTypeId}, 1, 50| 2, ${rndSeed}||`);
-            allSelectedParts.push(rarityPartCode);
-            // --- End Base Serial Structure ---
+            if (baseInput) {
+                // Use the user's input as the base
+                baseParts = baseInput.split(/\s+/).filter(p => p.length > 0);
+                
+                // Identify the main header and potentially the rarity part for separation
+                // This is a simplification; a full parser would be required for robust base parsing.
+                if (baseParts.length > 0) {
+                    // Assume the base is everything up to the first block {X...} or the last pipe |
+                    const splitIndex = baseParts.findIndex(p => p.startsWith('{'));
 
-            // 2. Collect all selected parts
+                    if (splitIndex !== -1) {
+                         header = baseParts.slice(0, splitIndex).join(' ');
+                         dynamicParts = baseParts.slice(splitIndex);
+                    } else {
+                        header = baseParts.join(' ').replace(/\|$/, ''); // Keep pipe logic separate
+                    }
+                    
+                    // Clear the output of any existing pipes or spaces before appending
+                    header = header.replace(/\|$/, '').trim(); 
+                    
+                } else {
+                     header = '';
+                }
+
+                allSelectedParts.push(header);
+                allSelectedParts.push(...dynamicParts);
+
+            } else {
+                // --- Generated Base Serial (Placeholder) ---
+                const typeMap = { gun: 1, shield: 2, grenade: 3, classmod: 4, enhancement: 5 };
+                const itemTypeId = typeMap[dom.itemTypeSel.value] || 0;
+                const rarityCodeMap = { common: 217, uncommon: 218, rare: 219, epic: 220, legendary: 999 };
+                rarityPart = `{${rarityCodeMap[dom.raritySel.value] || 0}}`;
+                
+                // Base Header Structure (HIGHLY SPECULATIVE)
+                header = `0, ${itemTypeId}, 1, 50| 2, ${rndSeed}||`;
+
+                allSelectedParts.push(header);
+                allSelectedParts.push(rarityPart);
+            }
+
+            // 2. Collect all selected parts from builders (always appended)
             document.querySelectorAll('.builderSection').forEach(section => {
                  const key = section.dataset.key;
                  if (builders[key] && typeof builders[key].getSelectedItems === 'function') {
-                     allSelectedParts.push(...builders[key].getSelectedItems()); // Add all codes
+                     allSelectedParts.push(...builders[key].getSelectedItems());
                  }
             });
-
-            // 3. Apply condensation and reformat to string
-            const dynamicParts = allSelectedParts.splice(2); // Keep base header and rarity, process dynamic parts
-            const condensedParts = condenseParts(dynamicParts);
             
-            // Recombine header, rarity, and condensed parts
-            const parts = [
-                allSelectedParts[0].trim(), // Base Header
-                allSelectedParts[1].trim(), // Rarity Part
-                ...condensedParts
-            ];
-
-            // 4. Join parts with spaces and add the final pipe
+            // 3. Separate header/base from dynamic parts for condensation
+            const basePart = allSelectedParts[0].trim();
+            const dynamicList = allSelectedParts.slice(1);
+            
+            // 4. Condense the dynamic parts
+            const condensedDynamicParts = condenseParts(dynamicList);
+            
+            // 5. Recombine, join with space, and add the final pipe
+            const parts = [basePart, ...condensedDynamicParts];
             const newOutput = parts.join(' ').trim() + '|';
-            lastGeneratedOutput = newOutput; // Store this generated version
+            
+            lastGeneratedOutput = newOutput;
 
             // Update textContent only if the user is not currently editing it
             if (document.activeElement !== dom.outCode) {
                  dom.outCode.textContent = newOutput;
-                 if (isManualEditMode) { // If reverting from manual edit, turn off indicator
+                 if (isManualEditMode) {
                      isManualEditMode = false;
                      dom.outCode.classList.remove('manual-edit');
                      dom.outWrapper.classList.remove('manual-edit');
@@ -554,25 +534,22 @@
     }
 
 
-     // --- Debounced Triggers ---
+     // --- Debounced Triggers and API Logic (Unchanged) ---
      function triggerDebouncedRebuild() {
          clearTimeout(rebuildTimer);
-         rebuildTimer = setTimeout(rebuildOutputAndCallApi, 50); // Short delay for UI updates
+         rebuildTimer = setTimeout(rebuildOutputAndCallApi, 50);
      }
      function triggerDebouncedApiCall() {
          clearTimeout(apiCallTimer);
-         // Only trigger API if not in manual edit mode
          if (!isManualEditMode) {
-             apiCallTimer = setTimeout(callReserialize, 400); // 400ms delay
+             apiCallTimer = setTimeout(callReserialize, 400);
          }
      }
-     // Combines rebuild and API call trigger
     function rebuildOutputAndCallApi() {
         rebuildOutput();
-        triggerDebouncedApiCall(); // Schedules API call if applicable
+        triggerDebouncedApiCall();
     }
-
-    // --- API Call Logic (Minor update to handle manual edit state) ---
+    
     async function callReserialize() {
       if (dom.serial_b85) dom.serial_b85.textContent = 'Fetching...';
       if (dom.additionalData) dom.additionalData.textContent = '';
@@ -617,7 +594,7 @@
     async function initializeApp() {
         dom.body.classList.add('loading');
         try {
-            // Check for required JSON file (bl4_parts_data.json)
+            // Check for required JSON file
             const response = await fetch('bl4_parts_data.json');
             if (!response.ok) throw new Error(`HTTP error ${response.status} fetching <code>bl4_parts_data.json</code>. You must host this file on GitHub Pages alongside index.html.`);
 
@@ -644,13 +621,14 @@
             dom.itemTypeSel.addEventListener('change', triggerDebouncedRebuild);
             dom.raritySel.addEventListener('change', triggerDebouncedRebuild);
             dom.dice.onclick = () => { rndSeed = Math.floor(1000 + Math.random()*9000); triggerDebouncedRebuild(); };
+            dom.inputSerialCode.addEventListener('input', triggerDebouncedRebuild); // New: Listen to base input
 
             // Manual Edit Handling
             dom.outCode.addEventListener('input', () => {
                 isManualEditMode = true;
                 dom.outCode.classList.add('manual-edit');
                 dom.outWrapper.classList.add('manual-edit');
-                clearTimeout(apiCallTimer); // Stop auto API calls on manual edit
+                clearTimeout(apiCallTimer);
             });
 
             dom.undoEditBtn.addEventListener('click', () => {
@@ -668,7 +646,22 @@
 
             dom.reserializeManualBtn.addEventListener('click', callReserialize);
 
-            // Copy Buttons are wired above
+            dom.copyFull.addEventListener('click', async () => {
+                try {
+                    const text = (dom.outCode?.textContent || '').trim();
+                    if (!text || text.startsWith('[')) return showCopyStatus(dom.copyFullStatus, 'No output!');
+                    await navigator.clipboard.writeText(text);
+                    showCopyStatus(dom.copyFullStatus, 'Copied!');
+                } catch(e) { console.error('Copy Output failed:', e); showCopyStatus(dom.copyFullStatus, 'Error!'); }
+             });
+             dom.copySerial.addEventListener('click', async () => {
+                try {
+                    const text = (dom.serial_b85?.textContent || '').trim();
+                     if (!text || text.startsWith('[')) return showCopyStatus(dom.copyApiStatus, 'No serial!');
+                    await navigator.clipboard.writeText(text);
+                     showCopyStatus(dom.copyApiStatus, 'Copied!');
+                } catch(e) { console.error('Copy API Serial failed:', e); showCopyStatus(dom.copyApiStatus, 'Error!'); }
+             });
 
             // Initial build and API call
             rebuildOutput();
