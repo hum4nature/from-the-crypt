@@ -10,42 +10,21 @@
         * { box-sizing: border-box; }
         body { font-family: 'Inter', system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--ink); padding: 0; /* Remove body padding */ font-size: 16px; line-height: 1.5; margin: 0; }
 
-        /* --- NEW TAB NAVIGATION STYLES --- */
-        .tab-nav {
-            background-color: var(--card); /* Match card background */
-            border-bottom: 1px solid var(--line);
-            padding: 0 18px; /* Horizontal padding like body had */
-            margin-bottom: 18px; /* Space below nav */
-            display: flex;
-            gap: 10px;
-        }
-        .tab-link {
-            display: inline-block;
-            padding: 12px 16px;
-            color: var(--muted);
-            text-decoration: none;
-            border-bottom: 3px solid transparent; /* Placeholder for active state */
-            transition: color 0.2s ease, border-color 0.2s ease;
-            font-weight: 500;
-            font-size: 15px;
-        }
-        .tab-link:hover {
-            color: var(--ink);
-        }
-        .tab-link.active {
-            color: var(--accent-orange);
-            border-bottom-color: var(--accent-orange);
-        }
-        /* --- END NEW TAB STYLES --- */
+        /* --- TAB NAVIGATION STYLES --- */
+        .tab-nav { background-color: var(--card); border-bottom: 1px solid var(--line); padding: 0 18px; margin-bottom: 18px; display: flex; gap: 10px; }
+        .tab-link { display: inline-block; padding: 12px 16px; color: var(--muted); text-decoration: none; border-bottom: 3px solid transparent; transition: color 0.2s ease, border-color 0.2s ease; font-weight: 500; font-size: 15px; }
+        .tab-link:hover { color: var(--ink); }
+        .tab-link.active { color: var(--accent-orange); border-bottom-color: var(--accent-orange); }
+        /* --- END TAB STYLES --- */
 
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 18px 18px 18px; /* Padding moved here */ } /* Added container padding */
-        h2 { margin: 0 0 14px; border-bottom: 1px solid var(--line); padding-bottom: 8px; font-weight: 700; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 18px 18px 18px; /* Padding moved here */ }
+        h2 { margin: 0 0 14px; border-bottom: 1px solid var(--line); padding-bottom: 8px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; } /* Make h2 a flex container */
         .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
         .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; margin-bottom: 14px; }
         label { color: var(--muted); font-size: 12px; display: block; margin-bottom: 6px; font-weight: 400; }
         select, input, button { background: #0f1720; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 16px; font-family: inherit; }
         input::placeholder { color: var(--muted); opacity: 0.7; }
-        select[multiple] { padding: 4px; /* Adjust padding for multi-select */ }
+        select[multiple] { padding: 4px; }
         select:focus, input:focus, button:focus { outline: 2px solid var(--accent-orange); outline-offset: 1px; border-color: var(--accent-orange); }
         code { background:#0c121b; border: 1px solid var(--line); padding: 4px 8px; display: inline-block; border-radius: 6px; font-size: 0.9em; font-family: monospace; }
         button { cursor: pointer; background-color: #2c2c4d; transition: background-color 0.2s ease; }
@@ -54,81 +33,113 @@
         button.small { padding: 6px 10px; border-radius: 8px; font-size: 14px; min-height: 38px; min-width: 38px; }
         .wrap { white-space: normal; word-break: break-word; }
 
+        /* --- NEW COLLAPSIBLE STYLES --- */
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            margin-top: 0; /* Remove potential margin if header had bottom margin */
+        }
+        .collapsible-content.expanded {
+            max-height: 1000px; /* Adjust if content might be taller */
+            margin-top: 14px; /* Restore spacing when expanded */
+        }
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-size: 1.5em; /* Larger +/- symbol */
+            line-height: 1;
+            padding: 0 5px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s, color 0.2s;
+            margin-left: 10px; /* Space between title and button */
+        }
+        .toggle-btn:hover {
+            opacity: 1;
+        }
+        .toggle-btn::before {
+            content: '[+]';
+            color: var(--success-green);
+        }
+        .toggle-btn.expanded::before {
+            content: '[-]';
+            color: var(--danger-red);
+        }
+        /* Adjust builder titleRow to accommodate button */
+        .builderSection .row.titleRow {
+            justify-content: space-between; /* Keep space-between */
+            align-items: center;
+            /* No bottom border here, border is on the h2 equivalent (the first div) */
+            padding-bottom: 8px;
+            margin-bottom: 0; /* Remove margin as content wrapper handles spacing */
+            border-bottom: 1px solid var(--line);
+        }
+        .builderSection .row.titleRow > div:first-child {
+             /* Title text */
+            font-weight: 700; color: var(--muted); font-size: 1.1em; /* Make title slightly larger */
+             border-bottom: none; /* Remove duplicate border */
+             padding-bottom: 0; margin-bottom: 0;
+             flex-grow: 1; /* Allow title to take space */
+        }
+         /* Ensure filter row alignment is maintained */
+        .builderSection .row.filterRow { flex-grow: 0; flex-shrink: 0; width: auto; }
+
+        /* --- END COLLAPSIBLE STYLES --- */
+
         /* Generic Builder Style */
-        .builderSection .row.titleRow { justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: nowrap; }
-        .builderSection .row.titleRow > div:first-child { font-weight: 700; color: var(--muted); font-size: 14px; white-space: nowrap; }
-        .builderSection .row.filterRow { justify-content: flex-end; gap: 8px; flex-grow: 1; }
-        .builderSection .row.filterRow input[type="text"] { flex-grow: 1; min-width: 150px; }
-        .builderSection .row.filterRow input.delimiter { width: 100px; flex-grow: 0; display: none; }
         .builderSection .row.selects { margin-top: 8px; display: flex; gap: 10px; align-items: stretch; }
         .builderSection select { flex: 1; min-height: 220px; width: 100%; border-radius: 8px;}
         .builderSection .buttons { display: flex; flex-direction: column; gap: 8px; justify-content: center; width: 56px; align-items: center; }
         .builderSection .tip { margin-top: 10px; font-size: 12px; color: var(--muted); }
 
         /* Output Box Styling */
-        .outCard code {
-            display: block; overflow: auto; width: 100%; white-space: pre-wrap; word-break: break-all;
-            max-height: 100px; /* Reduced max height */
-            min-height: 50px;
-            background: #0c121b; padding: 10px; border-radius: 8px; border: 2px solid var(--line); transition: border-color 0.3s ease;
-        }
+        .outCard code { display: block; overflow: auto; width: 100%; white-space: pre-wrap; word-break: break-all; max-height: 100px; min-height: 50px; background: #0c121b; padding: 10px; border-radius: 8px; border: 2px solid var(--line); transition: border-color 0.3s ease; }
         .outCard code[contenteditable="true"]:focus { outline: none; border-color: var(--edit-yellow); }
         .outCard code.manual-edit { border-color: var(--edit-yellow); }
-
         #apiCard code { max-height: 100px; }
-        .sticky { position: sticky; top: 0; /* Adjust to 0 since body padding removed */ z-index: 20; background: var(--bg); /* Add bg to prevent content showing through */} /* Made sticky start from top */
+        .sticky { position: sticky; top: 0; z-index: 20; background: var(--bg); }
 
          /* Input Serial Box Styling */
-        #inputSerialCode {
-            width: 100%; min-height: 40px; margin-top: 6px; padding: 8px 10px;
-            background: #141c27; /* Slightly lighter background */
-            color: var(--ink); border: 1px solid var(--line); border-radius: 8px;
-            font-family: monospace; font-size: 0.9em;
-        }
+        #inputSerialCode { width: 100%; min-height: 40px; margin-top: 6px; padding: 8px 10px; background: #141c27; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; font-family: monospace; font-size: 0.9em; }
          /* Universal Message Area Styling */
-        #message-area {
-            padding: 10px 18px; /* Match container padding */
-            margin-bottom: 14px;
-            border-radius: 8px;
-            font-size: 14px;
-            display: none; /* Hidden by default */
-            border: 1px solid transparent;
-        }
+        #message-area { padding: 10px 18px; margin-bottom: 14px; border-radius: 8px; font-size: 14px; display: none; border: 1px solid transparent; }
         #message-area.visible { display: block; }
         #message-area.error { background-color: rgba(231, 76, 60, 0.2); border-color: var(--danger-red); color: var(--danger-red); }
         #message-area.success { background-color: rgba(40, 167, 69, 0.2); border-color: var(--success-green); color: var(--success-green); }
         .copy-status { font-size: 12px; color: var(--muted); margin-left: 5px; opacity: 0; transition: opacity 0.3s ease; }
         .copy-status.visible { opacity: 1; }
-
         .manual-edit-indicator { display: none; font-size: 11px; color: var(--edit-yellow); margin-left: 8px; }
         .outCard.manual-edit .manual-edit-indicator { display: inline; }
 
-
         /* Responsive Adjustments */
         @media (max-width: 768px) {
-            .tab-nav { padding: 0 10px; margin-bottom: 10px; } /* Adjust padding */
-            .tab-link { padding: 10px 8px; font-size: 14px; } /* Smaller tabs */
-            .container { padding: 0 10px 10px 10px; } /* Adjust container padding */
+            .tab-nav { padding: 0 10px; margin-bottom: 10px; }
+            .tab-link { padding: 10px 8px; font-size: 14px; }
+            .container { padding: 0 10px 10px 10px; }
             .outCard code { max-height: 120px; }
             .outCard .row { flex-wrap: wrap; }
-            .outCard .row button.small { min-height: 30px; } /* Smaller button size */
-            #dice { padding: 4px 8px !important; font-size: 12px !important; } /* Smaller dice button text */
+            .outCard .row button.small { min-height: 30px; }
+            #dice { padding: 4px 8px !important; font-size: 12px !important; }
+            /* Adjust builder title row for smaller screens */
+             .builderSection .row.titleRow { flex-wrap: wrap; }
+             .builderSection .row.filterRow { width: 100%; justify-content: space-between; margin-top: 5px;}
         }
     </style>
 </head>
-<body class="loading"> <!-- Start with loading class -->
+<body class="loading">
 
-    <!-- NEW TAB NAVIGATION BAR -->
+    <!-- TAB NAVIGATION BAR -->
     <nav class="tab-nav">
         <a href="Deseralizer Comparator.html" class="tab-link">Comparator & Editor</a>
         <a href="Deseralizer Comparator.html#deserializer" class="tab-link">Deserializer</a>
-        <a href="bl4_decoder.html" class="tab-link active">Workstation</a> <!-- Use filename or # -->
+        <a href="bl4_decoder.html" class="tab-link active">Workstation</a>
     </nav>
-    <!-- END TAB NAVIGATION BAR -->
 
 <div class="container">
-    <div id="message-area"></div> <!-- Universal Message/Error display area -->
-    <h2>BL4 Weapon Part Editor (Workstation)</h2> <!-- Added subtitle -->
+    <div id="message-area"></div>
+    <h2>BL4 Weapon Part Editor (Workstation)</h2>
 
     <!-- Input Serial Section -->
     <div class="card" id="inputCard">
@@ -168,114 +179,130 @@
     </div>
 
     <div id="mainContent">
-        <!-- Base Item Info (Simplified Placeholders) -->
-        <div class="card">
-             <div class="row">
-                <div style="flex: 1;">
-                    <label>Base Item Type (Placeholder)</label>
-                    <select id="itemTypeSel">
-                        <option value="gun">Generic Gun</option>
-                        <option value="shield">Shield</option>
-                        <option value="grenade">Grenade Mod</option>
-                        <option value="classmod">Class Mod</option>
-                        <option value="enhancement">Enhancement</option>
-                    </select>
-                </div>
-                 <div style="flex: 1;">
-                    <label>Rarity (Placeholder)</label>
-                    <select id="raritySel">
-                        <option value="common">Common</option>
-                        <option value="uncommon">Uncommon</option>
-                        <option value="rare">Rare</option>
-                        <option value="epic">Epic</option>
-                        <option value="legendary">Legendary</option>
-                    </select>
-                </div>
+        <!-- Base Item Info (Collapsible) -->
+        <div class="card collapsible" id="baseItemCard"> <!-- Added collapsible class -->
+             <h2>Base Item Properties</h2> <!-- Button will be added here by JS -->
+             <div class="collapsible-content"> <!-- Content wrapped -->
+                 <div class="row">
+                    <div style="flex: 1;">
+                        <label>Base Item Type (Placeholder)</label>
+                        <select id="itemTypeSel">
+                            <option value="gun">Generic Gun</option>
+                            <option value="shield">Shield</option>
+                            <option value="grenade">Grenade Mod</option>
+                            <option value="classmod">Class Mod</option>
+                            <option value="enhancement">Enhancement</option>
+                        </select>
+                    </div>
+                     <div style="flex: 1;">
+                        <label>Rarity (Placeholder)</label>
+                        <select id="raritySel">
+                            <option value="common">Common</option>
+                            <option value="uncommon">Uncommon</option>
+                            <option value="rare">Rare</option>
+                            <option value="epic">Epic</option>
+                            <option value="legendary">Legendary</option>
+                        </select>
+                    </div>
+                 </div>
              </div>
         </div>
 
-        <!-- Builder Sections (Removed delimiter inputs in HTML for simplicity) -->
-        <div class="card builderSection" data-key="altFireModes" data-name-field="name" data-code-field="code" data-id-prefix="AltFire">
-            <div class="row titleRow">
-                <div>Alt Fire Mode Variations</div>
-                <div class="row filterRow">
-                    <input id="filterAltFire" placeholder="Filter..." type="text"/>
-                    <button class="small" id="clearAltFire" title="Clear Selected">❌</button>
-                </div>
-            </div>
-            <div class="row selects">
-                <select id="availAltFire" multiple size="8" aria-label="Available Alt Fire Modes"></select>
-                <div class="buttons">
-                    <button id="addAltFire" title="Add Selected">»</button>
-                    <button id="remAltFire" title="Remove Selected">«</button>
-                </div>
-                <select id="selAltFire" multiple size="8" aria-label="Selected Alt Fire Modes"></select>
-            </div>
-             <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
-        </div>
+        <!-- Builder Sections (Reordered and Collapsible) -->
 
-        <div class="card builderSection" data-key="magazineModes" data-name-field="name" data-code-field="code" data-id-prefix="MagMode">
+        <!-- Legendary Perks (Moved Up) -->
+        <div class="card builderSection collapsible" data-key="legendaryPerks" data-name-field="name" data-code-field="code" data-id-prefix="LegPerk"> <!-- Added collapsible class -->
              <div class="row titleRow">
-                <div>Magazine / Ammo Mode Variations</div>
-                 <div class="row filterRow">
-                    <input id="filterMagMode" placeholder="Filter..." type="text"/>
-                    <button class="small" id="clearMagMode" title="Clear Selected">❌</button>
-                </div>
-            </div>
-            <div class="row selects">
-                <select id="availMagMode" multiple size="8" aria-label="Available Magazine/Ammo Modes"></select>
-                <div class="buttons">
-                    <button id="addMagMode" title="Add Selected">»</button>
-                    <button id="remMagMode" title="Remove Selected">«</button>
-                </div>
-                <select id="selMagMode" multiple size="8" aria-label="Selected Magazine/Ammo Modes"></select>
-            </div>
-             <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
-        </div>
-
-        <div class="card builderSection" data-key="legendaryPerks" data-name-field="name" data-code-field="code" data-id-prefix="LegPerk">
-             <div class="row titleRow">
-                 <div>Legendary Perk Part Variations</div>
+                 <div>Legendary Perk Part Variations</div> <!-- Button will be added here by JS -->
                  <div class="row filterRow">
                     <input id="filterLegPerk" placeholder="Filter..." type="text"/>
                     <button class="small" id="clearLegPerk" title="Clear Selected">❌</button>
                 </div>
             </div>
-            <div class="row selects">
-                <select id="availLegPerk" multiple size="8" aria-label="Available Legendary Perks"></select>
-                <div class="buttons">
-                    <button id="addLegPerk" title="Add Selected">»</button>
-                    <button id="remLegPerk" title="Remove Selected">«</button>
+             <div class="collapsible-content"> <!-- Content wrapped -->
+                <div class="row selects">
+                    <select id="availLegPerk" multiple size="8" aria-label="Available Legendary Perks"></select>
+                    <div class="buttons">
+                        <button id="addLegPerk" title="Add Selected">»</button>
+                        <button id="remLegPerk" title="Remove Selected">«</button>
+                    </div>
+                    <select id="selLegPerk" multiple size="8" aria-label="Selected Legendary Perks"></select>
                 </div>
-                <select id="selLegPerk" multiple size="8" aria-label="Selected Legendary Perks"></select>
-            </div>
-             <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
+                 <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
+             </div>
         </div>
 
-        <div class="card builderSection" data-key="ordnancePerks" data-name-field="name" data-code-field="code" data-id-prefix="OrdPerk">
+        <!-- Alt Fire Modes -->
+        <div class="card builderSection collapsible" data-key="altFireModes" data-name-field="name" data-code-field="code" data-id-prefix="AltFire"> <!-- Added collapsible class -->
+            <div class="row titleRow">
+                <div>Alt Fire Mode Variations</div> <!-- Button will be added here by JS -->
+                <div class="row filterRow">
+                    <input id="filterAltFire" placeholder="Filter..." type="text"/>
+                    <button class="small" id="clearAltFire" title="Clear Selected">❌</button>
+                </div>
+            </div>
+             <div class="collapsible-content"> <!-- Content wrapped -->
+                <div class="row selects">
+                    <select id="availAltFire" multiple size="8" aria-label="Available Alt Fire Modes"></select>
+                    <div class="buttons">
+                        <button id="addAltFire" title="Add Selected">»</button>
+                        <button id="remAltFire" title="Remove Selected">«</button>
+                    </div>
+                    <select id="selAltFire" multiple size="8" aria-label="Selected Alt Fire Modes"></select>
+                </div>
+                 <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
+            </div>
+        </div>
+
+        <!-- Magazine Modes -->
+        <div class="card builderSection collapsible" data-key="magazineModes" data-name-field="name" data-code-field="code" data-id-prefix="MagMode"> <!-- Added collapsible class -->
              <div class="row titleRow">
-                <div>Ordnance Legendary Perks (Heavy/Grenade)</div>
+                <div>Magazine / Ammo Mode Variations</div> <!-- Button will be added here by JS -->
+                 <div class="row filterRow">
+                    <input id="filterMagMode" placeholder="Filter..." type="text"/>
+                    <button class="small" id="clearMagMode" title="Clear Selected">❌</button>
+                </div>
+            </div>
+             <div class="collapsible-content"> <!-- Content wrapped -->
+                <div class="row selects">
+                    <select id="availMagMode" multiple size="8" aria-label="Available Magazine/Ammo Modes"></select>
+                    <div class="buttons">
+                        <button id="addMagMode" title="Add Selected">»</button>
+                        <button id="remMagMode" title="Remove Selected">«</button>
+                    </div>
+                    <select id="selMagMode" multiple size="8" aria-label="Selected Magazine/Ammo Modes"></select>
+                </div>
+                 <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
+             </div>
+        </div>
+
+        <!-- Ordnance Perks -->
+        <div class="card builderSection collapsible" data-key="ordnancePerks" data-name-field="name" data-code-field="code" data-id-prefix="OrdPerk"> <!-- Added collapsible class -->
+             <div class="row titleRow">
+                <div>Ordnance Legendary Perks (Heavy/Grenade)</div> <!-- Button will be added here by JS -->
                  <div class="row filterRow">
                     <input id="filterOrdPerk" placeholder="Filter..." type="text"/>
                     <button class="small" id="clearOrdPerk" title="Clear Selected">❌</button>
                 </div>
             </div>
-            <div class="row selects">
-                <select id="availOrdPerk" multiple size="8" aria-label="Available Ordnance Perks"></select>
-                <div class="buttons">
-                    <button id="addOrdPerk" title="Add Selected">»</button>
-                    <button id="remOrdPerk" title="Remove Selected">«</button>
+             <div class="collapsible-content"> <!-- Content wrapped -->
+                <div class="row selects">
+                    <select id="availOrdPerk" multiple size="8" aria-label="Available Ordnance Perks"></select>
+                    <div class="buttons">
+                        <button id="addOrdPerk" title="Add Selected">»</button>
+                        <button id="remOrdPerk" title="Remove Selected">«</button>
+                    </div>
+                    <select id="selOrdPerk" multiple size="8" aria-label="Selected Ordnance Perks"></select>
                 </div>
-                <select id="selOrdPerk" multiple size="8" aria-label="Selected Ordnance Perks"></select>
-            </div>
-             <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
+                 <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
+             </div>
         </div>
 
     </div> <!-- End mainContent -->
 </div> <!-- End container -->
 
 <script>
-    // Global variables
+    // ... (Existing Global variables, DOM cache, Utility functions - unchanged) ...
     let PAYLOAD = {};
     const builders = {};
     let rndSeed = Math.floor(1000 + Math.random() * 9000);
@@ -284,7 +311,6 @@
     let lastGeneratedOutput = '';
     let isManualEditMode = false;
 
-    // --- DOM Elements Cache ---
     const dom = {
         body: document.body,
         messageArea: document.getElementById('message-area'),
@@ -292,7 +318,7 @@
         raritySel: document.getElementById('raritySel'),
         outWrapper: document.getElementById('out'),
         outCode: document.querySelector('#out code'),
-        inputSerialCode: document.getElementById('inputSerialCode'), // New: Input Base Code
+        inputSerialCode: document.getElementById('inputSerialCode'),
         serial_b85: document.getElementById('serial_b85'),
         additionalData: document.getElementById('additionalData'),
         copyFull: document.getElementById('copyFull'),
@@ -304,8 +330,8 @@
         reserializeManualBtn: document.getElementById('reserializeManual'),
     };
 
-    // --- Utility Functions ---
     function showMessage(message, isError = true) {
+        // ... (showMessage function unchanged) ...
         console.log(isError ? "Error:" : "Status:", message.replace(/<code>(.*?)<\/code>/g, '$1'));
         dom.messageArea.innerHTML = message;
         dom.messageArea.className = `message-area visible ${isError ? 'error' : 'success'}`;
@@ -321,6 +347,7 @@
     }
 
     function showCopyStatus(statusElement, message) {
+        // ... (showCopyStatus function unchanged) ...
         if (!statusElement) return;
         statusElement.textContent = message;
         statusElement.classList.add('visible');
@@ -330,8 +357,54 @@
         }, 1500);
     }
 
-    // --- Generic Builder UI Logic (unchanged from previous working version) ---
+    // --- NEW: Collapsible Section Logic ---
+    function setupCollapsibleSections() {
+        const collapsibleCards = document.querySelectorAll('.card.collapsible');
+
+        collapsibleCards.forEach(card => {
+            const header = card.querySelector('h2') || card.querySelector('.row.titleRow'); // Find h2 or the builder title row
+            const content = card.querySelector('.collapsible-content');
+
+            if (!header || !content) {
+                console.warn('Collapsible card structure incorrect:', card);
+                return;
+            }
+
+            // Create and insert the toggle button
+            const toggleBtn = document.createElement('button');
+            toggleBtn.className = 'toggle-btn';
+            toggleBtn.setAttribute('aria-expanded', 'false');
+            toggleBtn.title = 'Toggle Section';
+
+            // Insert button appropriately (different for h2 vs builder title row)
+            if (header.tagName === 'H2') {
+                 header.appendChild(toggleBtn); // Append to h2 (which is now flex)
+            } else if (header.classList.contains('titleRow')) {
+                 // Insert after the title div but before the filter row
+                 const titleDiv = header.querySelector('div:first-child');
+                 if (titleDiv) {
+                     titleDiv.insertAdjacentElement('afterend', toggleBtn);
+                 } else {
+                     header.appendChild(toggleBtn); // Fallback append
+                 }
+            }
+
+
+            // Add click event listener
+            toggleBtn.addEventListener('click', () => {
+                const isExpanded = content.classList.toggle('expanded');
+                toggleBtn.classList.toggle('expanded', isExpanded);
+                toggleBtn.setAttribute('aria-expanded', isExpanded);
+            });
+
+            // Start collapsed (default CSS handles this)
+        });
+    }
+
+
+    // --- Generic Builder UI Logic (unchanged) ---
     function createBuilder(key, nameField, codeField, idPrefix) {
+        // ... (createBuilder function unchanged) ...
         const dataList = PAYLOAD[key] || [];
         const filterInput = document.getElementById(`filter${idPrefix}`);
         const availList = document.getElementById(`avail${idPrefix}`);
@@ -462,95 +535,73 @@
         return { getSelectedItems: () => selectedItems, clear: clearSelected };
     }
 
-    // --- Condensing Logic ---
+    // --- Condensing Logic (unchanged) ---
     function getPartId(code) {
-        // Matches the ID in {ID:VALUE} or {ID} or {ID:[...]}
+        // ... (getPartId function unchanged) ...
         const match = code.match(/\{(\d+)/);
         return match ? match[1] : null;
     }
 
     function condenseParts(parts) {
+         // ... (condenseParts function unchanged) ...
          if (!parts || parts.length === 0) return [];
-
-         // Group parts by their primary ID
          const grouped = {};
-         const individualParts = []; // Keep track of non-standard or ungroupable parts
-
+         const individualParts = [];
          parts.forEach(code => {
-             // Regex to handle {ID}, {ID:Value}, and {ID:[Val Val...]} including potential whitespace
              const match = code.match(/^\{(\d+)(:\s*([^}\[\]]+)|:\s*\[([^\]]+)\])?\s*\}$/);
              if (match) {
                  const id = match[1];
                  if (!grouped[id]) grouped[id] = [];
-                 grouped[id].push(code.trim()); // Store the full, trimmed code
+                 grouped[id].push(code.trim());
              } else if (typeof code === 'string' && code.trim().length > 0 && !code.includes('||')) {
-                  // If it doesn't match expected formats but is a non-empty string and not the header separator
                   individualParts.push(code.trim());
              }
          });
-
          const condensedParts = [];
-
          for (const id in grouped) {
              const codes = grouped[id];
              if (codes.length === 1) {
-                 // Single part for this ID, add directly
                  condensedParts.push(codes[0]);
              } else {
-                 // Multiple parts for this ID, attempt condensation
                  let values = [];
-                 let isSimpleIdOnly = true; // Flag if only {ID} types are found
-
+                 let isSimpleIdOnly = true;
                  codes.forEach(code => {
-                     const valueMatch = code.match(/:\s*([^}\[\]]+)\s*\}$/); // Match single value
-                     const arrayMatch = code.match(/:\s*\[([^\]]+)\]\s*\}$/); // Match existing array content
-                     const simpleIdMatch = code.match(/^\{(\d+)\}$/); // Match simple {ID}
-
+                     const valueMatch = code.match(/:\s*([^}\[\]]+)\s*\}$/);
+                     const arrayMatch = code.match(/:\s*\[([^\]]+)\]\s*\}$/);
+                     const simpleIdMatch = code.match(/^\{(\d+)\}$/);
                      if (arrayMatch) {
-                         values.push(...arrayMatch[1].trim().split(/\s+/).filter(v => v)); // Add array elements
+                         values.push(...arrayMatch[1].trim().split(/\s+/).filter(v => v));
                          isSimpleIdOnly = false;
                      } else if (valueMatch) {
-                         values.push(valueMatch[1].trim()); // Add single value
+                         values.push(valueMatch[1].trim());
                          isSimpleIdOnly = false;
                      } else if (!simpleIdMatch) {
-                          // If it's not a simple ID either, it's malformed for condensation
-                          individualParts.push(code); // Treat as individual if format unclear
+                          individualParts.push(code);
                      }
-                     // If it *is* a simpleIdMatch, we don't add a value but isSimpleIdOnly remains true initially
                  });
-
-                 // If only simple {ID} blocks were found (like {999} {999}), don't condense into an array.
                  if (isSimpleIdOnly && codes.length > 0) {
-                      condensedParts.push(codes[0]); // Just add the first occurrence
+                      condensedParts.push(codes[0]);
                  } else if (values.length > 0) {
-                     // Remove duplicates from collected values
                      const uniqueValues = [...new Set(values)];
                      if (uniqueValues.length === 1 && codes.length > 1) {
-                         // If duplicates condensed to one value, format as {ID:[Value]} or {ID:Value} ?
-                         // Let's use array format for consistency when condensing occurred.
                          condensedParts.push(`{${id}:[${uniqueValues[0]}]}`);
                      } else if (uniqueValues.length > 0) {
-                          // Multiple unique values, format as {ID:[Val1 Val2 ...]}
                           condensedParts.push(`{${id}:[${uniqueValues.join(' ')}]}`);
                      } else if (codes.length > 0) {
-                          // Fallback if value extraction failed unexpectedly
                           condensedParts.push(codes[0]);
                      }
                  } else if (codes.length > 0 && !isSimpleIdOnly) {
-                      // Handled malformed parts earlier by pushing to individualParts
-                      // If somehow we got here with non-simple IDs but no values extracted, add first code as fallback
                       condensedParts.push(codes[0]);
                  }
              }
          }
-
-         // Combine condensed and individual parts
          return [...condensedParts, ...individualParts];
      }
 
 
-    // --- Output Rebuilding & API ---
+    // --- Output Rebuilding & API (unchanged) ---
     function rebuildOutput() {
+        // ... (rebuildOutput function unchanged) ...
         try {
             rndSeed = Math.floor(1000 + Math.random() * 9000); // Always generate a new seed for rebuild
 
@@ -653,7 +704,7 @@
     }
 
 
-     // --- Debounced Triggers and API Logic (Unchanged) ---
+     // --- Debounced Triggers and API Logic (unchanged) ---
      function triggerDebouncedRebuild() {
          clearTimeout(rebuildTimer);
          rebuildTimer = setTimeout(rebuildOutputAndCallApi, 50);
@@ -670,6 +721,7 @@
     }
 
     async function callReserialize() {
+      // ... (callReserialize function unchanged) ...
       if (dom.serial_b85) dom.serial_b85.textContent = 'Fetching...';
       if (dom.additionalData) dom.additionalData.textContent = '';
       dom.copySerial.disabled = true;
@@ -716,14 +768,14 @@
     async function initializeApp() {
         dom.body.classList.add('loading');
         try {
-            // Check for required JSON file
+            // Fetch and parse data
             const response = await fetch('bl4_parts_data.json');
-            if (!response.ok) throw new Error(`HTTP error ${response.status} fetching <code>bl4_parts_data.json</code>. Ensure this file is hosted alongside index.html (or bl4_decoder.html).`);
-
+            if (!response.ok) throw new Error(`HTTP error ${response.status} fetching <code>bl4_parts_data.json</code>.`);
             try { PAYLOAD = await response.json(); }
-            catch (jsonError) { throw new Error(`Failed to parse <code>bl4_parts_data.json</code>: ${jsonError.message}. Check JSON syntax.`); }
+            catch (jsonError) { throw new Error(`Failed to parse <code>bl4_parts_data.json</code>: ${jsonError.message}.`); }
 
-            const requiredKeys = ['altFireModes', 'magazineModes', 'legendaryPerks', 'ordnancePerks']; // Add more keys as needed
+            // Validate data
+            const requiredKeys = ['altFireModes', 'magazineModes', 'legendaryPerks', 'ordnancePerks'];
             const missingKeys = requiredKeys.filter(key => !PAYLOAD[key] || !Array.isArray(PAYLOAD[key]));
             if (missingKeys.length > 0) throw new Error(`Data Validation Error: Key(s) <code>${missingKeys.join(', ')}</code> missing/invalid in JSON.`);
 
@@ -733,31 +785,27 @@
                  const nameField = section.dataset.nameField;
                  const codeField = section.dataset.codeField;
                  const idPrefix = section.dataset.idPrefix;
-                 if (key && nameField && codeField && idPrefix && PAYLOAD[key]) { // Check PAYLOAD has the key
+                 if (key && nameField && codeField && idPrefix && PAYLOAD[key]) {
                      try { builders[key] = createBuilder(key, nameField, codeField, idPrefix); }
                      catch (builderError) { throw new Error(`Failed to init builder for ${key}: ${builderError.message}`); }
-                 } else { console.warn("Skipping builder section, missing data attributes or data not found in PAYLOAD:", section, key); }
+                 } else { console.warn("Skipping builder section, missing data or attributes:", section, key); }
             });
 
-            // --- Setup Event Listeners ---
+            // --- Setup Event Listeners (unchanged logic, just call new setup function) ---
             dom.itemTypeSel.addEventListener('change', triggerDebouncedRebuild);
             dom.raritySel.addEventListener('change', triggerDebouncedRebuild);
             dom.dice.onclick = () => { rndSeed = Math.floor(1000 + Math.random()*9000); triggerDebouncedRebuild(); };
             dom.inputSerialCode.addEventListener('input', () => {
-                 // When base input changes, immediately rebuild but debounce API call
                  clearTimeout(rebuildTimer);
-                 rebuildTimer = setTimeout(rebuildOutputAndCallApi, 50); // Quick rebuild, API call debounced within it
+                 rebuildTimer = setTimeout(rebuildOutputAndCallApi, 50);
              });
-
-            // Manual Edit Handling
             dom.outCode.addEventListener('input', () => {
                 isManualEditMode = true;
                 dom.outCode.classList.add('manual-edit');
                 dom.outWrapper.classList.add('manual-edit');
                 dom.outWrapper.querySelector('.manual-edit-indicator').style.display = 'inline';
-                clearTimeout(apiCallTimer); // Stop automatic API calls
+                clearTimeout(apiCallTimer);
             });
-
             dom.undoEditBtn.addEventListener('click', () => {
                 if (lastGeneratedOutput) {
                     dom.outCode.textContent = lastGeneratedOutput;
@@ -765,17 +813,14 @@
                     dom.outCode.classList.remove('manual-edit');
                     dom.outWrapper.classList.remove('manual-edit');
                      dom.outWrapper.querySelector('.manual-edit-indicator').style.display = 'none';
-                    triggerDebouncedApiCall(); // Resume automatic API calls
+                    triggerDebouncedApiCall();
                     showCopyStatus(dom.copyFullStatus, 'Edit Undone');
                 } else {
                     showCopyStatus(dom.copyFullStatus, 'No history!');
                 }
             });
-
-            dom.reserializeManualBtn.addEventListener('click', callReserialize); // Allow manual API trigger
-
-            // Copy Buttons
-             dom.copyFull.addEventListener('click', async () => {
+            dom.reserializeManualBtn.addEventListener('click', callReserialize);
+             dom.copyFull.addEventListener('click', async () => { /* ... copy logic ... */
                 try {
                     const text = (dom.outCode?.textContent || '').trim();
                     if (!text || text.startsWith('[')) return showCopyStatus(dom.copyFullStatus, 'No output!');
@@ -783,7 +828,7 @@
                     showCopyStatus(dom.copyFullStatus, 'Copied!');
                 } catch(e) { console.error('Copy Output failed:', e); showCopyStatus(dom.copyFullStatus, 'Error!'); }
              });
-             dom.copySerial.addEventListener('click', async () => {
+             dom.copySerial.addEventListener('click', async () => { /* ... copy logic ... */
                 try {
                     const text = (dom.serial_b85?.textContent || '').trim();
                      if (!text || text.startsWith('[')) return showCopyStatus(dom.copyApiStatus, 'No serial!');
@@ -792,6 +837,9 @@
                 } catch(e) { console.error('Copy API Serial failed:', e); showCopyStatus(dom.copyApiStatus, 'Error!'); }
              });
 
+             // *** NEW: Setup Collapsible Sections ***
+             setupCollapsibleSections();
+
             // Initial build and API call
             rebuildOutput();
             setTimeout(callReserialize, 150);
@@ -799,8 +847,6 @@
 
         } catch (error) {
             showMessage(error.message, true);
-            // Consider disabling only builders if core elements load
-            // document.querySelectorAll('input, select, button').forEach(el => el.disabled = true);
         } finally {
              dom.body.classList.remove('loading');
         }
@@ -812,4 +858,3 @@
 </script>
 </body>
 </html>
-
