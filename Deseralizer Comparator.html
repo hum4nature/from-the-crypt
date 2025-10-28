@@ -11,16 +11,45 @@
             --text-primary: #e0e0e0; --text-secondary: #a0a0c0; --accent-orange: #e59400;
             --accent-orange-hover: #ffb84d; --success-green: #28a745; --danger-red: #e74c3c;
             --highlight-bg: #e59400; --highlight-text: #1a1a2e;
+            /* Added from bl4_decoder for consistency */
+            --bg:#0b0f14; --card:#0e1520; --ink:#e6f0ff; --muted:#a6b4c8; --line:#1f2a3a;
         }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-deep-blue); color: var(--text-primary); margin: 0; padding: 2rem; }
-        .container { max-width: 1200px; margin: 0 auto; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-deep-blue); color: var(--text-primary); margin: 0; padding: 0; /* Remove body padding */ } /* Removed padding */
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem 2rem 2rem; } /* Added padding here */
+
+        /* --- NEW TAB NAVIGATION STYLES (Copied from bl4_decoder.html) --- */
+        .tab-nav {
+            background-color: var(--card); /* Match card background */
+            border-bottom: 1px solid var(--line);
+            padding: 0 2rem; /* Match container horizontal padding */
+            margin-bottom: 2rem; /* Space below nav */
+            display: flex;
+            gap: 10px;
+        }
+        .tab-link {
+            display: inline-block;
+            padding: 12px 16px;
+            color: var(--muted);
+            text-decoration: none;
+            border-bottom: 3px solid transparent; /* Placeholder for active state */
+            transition: color 0.2s ease, border-color 0.2s ease;
+            font-weight: 500;
+            font-size: 15px;
+        }
+        .tab-link:hover {
+            color: var(--ink);
+        }
+        .tab-link.active {
+            color: var(--accent-orange);
+            border-bottom-color: var(--accent-orange);
+        }
+        /* --- END NEW TAB STYLES --- */
+
         h1, h2, h3 { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
         h1 { text-shadow: 0 0 8px var(--accent-orange); }
         h3 { border-bottom: none; font-family: 'Inter'; margin-top: 0; margin-bottom: 0.5rem; font-size: 1.2rem; color: var(--text-secondary); }
         h4 { font-family: 'Inter'; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.5rem; color: var(--text-secondary); }
-        /* SURGICAL ADDITION: Added input[type="text"] to this rule for Workstation */
         textarea, input[type="text"], input[type="number"], select { width: 100%; padding: 0.75rem; background-color: var(--bg-element); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
-        /* SURGICAL ADDITION: Added this rule for Workstation "Name" fields */
         input[type="text"] { font-family: 'Inter', sans-serif; }
         select { font-family: 'Inter', sans-serif; }
         button { padding: 0.5rem 1rem; background-color: var(--accent-orange); color: var(--bg-deep-blue); border: none; border-radius: 6px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; margin-right: 0.5rem; }
@@ -48,334 +77,172 @@
         #final-output-container { margin-top: 2rem; padding: 1rem; background-color: var(--bg-element); border: 1px solid var(--success-green); border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 1.1rem; }
         .final-output-code { color: var(--success-green); font-weight: bold; font-family: 'Courier New', monospace; word-break: break-all; }
         .btn-cancel { background-color: #6c757d; color: white; }
+        /* Existing internal tabs - unchanged */
         .tabs { border-bottom: 2px solid var(--border-color); margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; }
-        .tab-link { background: none; border: none; color: var(--text-secondary); font-size: 1.1rem; font-weight: 600; padding: 0.75rem 1.5rem; border-radius: 6px 6px 0 0; cursor: pointer; margin-right: 0; }
-        .tab-link:hover { background-color: var(--bg-element); }
-        .tab-link.active { background-color: var(--bg-element); color: var(--accent-orange); border: 2px solid var(--border-color); border-bottom: 2px solid var(--bg-element); }
+        .tabs .tab-link { /* Scoped selector */ background: none; border: none; color: var(--text-secondary); font-size: 1.1rem; font-weight: 600; padding: 0.75rem 1.5rem; border-radius: 6px 6px 0 0; cursor: pointer; margin-right: 0; }
+        .tabs .tab-link:hover { background-color: var(--bg-element); } /* Scoped selector */
+        .tabs .tab-link.active { background-color: var(--bg-element); color: var(--accent-orange); border: 2px solid var(--border-color); border-bottom: 2px solid var(--bg-element); } /* Scoped selector */
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .output-header { border-bottom: 3px solid var(--accent-orange); margin-bottom: 1rem; padding-bottom: 0.5rem; }
         .output-header h3 { border-bottom: none; margin-bottom: 0.25rem; font-size: 1.5rem; }
         .serial-count { color: var(--success-green); font-weight: bold; }
-        .output-header .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
+        .output-header .header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
         .output-header .stats { margin-bottom: 0; }
         #permutator-output { white-space: pre; }
 
-        /* --- STYLES FOR DESERIALIZER TAB --- */
-        /* --- THIS SECTION IS UNTOUCHED --- */
+        /* --- STYLES FOR DESERIALIZER TAB --- UNTOUCHED --- */
         #Deserializer * { margin: 0; padding: 0; box-sizing: border-box; }
-        #Deserializer { 
-            font-family: 'Segoe UI', Arial, sans-serif; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #eee; 
-            padding: 20px;
-            border-radius: 0 0 6px 6px; /* Match container style */
-        }
-        #Deserializer .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: #1a1a2e;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-        }
-        #Deserializer h1 {
-            text-align: center;
-            color: #fff;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            /* Reset existing h1 styles */
-            border-bottom: none; 
-        }
-        #Deserializer .section {
-            margin-bottom: 30px;
-        }
-        #Deserializer label {
-            display: block;
-            margin-bottom: 10px;
-            color: #764ba2;
-            font-weight: bold;
-        }
-        #Deserializer textarea {
-            width: 100%;
-            min-height: 300px;
-            padding: 15px;
-            background: #0f3460;
-            color: #fff;
-            border: 2px solid #667eea;
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
-            font-size: 11px;
-            resize: vertical;
-        }
-        #Deserializer textarea:focus {
-            outline: none;
-            border-color: #764ba2;
-            box-shadow: 0 0 20px rgba(118, 75, 162, 0.5);
-        }
-        #Deserializer button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 1.2em;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            transition: all 0.3s;
-            /* Explicitly set margin for override */
-            margin-right: 0.5rem; 
-        }
-        #Deserializer button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-            /* Override existing hover */
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        #Deserializer button:active {
-            transform: translateY(0);
-        }
-        #Deserializer .button-container {
-            text-align: center;
-            margin: 25px 0;
-        }
-        #Deserializer .status {
-            text-align: center;
-            padding: 15px;
-            background: #16213e;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-            font-family: monospace;
-        }
-        #Deserializer .status.active {
-            display: block;
-        }
-        #Deserializer .status.success {
-            background: #1a4d3a;
-            color: #4CAF50;
-        }
-        #Deserializer .status.error {
-            background: #4d1a1a;
-            color: #f44336;
-        }
-        #Deserializer .status.processing {
-            background: #3d3d1a;
-            color: #FFD700;
-        }
-        #Deserializer .output-box {
-            max-height: 500px;
-            overflow-y: auto;
-        }
-        #Deserializer .help-section {
-            background: #16213e;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-            border: 2px solid #764ba2;
-        }
-        #Deserializer .help-section.active {
-            display: block;
-        }
-        #Deserializer .help-section h3 {
-            color: #764ba2;
-            margin-bottom: 15px;
-            /* Reset existing h3 styles */
-            border-bottom: none;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            font-size: 1.2rem;
-            color: #764ba2;
-        }
-        #Deserializer .help-section p {
-            margin-bottom: 15px;
-            line-height: 1.6;
-        }
-        #Deserializer .help-section code {
-            background: #0f3460;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: 'Courier New', monospace;
-            color: #4CAF50;
-        }
-        /* --- END OF UNTOUCHED SECTION --- */
+        #Deserializer { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #eee; padding: 20px; border-radius: 0 0 6px 6px; }
+        #Deserializer .container { max-width: 1400px; margin: 0 auto; background: #1a1a2e; border-radius: 15px; padding: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+        #Deserializer h1 { text-align: center; color: #fff; margin-bottom: 30px; font-size: 2.5em; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); border-bottom: none; }
+        #Deserializer .section { margin-bottom: 30px; }
+        #Deserializer label { display: block; margin-bottom: 10px; color: #764ba2; font-weight: bold; }
+        #Deserializer textarea { width: 100%; min-height: 300px; padding: 15px; background: #0f3460; color: #fff; border: 2px solid #667eea; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 11px; resize: vertical; }
+        #Deserializer textarea:focus { outline: none; border-color: #764ba2; box-shadow: 0 0 20px rgba(118, 75, 162, 0.5); }
+        #Deserializer button { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 15px 40px; font-size: 1.2em; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: all 0.3s; margin-right: 0.5rem; }
+        #Deserializer button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.4); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        #Deserializer button:active { transform: translateY(0); }
+        #Deserializer .button-container { text-align: center; margin: 25px 0; }
+        #Deserializer .status { text-align: center; padding: 15px; background: #16213e; border-radius: 8px; margin-bottom: 20px; display: none; font-family: monospace; }
+        #Deserializer .status.active { display: block; }
+        #Deserializer .status.success { background: #1a4d3a; color: #4CAF50; }
+        #Deserializer .status.error { background: #4d1a1a; color: #f44336; }
+        #Deserializer .status.processing { background: #3d3d1a; color: #FFD700; }
+        #Deserializer .output-box { max-height: 500px; overflow-y: auto; }
+        #Deserializer .help-section { background: #16213e; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: none; border: 2px solid #764ba2; }
+        #Deserializer .help-section.active { display: block; }
+        #Deserializer .help-section h3 { color: #764ba2; margin-bottom: 15px; border-bottom: none; font-family: 'Segoe UI', Arial, sans-serif; font-size: 1.2rem; }
+        #Deserializer .help-section p { margin-bottom: 15px; line-height: 1.6; }
+        #Deserializer .help-section code { background: #0f3460; padding: 2px 6px; border-radius: 3px; font-family: 'Courier New', monospace; color: #4CAF50; }
+        /* --- END OF UNTOUCHED DESERIALIZER SECTION --- */
 
+        /* --- STYLES FOR WORKSTATION TAB --- UNTOUCHED --- */
+        #Workstation { font-family: 'Inter', sans-serif; }
+        .workstation-intro, .workstation-example { background-color: var(--bg-deep-blue); padding: 1rem 1.5rem; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 1.5rem; line-height: 1.6; }
+        .workstation-example h3 { border-bottom: none; margin-top: 0; color: var(--accent-orange); }
+        .workstation-example code { background-color: var(--bg-element); color: var(--text-primary); padding: 2px 5px; border-radius: 4px; }
+        span.ws-highlight { background-color: var(--highlight-bg); color: var(--highlight-text); border-radius: 3px; padding: 0 2px; transition: all 0.1s ease-in-out; }
+        .workstation-example ul { list-style-type: none; padding-left: 0; }
+        .workstation-example ul li { margin-bottom: 0.5rem; }
+        .workstation-example ul li.highlight-trigger { cursor: pointer; transition: color 0.2s; }
+        .workstation-example ul li.highlight-trigger:hover { color: var(--accent-orange-hover); }
+        #workstation-help-section { background: var(--bg-deep-blue); padding: 1rem 1.5rem; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 1.5rem; line-height: 1.6; display: none; }
+        #workstation-help-section.active { display: block; }
+        .workstation-hr { border: 0; height: 2px; background-color: var(--border-color); margin: 2rem 0; }
+        .workstation-item { background-color: var(--bg-element); border: 1px solid var(--border-color); border-radius: 6px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .workstation-item h3 { color: var(--accent-orange); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; }
+        .workstation-item label { display: block; margin-top: 1rem; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 700; font-family: 'Inter', sans-serif; font-size: 0.9rem; }
+        .workstation-item textarea { min-height: 60px; font-size: 0.9rem; }
+        .workstation-item .test-code { min-height: 120px; background-color: #1a222e; }
+        .workstation-item .final-code { min-height: 80px; background-color: #1f2b2e; border-color: var(--success-green); }
+        #add-workstation-item-btn { background: var(--accent-orange); color: var(--bg-deep-blue); border: none; padding: 0.5rem 1.5rem; font-size: 1.5rem; border-radius: 50px; cursor: pointer; font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: all 0.2s ease-in-out; margin: 0.5rem; }
+        #add-workstation-item-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.3); background: var(--accent-orange-hover); }
+        #export-workstation-btn { background: var(--success-green); color: white; border: none; padding: 0.75rem 1.5rem; font-size: 1rem; border-radius: 6px; cursor: pointer; font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: all 0.2s ease-in-out; margin: 0.5rem; }
+        #export-workstation-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.3); background: #34c759; }
+        /* --- END OF WORKSTATION STYLES --- */
 
-        /* --- SURGICAL ADDITION: STYLES FOR WORKSTATION TAB --- */
-        #Workstation {
-            font-family: 'Inter', sans-serif;
+        /* Responsive adjustments for top nav */
+        @media (max-width: 768px) {
+            .tab-nav { padding: 0 10px; margin-bottom: 10px; } /* Adjust padding */
+            .nav-tab-link { padding: 10px 8px; font-size: 14px; } /* Smaller tabs */
+            .container { padding: 0 10px 10px 10px; } /* Adjust container padding */
         }
-        .workstation-intro, .workstation-example {
-            background-color: var(--bg-deep-blue);
-            padding: 1rem 1.5rem;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 1.5rem;
-            line-height: 1.6;
-        }
-        .workstation-example h3 {
-            border-bottom: none;
-            margin-top: 0;
-            color: var(--accent-orange);
-        }
-        .workstation-example code {
-            background-color: var(--bg-element);
-            color: var(--text-primary);
-            padding: 2px 5px;
-            border-radius: 4px;
-        }
-        /* Style for the example code block highlight */
-        span.ws-highlight {
-            background-color: var(--highlight-bg);
-            color: var(--highlight-text);
-            border-radius: 3px;
-            padding: 0 2px;
-            transition: all 0.1s ease-in-out;
-        }
-        .workstation-example ul {
-            list-style-type: none;
-            padding-left: 0;
-        }
-        .workstation-example ul li {
-            margin-bottom: 0.5rem;
-        }
-        /* Style for the clickable list items */
-        .workstation-example ul li.highlight-trigger {
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-        .workstation-example ul li.highlight-trigger:hover {
-            color: var(--accent-orange-hover);
-        }
-        /* Style for the new workstation help section */
-        #workstation-help-section {
-            background: var(--bg-deep-blue);
-            padding: 1rem 1.5rem;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 1.5rem;
-            line-height: 1.6;
-            display: none; /* Hidden by default */
-        }
-        #workstation-help-section.active {
-            display: block; /* Shown when active */
-        }
-        .workstation-hr {
-            border: 0;
-            height: 2px;
-            background-color: var(--border-color);
-            margin: 2rem 0;
-        }
-        .workstation-item {
-            background-color: var(--bg-element);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-        .workstation-item h3 {
-            color: var(--accent-orange);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 0.5rem;
-            margin-bottom: 1rem;
-        }
-        .workstation-item label {
-            display: block;
-            margin-top: 1rem;
-            margin-bottom: 0.5rem;
-            color: var(--text-secondary);
-            font-weight: 700;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.9rem;
-        }
-        .workstation-item textarea {
-            min-height: 60px;
-            font-size: 0.9rem;
-        }
-        .workstation-item .test-code {
-            min-height: 120px;
-            background-color: #1a222e;
-        }
-        .workstation-item .final-code {
-            min-height: 80px;
-            background-color: #1f2b2e; /* A slightly different "final" color */
-            border-color: var(--success-green);
-        }
-        /* Style for the new control buttons */
-        #add-workstation-item-btn {
-            background: var(--accent-orange);
-            color: var(--bg-deep-blue);
-            border: none;
-            padding: 0.5rem 1.5rem;
-            font-size: 1.5rem;
-            border-radius: 50px; /* Rounded button */
-            cursor: pointer;
-            font-weight: 700;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            transition: all 0.2s ease-in-out;
-            margin: 0.5rem;
-        }
-        #add-workstation-item-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-            background: var(--accent-orange-hover);
-        }
-        #export-workstation-btn {
-            background: var(--success-green);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            font-size: 1rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 700;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            transition: all 0.2s ease-in-out;
-            margin: 0.5rem;
-        }
-        #export-workstation-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-            background: #34c759;
-        }
-        /* --- END OF SURGICAL ADDITION --- */
     </style>
 </head>
 <body>
+
+    <!-- NEW TOP NAVIGATION BAR -->
+    <nav class="tab-nav">
+        <!-- Link to Comparator section (internal), marked active -->
+        <a href="#Comparator" class="tab-link active">🔬 Comparator & Editor</a>
+        <!-- Link to Deserializer section (internal) -->
+        <a href="#Deserializer" class="tab-link">🔓 Deserializer</a>
+        <!-- Link back to the Workstation page -->
+        <a href="bl4_decoder.html" class="tab-link">🗂️ Workstation</a>
+    </nav>
+    <!-- END NEW TOP NAVIGATION BAR -->
+
 <div class="container">
     <h1>BL4 Serial Editor Suite</h1>
+
+    <!-- Existing Internal Tab Buttons (Unchanged) -->
     <div class="tabs">
         <button class="tab-link" onclick="openTab(event, 'Comparator')">🔬 Comparator & Editor</button>
-        <button class="tab-link" onclick="openTab(event, 'Deserializer')">🔓 Deserializer</button>
-        <!-- SURGICAL ADDITION: New Tab Button -->
+        <button class="tab-link" onclick="openTab(event, 'Deserializer')" id="deserializer-tab-button">🔓 Deserializer</button>
         <button class="tab-link" onclick="openTab(event, 'Workstation')">🗂️ Workstation</button>
     </div>
 
-    <div id="Comparator" class="tab-content"></div>
-    
-    <!-- DESERIALIZER TAB (UNTOUCHED) -->
-    <div id="Deserializer" class="tab-content">
-        <div class="container">        <h1>🔓 Borderlands 4 Bulk Deserializer</h1>        <p style="text-align: center; color: #aaa; margin-bottom: 20px;">            By @Nicnl | API: <a href="https://borderlands4-deserializer.nicnl.com" target="_blank" style="color: #667eea;">borderlands4-deserializer.nicnl.com</a> |             <button onclick="toggleHelp()" style="background: #764ba2; border: none; color: white; padding: 5px 15px; border-radius: 5px; cursor: pointer;">ℹ️ Help</button>        </p>                <div class="status" id="status"></div>        <div id="help-section" class="help-section">            <h3>🧠 How does it work? How can I use this?</h3>                        <p><strong>1. What are item serials?</strong><br>            The game stores its weapons and items inside "serials" that looks like this:<br>            <code>@Ugy3L+2}TYg%$yC%i7M2gZldO)@}cgb!l34$a-qf{00</code><br><br>            These serials contains core informations about the item (ex: manufacturer, type, level, and its "parts").            However, as you can see... those informations are scrambled, and not easily readable nor modifiable.</p>                        <p><strong>2. What does the deserializer do?</strong><br>            The deserialization tool is available here: <a href="https://borderlands4-deserializer.nicnl.com" target="_blank">borderlands4-deserializer.nicnl.com</a><br>            Basically, it decodes the "scrambled" serials into their core values, making them easy to read.            But most importantly, the deserializer works both ways: you can modify the values and reserialize your item.            This allows you to adjust your trusty Daedalus Darkbeast by putting the glass scope you like best.</p>                        <p><strong>3. Help, I don't understand the output of the deserializer!</strong><br>            Don't worry, it's not very complicated. Here are the basics.<br><br>            We'll start with this serial, a "Ricocheting GCX":<br>            <code>@UgwSAs2}TYg%+Cc1jp~P5)T82}IyDEC3v~`v4>e=}</code><br><br>            Putting it in the deserializer gives the following result:<br>            <code>20, 0, 1, 50| 2, 1439|| {96} {62} {5} {7} {88} {14} {25} {44} {51} {58} {1:12}|</code><br><br>                        <code>20, 0, 1, 50| 2, 1439|| {96} {62} {5} {7} {88} {14} {25} {44} {51} {58} {1:12}|</code><br>            <code>^^</code><br>            This is the manufacturer index: "20" means "daedalus:smg".            (See the "Item Types & Manufacturers" tab at the bottom.)            Usually you don't want to touch this number because it'll break the parts that comes afterwards.</p>                        <p style="text-align: center; color: #4CAF50; font-weight: bold;">                Created by @Nicnl | Tool powered by borderlands4-deserializer.nicnl.com API            </p>        </div>        <div class="section">            <label for="input-data">Paste your Base85 serial strings here (one per line):</label>            <textarea id="input-data" placeholder='Paste your serials here, example:@Ug!pHG2}TYgT$`TI-PE9Jw*U@Ug!pHG2}TYgT$`TI-PE9J*8l@Ug!pHG2}TYgT$`TI-PE9J_W%'></textarea>        </div>        <div class="button-container">            <button onclick="deserialize()">🔓 Deserialize</button>            <button onclick="serialize()" style="background: #4CAF50; margin-left: 10px;">⚙️ Reserialize</button>            <input type="file" id="fileInput" accept=".txt" style="display: none;" onchange="handleFileSelect(event)">            <button onclick="document.getElementById('fileInput').click()" style="background: #16213e; margin-left: 10px;">📂 Load from File...</button>        </div>        <div class="section">            <label for="output-data">Results: <button onclick="copyOutput()" style="background: #4CAF50; padding: 8px 20px; font-size: 0.9em; margin-left: 10px;">📋 Copy Output</button></label>            <textarea id="output-data" class="output-box" readonly placeholder="Results will appear here..."></textarea>        </div>    </div>
+    <!-- Tab Content Area -->
+    <!-- Ensure IDs match for internal links -->
+    <div id="Comparator" class="tab-content">
+        <!-- Content injected by JS -->
     </div>
-    
-    <!-- SURGICAL ADDITION: New Workstation Tab Content -->
+
+    <!-- Deserializer Tab Content -->
+    <!-- Ensure ID matches for internal links -->
+    <div id="Deserializer" class="tab-content">
+        <div class="container">
+            <h1>🔓 Borderlands 4 Bulk Deserializer</h1>
+            <p style="text-align: center; color: #aaa; margin-bottom: 20px;">
+                By @Nicnl | API: <a href="https://borderlands4-deserializer.nicnl.com" target="_blank" style="color: #667eea;">borderlands4-deserializer.nicnl.com</a> |
+                <button onclick="toggleHelp()" style="background: #764ba2; border: none; color: white; padding: 5px 15px; border-radius: 5px; cursor: pointer;">ℹ️ Help</button>
+            </p>
+            <div class="status" id="status"></div>
+            <div id="help-section" class="help-section">
+                <h3>🧠 How does it work? How can I use this?</h3>
+                <p><strong>1. What are item serials?</strong><br>
+                    The game stores its weapons and items inside "serials" that looks like this:<br>
+                    <code>@Ugy3L+2}TYg%$yC%i7M2gZldO)@}cgb!l34$a-qf{00</code><br><br>
+                    These serials contains core informations about the item (ex: manufacturer, type, level, and its "parts").
+                    However, as you can see... those informations are scrambled, and not easily readable nor modifiable.</p>
+                <p><strong>2. What does the deserializer do?</strong><br>
+                    The deserialization tool is available here: <a href="https://borderlands4-deserializer.nicnl.com" target="_blank">borderlands4-deserializer.nicnl.com</a><br>
+                    Basically, it decodes the "scrambled" serials into their core values, making them easy to read.
+                    But most importantly, the deserializer works both ways: you can modify the values and reserialize your item.
+                    This allows you to adjust your trusty Daedalus Darkbeast by putting the glass scope you like best.</p>
+                <p><strong>3. Help, I don't understand the output of the deserializer!</strong><br>
+                    Don't worry, it's not very complicated. Here are the basics.<br><br>
+                    We'll start with this serial, a "Ricocheting GCX":<br>
+                    <code>@UgwSAs2}TYg%+Cc1jp~P5)T82}IyDEC3v~`v4>e=}</code><br><br>
+                    Putting it in the deserializer gives the following result:<br>
+                    <code>20, 0, 1, 50| 2, 1439|| {96} {62} {5} {7} {88} {14} {25} {44} {51} {58} {1:12}|</code><br><br>
+                    <code>20, 0, 1, 50| 2, 1439|| {96} {62} {5} {7} {88} {14} {25} {44} {51} {58} {1:12}|</code><br>
+                    <code>^^</code><br>
+                    This is the manufacturer index: "20" means "daedalus:smg".
+                    (See the "Item Types & Manufacturers" tab at the bottom.)
+                    Usually you don't want to touch this number because it'll break the parts that comes afterwards.</p>
+                <p style="text-align: center; color: #4CAF50; font-weight: bold;">
+                    Created by @Nicnl | Tool powered by borderlands4-deserializer.nicnl.com API
+                </p>
+            </div>
+            <div class="section">
+                <label for="input-data">Paste your Base85 serial strings here (one per line):</label>
+                <textarea id="input-data" placeholder='Paste your serials here, example:@Ug!pHG2}TYgT$`TI-PE9Jw*U@Ug!pHG2}TYgT$`TI-PE9J*8l@Ug!pHG2}TYgT$`TI-PE9J_W%'></textarea>
+            </div>
+            <div class="button-container">
+                <button onclick="deserialize()">🔓 Deserialize</button>
+                <button onclick="serialize()" style="background: #4CAF50; margin-left: 10px;">⚙️ Reserialize</button>
+                <input type="file" id="fileInput" accept=".txt" style="display: none;" onchange="handleFileSelect(event)">
+                <button onclick="document.getElementById('fileInput').click()" style="background: #16213e; margin-left: 10px;">📂 Load from File...</button>
+            </div>
+            <div class="section">
+                <label for="output-data">Results: <button onclick="copyOutput()" style="background: #4CAF50; padding: 8px 20px; font-size: 0.9em; margin-left: 10px;">📋 Copy Output</button></label>
+                <textarea id="output-data" class="output-box" readonly placeholder="Results will appear here..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workstation Tab Content -->
+    <!-- Ensure ID matches for internal links -->
     <div id="Workstation" class="tab-content">
         <h2>🗂️ Personal Workstation</h2>
         <div class="workstation-intro">
             <p>This is your personal space to modify and test your items!</p>
             <p>Posted below is an example of a gun fully parted out so you get the idea of how guns are parted together. Underneath the example is a full workstation ready for you to use.</p>
-            <!-- Button uses inline styles to avoid touching any CSS -->
             <button onclick="toggleWorkstationHelp()" class="ws-item-breakdown-btn" style="margin-top: 1rem; margin-left: 0; background: #4b4b7d; color: white; padding: 0.5rem 1rem; font-size: 0.9rem; margin-right: 0.5rem;">Item Breakdown</button>
         </div>
-    
+
         <div id="workstation-help-section" class="workstation-example">
             <h3>Example: "Boory" Breakdown</h3>
             <code id="workstation-example-code" data-original-text="22, 0, 1, 50 2, 3288 {98} {2} {5} {3} {7} {75} {74} {73} {14} {26} {43} {48} {60}">22, 0, 1, 50 2, 3288 {98} {2} {5} {3} {7} {75} {74} {73} {14} {26} {43} {48} {60}</code>
@@ -403,210 +270,210 @@
         </div>
 
         <hr class="workstation-hr">
-        
+
         <div id="workstation-items-container">
             <!-- Item 1 -->
             <div class="workstation-item">
                 <h3>[1]</h3>
                 <label for="ws-1-name">Name:</label>
                 <input type="text" id="ws-1-name" name="ws-1-name">
-                
+
                 <label for="ws-1-serial">Serial:</label>
                 <textarea id="ws-1-serial" name="ws-1-serial"></textarea>
-                
+
                 <label for="ws-1-deserial">Deserial:</label>
                 <textarea id="ws-1-deserial" name="ws-1-deserial"></textarea>
-                
+
                 <label for="ws-1-test">Test:</label>
                 <textarea id="ws-1-test" name="ws-1-test" class="test-code"></textarea>
-                
+
                 <label for="ws-1-final">Final Code:</label>
                 <textarea id="ws-1-final" name="ws-1-final" class="final-code"></textarea>
             </div>
-            
+
             <!-- Item 2 -->
             <div class="workstation-item" style="display: none;">
                 <h3>[2]</h3>
                 <label for="ws-2-name">Name:</label>
                 <input type="text" id="ws-2-name" name="ws-2-name">
-                
+
                 <label for="ws-2-serial">Serial:</label>
                 <textarea id="ws-2-serial" name="ws-2-serial"></textarea>
-                
+
                 <label for="ws-2-deserial">Deserial:</label>
                 <textarea id="ws-2-deserial" name="ws-2-deserial"></textarea>
-                
+
                 <label for="ws-2-test">Test:</label>
                 <textarea id="ws-2-test" name="ws-2-test" class="test-code"></textarea>
-                
+
                 <label for="ws-2-final">Final Code:</label>
                 <textarea id="ws-2-final" name="ws-2-final" class="final-code"></textarea>
             </div>
-            
+
             <!-- Item 3 -->
             <div class="workstation-item" style="display: none;">
                 <h3>[3]</h3>
                 <label for="ws-3-name">Name:</label>
                 <input type="text" id="ws-3-name" name="ws-3-name">
-                
+
                 <label for="ws-3-serial">Serial:</label>
                 <textarea id="ws-3-serial" name="ws-3-serial"></textarea>
-                
+
                 <label for="ws-3-deserial">Deserial:</label>
                 <textarea id="ws-3-deserial" name="ws-3-deserial"></textarea>
-                
+
                 <label for="ws-3-test">Test:</label>
                 <textarea id="ws-3-test" name="ws-3-test" class="test-code"></textarea>
-                
+
                 <label for="ws-3-final">Final Code:</label>
                 <textarea id="ws-3-final" name="ws-3-final" class="final-code"></textarea>
             </div>
-            
+
             <!-- Item 4 -->
             <div class="workstation-item" style="display: none;">
                 <h3>[4]</h3>
                 <label for="ws-4-name">Name:</label>
                 <input type="text" id="ws-4-name" name="ws-4-name">
-                
+
                 <label for="ws-4-serial">Serial:</label>
                 <textarea id="ws-4-serial" name="ws-4-serial"></textarea>
-                
+
                 <label for="ws-4-deserial">Deserial:</label>
                 <textarea id="ws-4-deserial" name="ws-4-deserial"></textarea>
-                
+
                 <label for="ws-4-test">Test:</label>
                 <textarea id="ws-4-test" name="ws-4-test" class="test-code"></textarea>
-                
+
                 <label for="ws-4-final">Final Code:</label>
                 <textarea id="ws-4-final" name="ws-4-final" class="final-code"></textarea>
             </div>
-            
+
             <!-- Item 5 -->
             <div class="workstation-item" style="display: none;">
                 <h3>[5]</h3>
                 <label for="ws-5-name">Name:</label>
                 <input type="text" id="ws-5-name" name="ws-5-name">
-                
+
                 <label for="ws-5-serial">Serial:</label>
                 <textarea id="ws-5-serial" name="ws-5-serial"></textarea>
-                
+
                 <label for="ws-5-deserial">Deserial:</label>
                 <textarea id="ws-5-deserial" name="ws-5-deserial"></textarea>
-                
+
                 <label for="ws-5-test">Test:</label>
                 <textarea id="ws-5-test" name="ws-5-test" class="test-code"></textarea>
-                
+
                 <label for="ws-5-final">Final Code:</label>
                 <textarea id="ws-5-final" name="ws-5-final" class="final-code"></textarea>
             </div>
-            
+
             <!-- Item 6 -->
             <div class="workstation-item" style="display: none;">
                 <h3>[6]</h3>
                 <label for="ws-6-name">Name:</label>
                 <input type="text" id="ws-6-name" name="ws-6-name">
-                
+
                 <label for="ws-6-serial">Serial:</label>
                 <textarea id="ws-6-serial" name="ws-6-serial"></textarea>
-                
+
                 <label for="ws-6-deserial">Deserial:</label>
                 <textarea id="ws-6-deserial" name="ws-6-deserial"></textarea>
-                
+
                 <label for="ws-6-test">Test:</label>
                 <textarea id="ws-6-test" name="ws-6-test" class="test-code"></textarea>
-                
+
                 <label for="ws-6-final">Final Code:</label>
                 <textarea id="ws-6-final" name="ws-6-final" class="final-code"></textarea>
             </div>
-            
+
             <!-- Item 7 -->
             <div class="workstation-item" style="display: none;">
                 <h3>[7]</h3>
                 <label for="ws-7-name">Name:</label>
                 <input type="text" id="ws-7-name" name="ws-7-name">
-                
+
                 <label for="ws-7-serial">Serial:</label>
                 <textarea id="ws-7-serial" name="ws-7-serial"></textarea>
-                
+
                 <label for="ws-7-deserial">Deserial:</label>
                 <textarea id="ws-7-deserial" name="ws-7-deserial"></textarea>
-                
+
                 <label for="ws-7-test">Test:</label>
                 <textarea id="ws-7-test" name="ws-7-test" class="test-code"></textarea>
-                
+
                 <label for="ws-7-final">Final Code:</label>
                 <textarea id="ws-7-final" name="ws-7-final" class="final-code"></textarea>
             </div>
-            
+
             <!-- Item 8 -->
             <div class="workstation-item" style="display: none;">
                 <h3>[8]</h3>
                 <label for="ws-8-name">Name:</label>
                 <input type="text" id="ws-8-name" name="ws-8-name">
-                
+
                 <label for="ws-8-serial">Serial:</label>
                 <textarea id="ws-8-serial" name="ws-8-serial"></textarea>
-                
+
                 <label for="ws-8-deserial">Deserial:</label>
                 <textarea id="ws-8-deserial" name="ws-8-deserial"></textarea>
-                
+
                 <label for="ws-8-test">Test:</label>
                 <textarea id="ws-8-test" name="ws-8-test" class="test-code"></textarea>
-                
+
                 <label for="ws-8-final">Final Code:</label>
                 <textarea id="ws-8-final" name="ws-8-final" class="final-code"></textarea>
             </div>
-            
+
             <!-- Item 9 -->
             <div class="workstation-item" style="display: none;">
                 <h3>[9]</h3>
                 <label for="ws-9-name">Name:</label>
                 <input type="text" id="ws-9-name" name="ws-9-name">
-                
+
                 <label for="ws-9-serial">Serial:</label>
                 <textarea id="ws-9-serial" name="ws-9-serial"></textarea>
-                
+
                 <label for="ws-9-deserial">Deserial:</label>
                 <textarea id="ws-9-deserial" name="ws-9-deserial"></textarea>
-                
+
                 <label for="ws-9-test">Test:</label>
                 <textarea id="ws-9-test" name="ws-9-test" class="test-code"></textarea>
-                
+
                 <label for="ws-9-final">Final Code:</label>
                 <textarea id="ws-9-final" name="ws-9-final" class="final-code"></textarea>
             </div>
-            
+
             <!-- Item 10 -->
             <div class="workstation-item" style="display: none;">
                 <h3>[10]</h3>
                 <label for="ws-10-name">Name:</label>
                 <input type="text" id="ws-10-name" name="ws-10-name">
-                
+
                 <label for="ws-10-serial">Serial:</label>
                 <textarea id="ws-10-serial" name="ws-10-serial"></textarea>
-                
+
                 <label for="ws-10-deserial">Deserial:</label>
                 <textarea id="ws-10-deserial" name="ws-10-deserial"></textarea>
-                
+
                 <label for="ws-10-test">Test:</label>
                 <textarea id="ws-10-test" name="ws-10-test" class="test-code"></textarea>
-                
+
                 <label for="ws-10-final">Final Code:</label>
                 <textarea id="ws-10-final" name="ws-10-final" class="final-code"></textarea>
             </div>
         </div>
-        
+
         <div class="workstation-controls" style="text-align: center; margin-top: 2rem;">
             <button id="add-workstation-item-btn" title="Add another item block">[+]</button>
             <button id="export-workstation-btn" title="Copy all workstation data to clipboard">Copy Workstation</button>
         </div>
     </div>
-    <!-- END OF SURGICAL ADDITION -->
+    <!-- END OF WORKSTATION TAB CONTENT -->
 
 </div>
 
 <script>
-// --- CORE LIBRARIES ---
+// --- CORE LIBRARIES --- (Unchanged)
 const B85_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+-;<=>?@^_`{/}~";
 const B85_REVERSE = new Int16Array(256).fill(-1);
 for(let i=0;i<85;i++)B85_REVERSE[B85_ALPHABET.charCodeAt(i)]=i;
@@ -614,7 +481,7 @@ for(let i=0;i<85;i++)B85_REVERSE[B85_ALPHABET.charCodeAt(i)]=i;
 function b85Decode_BL4(s) {
     if (!s || !s.startsWith("@U")) return null;
     const serial_part = s.slice(2);
-    
+
     const bytes = [];
     let a = 0 >>> 0, c = 0;
     const f = () => { bytes.push(a >>> 24 & 255, a >>> 16 & 255, a >>> 8 & 255, a & 255); a = 0; c = 0 };
@@ -630,7 +497,7 @@ function b85Decode_BL4(s) {
         if (c > 2) bytes.push(a >>> 16 & 255);
         if (c > 3) bytes.push(a >>> 8 & 255);
     }
-    
+
     const mirroredBytes = bytes.map(b => {
         return ((b & 1) << 7) | ((b & 2) << 5) | ((b & 4) << 3) | ((b & 8) << 1) |
                ((b & 16) >> 1) | ((b & 32) >> 3) | ((b & 64) >> 5) | ((b & 128) >> 7);
@@ -647,9 +514,9 @@ function b85Encode_BL4(hex) {
 
     const mirroredBytes = bytes.map(b => {
          return ((b & 1) << 7) | ((b & 2) << 5) | ((b & 4) << 3) | ((b & 8) << 1) |
-               ((b & 16) >> 1) | ((b & 32) >> 3) | ((b & 64) >> 5) | ((b & 128) >> 7);
+                ((b & 16) >> 1) | ((b & 32) >> 3) | ((b & 64) >> 5) | ((b & 128) >> 7);
     });
-    
+
     let r = [], i = 0;
     const P = [52200625, 614125, 7225, 85, 1];
     for (i = 0; i + 3 < mirroredBytes.length; i += 4) {
@@ -693,7 +560,7 @@ function dnaToBinary(dna) {
 }
 function reverseString(str) { return str.split('').reverse().join(''); }
 
-// --- AFFINE GAP ALIGNMENT LOGIC ---
+// --- AFFINE GAP ALIGNMENT LOGIC --- (Unchanged)
 function affineGapAlignment(seqA, seqB, matchScore = 5, mismatchPenalty = -4, gapOpenPenalty = -15, gapExtendPenalty = -2) {
     const lenA = seqA.length;
     const lenB = seqB.length;
@@ -742,7 +609,7 @@ function affineGapAlignment(seqA, seqB, matchScore = 5, mismatchPenalty = -4, ga
     return { alignedA, alignedB, comparison, stats: { matches, differences, additions, total: alignedA.length } };
 }
 
-// --- STRUCTURAL PATTERN MATCHING LOGIC (OPTIMIZED) ---
+// --- STRUCTURAL PATTERN MATCHING LOGIC (OPTIMIZED) --- (Unchanged)
 function listCommonPatterns(str1, str2, minLength) {
     const patterns = new Set();
     const len1 = str1.length;
@@ -771,7 +638,7 @@ function sortByLengthDescending(patterns) {
 }
 
 function greedyDeconstruct(inputString, sortedPatterns) {
-    let parts = [[inputString, false]]; 
+    let parts = [[inputString, false]];
 
     for (const pattern of sortedPatterns) {
         let newParts = [];
@@ -783,7 +650,7 @@ function greedyDeconstruct(inputString, sortedPatterns) {
 
             const currentString = part[0];
             const splitPieces = currentString.split(pattern);
-            
+
             if (splitPieces.length > 1) {
                 for (let i = 0; i < splitPieces.length; i++) {
                     if (splitPieces[i]) {
@@ -797,7 +664,7 @@ function greedyDeconstruct(inputString, sortedPatterns) {
                 newParts.push(part);
             }
         }
-        parts = newParts; 
+        parts = newParts;
     }
     return parts;
 }
@@ -822,38 +689,67 @@ function formatComparisonString(comparison) {
     } return html;
 }
 
-// --- FULL SCRIPT ---
+// --- FULL SCRIPT --- (Unchanged, except for Workstation functions)
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- SHARED HELPER FUNCTIONS & DEFINITIONS ---
     let activeEditor = null;
     let lastComparisonData = { a: null, b: null };
     let lastPermutationAnalysis = { binA: null, binB: null, diffIndices: [], mode: 'byte' };
-    // SURGICAL ADDITION: Workstation counter
-    let currentWorkstationItem = 1; 
+    let currentWorkstationItem = 1;
 
-    // --- TAB HANDLING ---
+    // --- TAB HANDLING --- (Internal Button Tabs)
     window.openTab = (evt, tabName) => {
         document.querySelectorAll('.tab-content').forEach(tc => tc.style.display = "none");
-        document.querySelectorAll('.tab-link').forEach(tl => tl.classList.remove('active'));
-        document.getElementById(tabName).style.display = "block";
-        evt.currentTarget.classList.add('active');
+        document.querySelectorAll('.tabs .tab-link').forEach(tl => tl.classList.remove('active')); // Scope to internal tabs
+        const targetTab = document.getElementById(tabName);
+        if (targetTab) targetTab.style.display = "block";
+        if (evt && evt.currentTarget) evt.currentTarget.classList.add('active');
+
+        // Handle URL hash changes for top nav links
+        if (location.hash === '#Deserializer' && tabName !== 'Deserializer') {
+             const deserializerButton = document.getElementById('deserializer-tab-button');
+             if (deserializerButton) deserializerButton.click(); // Programmatically click the internal tab
+        } else if (location.hash === '#Comparator' && tabName !== 'Comparator') {
+             const comparatorButton = document.querySelector('.tabs .tab-link[onclick*="Comparator"]');
+             if (comparatorButton) comparatorButton.click();
+        } else if (location.hash === '#Workstation' && tabName !== 'Workstation') {
+            const workstationButton = document.querySelector('.tabs .tab-link[onclick*="Workstation"]');
+             if (workstationButton) workstationButton.click();
+        }
+
     };
-    
+
     // --- INJECT HTML FOR COMPARATOR TAB ---
     document.getElementById('Comparator').innerHTML = `<div class="grid-2-col"><div><label for="serialA-input">Serial 1:</label><textarea id="serialA-input" rows="3">@Uge8s!m/)}}!tgGjNWCv7=um@tAI&bID_4b+=#r\`uMKB6>*(p+_rqq+YC_B)k3RMi~NB{</textarea></div><div><label for="serialB-input">Serial 2:</label><textarea id="serialB-input" rows="3">@Uge8Oqm/)}}!tgGjNWCv7=um@tAI&bID_4b+=#r\`uMKB6>*(p+_rqq+YC_B)k3RMi~NB{</textarea></div></div><button id="compare-btn" style="font-size: 1.2rem; padding: 0.75rem 1.5rem;">🔬 Compare</button><button id="advanced-align-btn" style="padding: 0.5rem 1rem; font-size: 0.9rem; background-color: #4b4b7d; margin-left: 0.5rem;">🧬 Advanced Align</button><button id="structural-analysis-btn" style="padding: 0.5rem 1rem; font-size: 0.9rem; background-color: #00695C; margin-left: 0.5rem;">🧩 Analyze Structure</button><div id="results-container" class="comparison-results"></div><div id="selective-merge-container" style="display:none; margin-top: 1.5rem; padding: 1rem; background-color: #2c2c4d; border-radius: 6px; border: 1px solid var(--border-color);"><h4 style="margin-top:0;">Selective Merge Permutations</h4><label for="merge-sections-input">Target Sections to Merge (from Serial 1):</label><textarea id="merge-sections-input" rows="2" placeholder="Example: s!m, +YC_B)k"></textarea><p class="help-text">Copy/paste differing sections from Serial 1 above, separated by commas. The tool will generate all combinations of these selected differences.</p><button id="base85-permutation-analysis-btn" style="background-color: #a16c00;">Analyze Base85-Level Merge</button><button id="byte-permutation-analysis-btn" style="background-color: #6c757d;">Analyze Byte-Level Merge</button><button id="bit-permutation-analysis-btn" style="background-color: #4b4b7d;">Analyze Bit-Level Merge</button></div><div id="permutation-analysis-results" style="display:none; margin-top: 1rem; padding: 1rem; background-color: #3a3a5a; border-radius: 6px;"></div><div id="final-output-container" style="display: none;"></div><div id="permutation-output-container" style="margin-top: 1.5rem; display: none;"><div class="output-header"><div class="header-content"><div><h3>Generated Merged Serials</h3><p class="stats">Unique Serials Generated: <span class="serial-count" id="serial-count-permutations">0</span></p></div><button class="util-btn copy-all-btn" data-target="permutation-output">Copy All</button></div></div><div id="permutation-output" class="display-box" style="min-height: 200px; max-height: 400px; overflow-y: auto;"></div></div>`;
-    
-    // Activate the first tab
-    document.querySelector('.tab-link').click();
-    
-    // --- ATTACH ALL EVENT LISTENERS ---
-    
-    // --- COMPARATOR ---
+
+     // --- Activate Initial Tab (based on hash or default) ---
+     const initialTab = location.hash.substring(1) || 'Comparator'; // Get tab from URL hash or default
+     const initialButton = document.querySelector(`.tabs .tab-link[onclick*="'${initialTab}'"]`);
+     if (initialButton) {
+         initialButton.click();
+     } else {
+         document.querySelector('.tabs .tab-link').click(); // Fallback to first tab
+     }
+
+     // Listen for hash changes to switch internal tabs
+     window.addEventListener('hashchange', () => {
+         const hashTab = location.hash.substring(1);
+         if (hashTab) {
+             const targetButton = document.querySelector(`.tabs .tab-link[onclick*="'${hashTab}'"]`);
+             if (targetButton && !targetButton.classList.contains('active')) {
+                 targetButton.click();
+             }
+         }
+     });
+
+
+    // --- ATTACH ALL EVENT LISTENERS --- (Comparator functions unchanged)
     async function runComparison() {
         const serialA_input = document.getElementById('serialA-input').value.trim();
         const serialB_input = document.getElementById('serialB-input').value.trim();
         const resultsContainer = document.getElementById('results-container');
-        resetAllEditors(); 
+        resetAllEditors();
 
         let serialToCompareA, serialToCompareB, deserializedToCompareA, deserializedToCompareB;
         const serialsToDeserialize = [];
@@ -893,7 +789,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         throw new Error(`API error: ${response.statusText} - ${errorText}`);
                     }
                     const result = await response.json();
-                    
+
                     if (serializeIndexA !== -1) {
                         serialToCompareA = result[serializeIndexA];
                         if (!serialToCompareA) throw new Error('Serial 1 input failed to serialize.');
@@ -942,7 +838,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- 3. Now we have all 4 values. Proceed with local decodes ---
             const hexA = b85Decode_BL4(serialToCompareA);
             const hexB = b85Decode_BL4(serialToCompareB);
-            
+
             if (!hexA || !hexB) {
                 alert("Error: One or both inputs resulted in an invalid serial. Cannot compare.");
                 return;
@@ -952,19 +848,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const binB = hexToBinary(hexB);
             const dnaA = binaryToDna(binA);
             const dnaB = binaryToDna(binB);
-            
+
             lastComparisonData = {
                 a: { serial: serialToCompareA, deserialized: deserializedToCompareA, hex: hexA, bin: binA, dna: dnaA },
                 b: { serial: serialToCompareB, deserialized: deserializedToCompareB, hex: hexB, bin: binB, dna: dnaB }
             };
 
-            resultsContainer.innerHTML = 
+            resultsContainer.innerHTML =
                 createComparisonBlock('Deserialized', deserializedToCompareA, deserializedToCompareB) +
                 createComparisonBlock('Base85', serialToCompareA, serialToCompareB) +
                 createComparisonBlock('Hexadecimal (Byte-Mirrored)', hexA, hexB) +
                 createComparisonBlock('Binary (Byte-Mirrored)', binA, binB) +
                 createComparisonBlock('Base4 (DNA, Byte-Mirrored)', dnaA, dnaB);
-            
+
             attachModifyListeners();
             resultsContainer.style.display = 'block';
             document.getElementById('selective-merge-container').style.display = 'block';
@@ -992,8 +888,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             dataA.bin = hexToBinary(dataA.hex);
-            dataB.bin = hexToBinary(dataB.bin);
-            dataA.dna = binaryToDna(dataA.bin); 
+            dataB.bin = hexToBinary(dataB.hex);
+            dataA.dna = binaryToDna(dataA.bin);
             dataB.dna = binaryToDna(dataB.bin);
 
             const createAdvancedAlignmentBlock = (title, seqA, seqB) => {
@@ -1034,12 +930,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>`;
             };
 
-            resultsContainer.innerHTML = 
+            resultsContainer.innerHTML =
                 createAdvancedAlignmentBlock('Base85', dataA.serial, dataB.serial) +
                 createAdvancedAlignmentBlock('Hexadecimal (Byte-Mirrored)', dataA.hex.replace(/(.{2})/g, '$1 ').trim(), dataB.hex.replace(/(.{2})/g, '$1 ').trim()) +
                 createAdvancedAlignmentBlock('Binary (Byte-Mirrored)', dataA.bin.replace(/(.{8})/g, '$1 ').trim(), dataB.bin.replace(/(.{8})/g, '$1 ').trim()) +
                 createAdvancedAlignmentBlock('Base4 (DNA, Byte-Mirrored)', dataA.dna, dataB.dna);
-            
+
             attachModifyListeners();
             resultsContainer.style.display = 'block';
             document.getElementById('selective-merge-container').style.display = 'none';
@@ -1057,21 +953,21 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsContainer.innerHTML = `<p>Running structural analysis... this may take a moment.</p>`;
         resultsContainer.style.display = 'block';
 
-        setTimeout(() => { 
+        setTimeout(() => {
             try {
                 const binA = hexToBinary(b85Decode_BL4(serialA));
                 const binB = hexToBinary(b85Decode_BL4(serialB));
                 if (!binA || !binB) {
                     alert("Error: Please provide two valid serials."); return;
                 }
-                
+
                 const commonPatterns = sortByLengthDescending(listCommonPatterns(binA, binB, 16));
 
                 if (commonPatterns.length === 0) {
                      resultsContainer.innerHTML = `<p>No significant common structural patterns (>= 16 bits) found.</p>`;
                      return;
                 }
-                
+
                 const partsA = greedyDeconstruct(binA, commonPatterns);
                 const partsB = greedyDeconstruct(binB, commonPatterns);
 
@@ -1164,14 +1060,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let newSerial = '';
-        if (cleanFormat === 'base85') { newSerial = modifiedValue; if(!b85Decode_BL4(newSerial)) throw new Error("Invalid Base85 string."); } 
-        else if (cleanFormat.includes('hexadecimal')) { newSerial = b85Encode_BL4(modifiedValue.replace(/\s/g, '')); } 
+        if (cleanFormat === 'base85') { newSerial = modifiedValue; if(!b85Decode_BL4(newSerial)) throw new Error("Invalid Base85 string."); }
+        else if (cleanFormat.includes('hexadecimal')) { newSerial = b85Encode_BL4(modifiedValue.replace(/\s/g, '')); }
         else if (cleanFormat.includes('binary')) { newSerial = b85Encode_BL4(binaryToHex(modifiedValue.replace(/\s/g, ''))); }
         else if (cleanFormat.includes('base4-dna')) { const newBinary = dnaToBinary(modifiedValue); newSerial = b85Encode_BL4(binaryToHex(newBinary)); }
         if (!newSerial) throw new Error("Encoding failed.");
         return newSerial;
     }
-    
+
     async function handleModifyClick(event) {
         const btn = event.target;
         if (activeEditor && activeEditor.button === btn) {
@@ -1198,24 +1094,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     } catch (e) { alert(`Re-encoding Error for Serial 2: ${e.message}`); }
                 }
             } else {
-                // --- SURGICAL CHANGE ---
                 if (format === 'deserialized') {
-                    // User wants to copy the MODIFIED deserialized text, not re-encode it.
-                    const modifiedValue = displayBox.textContent; // Preserve whitespace for copying
-                    // We need to escape HTML to display it safely in the <code> tag
+                    const modifiedValue = displayBox.textContent;
                     const escapedValue = modifiedValue.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                    
-                    // --- SURGICAL CHANGE ---
-                    // Wrap label in a non-selectable span.
-                    // Put the code in its own block-level code tag for easy selection.
                     outputHtml = `<div>
-                                    <span style="user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; color: var(--text-secondary);">Modified Deserialized Code:</span>
-                                    <code class="final-output-code" style="white-space: pre-wrap; display: block; margin-top: 0.5rem;">${escapedValue}</code>
-                                  </div>`;
-                    // --- END SURGICAL CHANGE ---
+                                        <span style="user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; color: var(--text-secondary);">Modified Deserialized Code:</span>
+                                        <code class="final-output-code" style="white-space: pre-wrap; display: block; margin-top: 0.5rem;">${escapedValue}</code>
+                                      </div>`;
                     modified = true;
                 } else {
-                    // Original logic for all other formats (Base85, Hex, Binary, etc.)
                     const modifiedValue = displayBox.textContent.replace(/[\s\u00A0]/g, '');
                     try {
                         const newSerial = await reEncodeValue(modifiedValue, format);
@@ -1223,7 +1110,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         modified = true;
                     } catch (e) { alert(`Re-encoding Error: ${e.message}`); }
                 }
-                // --- END SURGICAL CHANGE ---
             }
             if (modified) {
                 const finalOutputContainer = document.getElementById('final-output-container');
@@ -1269,14 +1155,14 @@ document.addEventListener('DOMContentLoaded', () => {
                  displayBox.innerHTML = displayBox.dataset.originalHtml;
             }
             button.textContent = button.dataset.originalText || 'Modify';
-            button.style.backgroundColor = 'var(--accent-orange)'; 
+            button.style.backgroundColor = 'var(--accent-orange)';
             if (cancelBtn) cancelBtn.remove();
-        } 
+        }
         activeEditor = null;
     }
 
-    function attachModifyListeners() { 
-        document.querySelectorAll('.modify-btn').forEach(btn => btn.addEventListener('click', handleModifyClick)); 
+    function attachModifyListeners() {
+        document.querySelectorAll('.modify-btn').forEach(btn => btn.addEventListener('click', handleModifyClick));
     }
 
     document.getElementById('compare-btn')?.addEventListener('click', runComparison);
@@ -1387,7 +1273,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     for (let k = 0; k < n; k++) if (binaryRepresentation[k] === '1') tempCharArray[diffIndices[k]] = serialB[diffIndices[k]];
                     newSerial = tempCharArray.join('');
                     const decoded = b85Decode_BL4(newSerial);
-                    if (!decoded || b85Encode_BL4(decoded) !== newSerial) continue; 
+                    if (!decoded || b85Encode_BL4(decoded) !== newSerial) continue;
                 }
                 if (!generatedSerials.has(newSerial)) {
                     generatedSerials.add(newSerial);
@@ -1435,7 +1321,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const textArea = document.createElement("textarea");
         textArea.value = textToCopy;
-        
+
         // Make it invisible
         textArea.style.position = 'fixed';
         textArea.style.top = '-9999px';
@@ -1477,7 +1363,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- SURGICAL ADDITION: Workstation Add Item Function ---
+    // --- WORKSTATION FUNCTIONS (Unchanged) ---
     document.getElementById('add-workstation-item-btn')?.addEventListener('click', () => {
         if (currentWorkstationItem < 10) {
             currentWorkstationItem++;
@@ -1492,10 +1378,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- SURGICAL ADDITION: Workstation "Copy" Function ---
     document.getElementById('export-workstation-btn')?.addEventListener('click', () => {
         let exportContent = "";
-        
+
         for (let i = 1; i <= currentWorkstationItem; i++) {
             const name = document.getElementById(`ws-${i}-name`)?.value || '';
             const serial = document.getElementById(`ws-${i}-serial`)?.value || '';
@@ -1503,14 +1388,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const test = document.getElementById(`ws-${i}-test`)?.value || '';
             const finalCode = document.getElementById(`ws-${i}-final`)?.value || '';
 
-            // Only add item if it has any content
             if (name || serial || deserial || test || finalCode) {
-                // Add a newline before this item if it's not the first one
                 if (exportContent !== "") {
-                    exportContent += "\n\n"; // Add extra space between items
+                    exportContent += "\n\n";
                 }
-                
-                // Format as requested
                 exportContent += `[${i}]\n`;
                 exportContent += `Name: ${name}\n`;
                 exportContent += `Serial: ${serial}\n`;
@@ -1519,295 +1400,236 @@ document.addEventListener('DOMContentLoaded', () => {
                 exportContent += `Final Code: ${finalCode}`;
             }
         }
-        
+
         if (exportContent === "") {
-            // No data to copy
             const btn = document.getElementById('export-workstation-btn');
             btn.textContent = "No Data!";
             btn.style.background = "var(--danger-red)";
             setTimeout(() => {
                 btn.textContent = "Copy Workstation";
-                btn.style.background = ""; // Revert to original
+                btn.style.background = "";
             }, 2000);
             return;
         }
 
-        // Copy to clipboard
         navigator.clipboard.writeText(exportContent).then(() => {
-            // Success feedback on the button
             const btn = document.getElementById('export-workstation-btn');
             btn.textContent = "Copied!";
-            btn.style.background = "#34c759"; // Keep hover green
+            btn.style.background = "#34c759";
             setTimeout(() => {
                 btn.textContent = "Copy Workstation";
-                btn.style.background = ""; // Revert to original
+                btn.style.background = "";
             }, 2000);
         }).catch(err => {
-            // Error feedback on the button
             console.error('Failed to copy workstation data: ', err);
             const btn = document.getElementById('export-workstation-btn');
             btn.textContent = "Copy Failed!";
             btn.style.background = "var(--danger-red)";
             setTimeout(() => {
                 btn.textContent = "Copy Workstation";
-                btn.style.background = ""; // Revert to original
+                btn.style.background = "";
             }, 2000);
         });
     });
 
-    // --- SURGICAL ADDITION: Workstation Help Toggle Function ---
     window.toggleWorkstationHelp = () => {
         const helpSection = document.getElementById('workstation-help-section');
         helpSection.classList.toggle('active');
     };
 
-    // --- SURGICAL ADDITION: Workstation Example Highlighter ---
     document.getElementById('workstation-help-section')?.addEventListener('click', (event) => {
         const trigger = event.target.closest('li.highlight-trigger');
         if (!trigger) return;
-
         const textToHighlight = trigger.dataset.highlight;
         if (!textToHighlight) return;
-
         const codeBlock = document.getElementById('workstation-example-code');
         const originalText = codeBlock.dataset.originalText;
-
-        // Reset text to original
         codeBlock.innerHTML = originalText;
-
-        // Apply new highlight
         const highlightedHtml = originalText.replace(textToHighlight, (match) => {
             return `<span class="ws-highlight">${match}</span>`;
         });
-        
         codeBlock.innerHTML = highlightedHtml;
     });
-    // --- END OF SURGICAL ADDITIONS ---
+    // --- END OF WORKSTATION FUNCTIONS ---
+
+    // --- FUNCTIONS FOR DESERIALIZER TAB --- (Unchanged)
+    window.toggleHelp = function() { // Make globally accessible if not already
+        const helpSection = document.getElementById('help-section');
+        helpSection.classList.toggle('active');
+    }
+
+    window.deserialize = async function() { // Make globally accessible
+        const inputData = document.getElementById('input-data').value.trim();
+        const outputTextarea = document.getElementById('output-data');
+        const statusDiv = document.getElementById('status');
+        if (!inputData) {
+            statusDiv.className = 'status active error';
+            statusDiv.textContent = '❌ Please enter some serials to deserialize!';
+            return;
+        }
+        statusDiv.className = 'status active processing';
+        statusDiv.textContent = '⏳ Deserializing...';
+        try {
+            const serials = inputData.split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0);
+            const apiUrl = 'https://borderlands4-deserializer.nicnl.com/api/v1/deserialize_bulk';
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(serials)
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+            }
+            const result = await response.json();
+            let formattedOutput = '';
+            for (const [serial, data] of Object.entries(result)) {
+                if (data && data.deserialized) {
+                    formattedOutput += data.deserialized + '\n';
+                }
+            }
+            outputTextarea.value = formattedOutput;
+            extractPerkIds(result); // Assuming this function exists and is defined elsewhere or below
+            statusDiv.className = 'status active success';
+            statusDiv.textContent = `✅ Successfully deserialized ${Object.keys(result).length} items!`;
+        } catch (error) {
+            console.error('Error:', error);
+            statusDiv.className = 'status active error';
+            statusDiv.textContent = `❌ Error: ${error.message}`;
+            outputTextarea.value = `Error: ${error.message}`;
+        }
+    }
+
+    // Define extractPerkIds if it wasn't defined earlier
+    function extractPerkIds(resultData) {
+        const perkIds = new Set();
+         const perkDetails = []; // Keep details if needed
+        for (const [serial, data] of Object.entries(resultData)) {
+            if (!data || !data.additional_data) continue; // Check additional_data
+            const ad = data.additional_data;
+            if (ad.firmware) perkIds.add('firmware_' + ad.firmware);
+            if (ad.rarity) perkIds.add('rarity_' + ad.rarity);
+            if (ad.stat_groups) {
+                ad.stat_groups.forEach(group => {
+                    if (group.stats) {
+                        group.stats.forEach(stat => {
+                            if (stat.stat_id) perkIds.add('stat_' + stat.stat_id);
+                        });
+                    }
+                });
+            }
+        }
+         console.log('Found perk IDs:', Array.from(perkIds).sort());
+         if (perkIds.size > 0) {
+             const statusDiv = document.getElementById('status');
+             if (statusDiv.classList.contains('success')) { // Append only if successful
+                 statusDiv.textContent += '\n\n📊 Found Perk IDs: ' + Array.from(perkIds).sort().join(', ');
+             }
+         }
+    }
+
+
+    window.serialize = async function() { // Make globally accessible
+        const inputData = document.getElementById('input-data').value.trim();
+        const outputTextarea = document.getElementById('output-data');
+        const statusDiv = document.getElementById('status');
+        if (!inputData) {
+            statusDiv.className = 'status active error';
+            statusDiv.textContent = '❌ Please enter deserialized strings to serialize!';
+            return;
+        }
+        statusDiv.className = 'status active processing';
+        statusDiv.textContent = '⏳ Serializing...';
+        try {
+            const deserializedStrings = inputData.split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0);
+            const apiUrl = 'https://borderlands4-deserializer.nicnl.com/api/v1/serialize_bulk';
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(deserializedStrings)
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+            }
+            const result = await response.json();
+            let formattedOutput = '';
+            for (const [index, serial] of Object.entries(result)) {
+                formattedOutput += serial + '\n';
+            }
+            outputTextarea.value = formattedOutput;
+            statusDiv.className = 'status active success';
+            statusDiv.textContent = `✅ Successfully serialized ${Object.keys(result).length} items!`;
+        } catch (error) {
+            console.error('Error:', error);
+            statusDiv.className = 'status active error';
+            statusDiv.textContent = `❌ Error: ${error.message}`;
+            outputTextarea.value = `Error: ${error.message}`;
+        }
+    }
+
+    window.handleFileSelect = function(event) { // Make globally accessible
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                const statusDiv = document.getElementById('status');
+                if (content.includes('inventory:') || content.includes('backpack:')) {
+                    const serials = extractSerialsFromYAML(content); // Assuming extractSerialsFromYAML is defined
+                    document.getElementById('input-data').value = serials.join('\n');
+                    statusDiv.className = 'status active success';
+                    statusDiv.textContent = `✅ Loaded ${file.name} - Extracted ${serials.length} serials from backpack`;
+                } else {
+                    document.getElementById('input-data').value = content;
+                    statusDiv.className = 'status active success';
+                    statusDiv.textContent = '✅ Loaded ' + file.name + ' (' + file.size + ' bytes)';
+                }
+            };
+            reader.readAsText(file);
+        }
+    }
+
+    // Define extractSerialsFromYAML if it wasn't defined earlier
+    function extractSerialsFromYAML(yamlContent) {
+        const serials = [];
+        const serialPattern = /serial:\s*'(@U[^']+)'/g; // Ensure @U is captured
+        let match;
+        while ((match = serialPattern.exec(yamlContent)) !== null) {
+            serials.push(match[1]); // Push the captured group which includes @U
+        }
+        return serials;
+    }
+
+
+    window.copyOutput = async function() { // Make globally accessible
+        const outputTextarea = document.getElementById('output-data');
+        if (!outputTextarea.value.trim()) {
+            alert('No output to copy!');
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(outputTextarea.value);
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = 'status active success';
+            statusDiv.textContent = '📋 Copied to clipboard!';
+            setTimeout(() => { statusDiv.className = 'status'; }, 2000);
+        } catch (err) {
+            outputTextarea.select();
+            document.execCommand('copy');
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = 'status active success';
+            statusDiv.textContent = '📋 Copied to clipboard!';
+            setTimeout(() => { statusDiv.className = 'status'; }, 2000);
+        }
+    }
+     // --- END DESERIALIZER FUNCTIONS ---
 
 });
-
-// --- FUNCTIONS FOR DESERIALIZER TAB ---
-// --- THIS SECTION IS UNTOUCHED ---
-function toggleHelp() {
-    const helpSection = document.getElementById('help-section');
-    helpSection.classList.toggle('active');
-}
-
-async function deserialize() {
-    const inputData = document.getElementById('input-data').value.trim();
-    const outputTextarea = document.getElementById('output-data');
-    const statusDiv = document.getElementById('status');
-    if (!inputData) {
-        statusDiv.className = 'status active error';
-        statusDiv.textContent = '❌ Please enter some serials to deserialize!';
-        return;
-    }
-    statusDiv.className = 'status active processing';
-    statusDiv.textContent = '⏳ Deserializing...';
-    try {
-        // Split by newline and clean - just get the raw strings
-        const serials = inputData.split('\n')
-            .map(line => line.trim())
-            .filter(line => line.length > 0);
-        console.log('Sending ' + serials.length + ' serials to API');
-        // Make API call to https://borderlands4-deserializer.nicnl.com/api/v1/deserialize_bulk
-        const apiUrl = 'https://borderlands4-deserializer.nicnl.com/api/v1/deserialize_bulk';
-        console.log('Calling API:', apiUrl);
-        console.log('Payload:', serials.slice(0, 3));
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(serials)
-        });
-        console.log('Response status:', response.status);
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
-        }
-        const result = await response.json();
-        console.log('API returned:', Object.keys(result).length, 'items');
-        // Format output to show only deserialized strings, one per line
-        let formattedOutput = '';
-        for (const [serial, data] of Object.entries(result)) {
-            if (data && data.deserialized) {
-                formattedOutput += data.deserialized + '\n';
-            }
-        }
-        outputTextarea.value = formattedOutput;
-        // Extract and display perk IDs found
-        extractPerkIds(result);
-        statusDiv.className = 'status active success';
-        statusDiv.textContent = `✅ Successfully deserialized ${Object.keys(result).length} items!`;
-        
-    } catch (error) {
-        console.error('Error:', error);
-        statusDiv.className = 'status active error';
-        statusDiv.textContent = `❌ Error: ${error.message}`;
-        outputTextarea.value = `Error: ${error.message}`;
-    }
-}
-function extractPerkIds(resultData) {
-    const perkIds = new Set();
-    const perkDetails = [];
-    // The result is a dictionary where keys are serials and values are the deserialized data
-    for (const [serial, data] of Object.entries(resultData)) {
-        if (!data) continue;
-        // Check for firmware
-        if (data.firmware) {
-            perkIds.add('firmware_' + data.firmware);
-            perkDetails.push({
-                serial: serial.substring(0, 30) + '...',
-                type: 'firmware',
-                id: data.firmware
-            });
-        }
-        // Check for rarity
-        if (data.rarity) {
-            perkIds.add('rarity_' + data.rarity);
-            perkDetails.push({
-                serial: serial.substring(0, 30) + '...',
-                type: 'rarity',
-                id: data.rarity
-            });
-        }
-        // Check for stat groups
-        if (data.stat_groups) {
-            data.stat_groups.forEach(group => {
-                if (group.stats) {
-                    group.stats.forEach(stat => {
-                        if (stat.stat_id) {
-                            perkIds.add('stat_' + stat.stat_id);
-                            perkDetails.push({
-                                serial: serial.substring(0, 30) + '...',
-                                type: 'stat',
-                                id: stat.stat_id
-                            });
-                        }
-                    });
-                }
-            });
-        }
-    }
-    console.log('Found perk IDs:', Array.from(perkIds).sort());
-    console.log('Perk details:', perkDetails);
-    // Show found perk IDs in status
-    if (perkIds.size > 0) {
-        const statusDiv = document.getElementById('status');
-        statusDiv.textContent += '\n\n📊 Found Perk IDs: ' + Array.from(perkIds).sort().join(', ');
-    }
-}
-function handleFileSelect(event) {
-    const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const content = e.target.result;
-            const statusDiv = document.getElementById('status');
-            // Check if it's YAML format
-            if (content.includes('inventory:') || content.includes('backpack:')) {
-                // Parse YAML to extract serials
-                const serials = extractSerialsFromYAML(content);
-                document.getElementById('input-data').value = serials.join('\n');
-                statusDiv.className = 'status active success';
-                statusDiv.textContent = `✅ Loaded ${file.name} - Extracted ${serials.length} serials from backpack`;
-            } else {
-                // Plain text file
-                document.getElementById('input-data').value = content;
-                statusDiv.className = 'status active success';
-                statusDiv.textContent = '✅ Loaded ' + file.name + ' (' + file.size + ' bytes)';
-            }
-        };
-        reader.readAsText(file);
-    }
-}
-function extractSerialsFromYAML(yamlContent) {
-    const serials = [];
-    // Extract serial: '...' patterns
-    const serialPattern = /serial:\s+'@([^']+)'/g;
-    let match;
-    while ((match = serialPattern.exec(yamlContent)) !== null) {
-        serials.push('@' + match[1]);
-    }
-    return serials;
-}
-async function serialize() {
-    const inputData = document.getElementById('input-data').value.trim();
-    const outputTextarea = document.getElementById('output-data');
-    const statusDiv = document.getElementById('status');
-    if (!inputData) {
-        statusDiv.className = 'status active error';
-        statusDiv.textContent = '❌ Please enter deserialized strings to serialize!';
-        return;
-    }
-    statusDiv.className = 'status active processing';
-    statusDiv.textContent = '⏳ Serializing...';
-    try {
-        // Split by newline and clean
-        const deserializedStrings = inputData.split('\n')
-            .map(line => line.trim())
-            .filter(line => line.length > 0);
-        console.log('Sending ' + deserializedStrings.length + ' strings to serialize API');
-        // Make API call to serialize
-        const apiUrl = 'https://borderlands4-deserializer.nicnl.com/api/v1/serialize_bulk';
-        console.log('Calling Serialize API:', apiUrl);
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(deserializedStrings)
-        });
-        console.log('Response status:', response.status);
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
-        }
-        const result = await response.json();
-        console.log('API returned serials:', Object.keys(result).length);
-        // Display serials one per line
-        let formattedOutput = '';
-        for (const [index, serial] of Object.entries(result)) {
-            formattedOutput += serial + '\n';
-        }
-        outputTextarea.value = formattedOutput;
-        statusDiv.className = 'status active success';
-        statusDiv.textContent = `✅ Successfully serialized ${Object.keys(result).length} items!`;
-    } catch (error) {
-        console.error('Error:', error);
-        statusDiv.className = 'status active error';
-        statusDiv.textContent = `❌ Error: ${error.message}`;
-        outputTextarea.value = `Error: ${error.message}`;
-    }
-}
-async function copyOutput() {
-    const outputTextarea = document.getElementById('output-data');
-    if (!outputTextarea.value.trim()) {
-        alert('No output to copy!');
-        return;
-    }
-    try {
-        // Try modern clipboard API first
-        await navigator.clipboard.writeText(outputTextarea.value);
-        const statusDiv = document.getElementById('status');
-        statusDiv.className = 'status active success';
-        statusDiv.textContent = '📋 Copied to clipboard!';
-        setTimeout(() => {
-            statusDiv.className = 'status';
-        }, 2000);
-    } catch (err) {
-        // Fallback to old method
-        outputTextarea.select();
-        document.execCommand('copy');
-        const statusDiv = document.getElementById('status');
-        statusDiv.className = 'status active success';
-        statusDiv.textContent = '📋 Copied to clipboard!';
-        setTimeout(() => {
-            statusDiv.className = 'status';
-        }, 2000);
-    }
-}
 </script>
 </body>
 </html>
