@@ -400,48 +400,51 @@
     }
 
     // --- Condensing Logic ---
-    // Extract Part ID (e.g., "9" from "{9:26}" or "{9}")
     function getPartId(code) {
-        // Find {ID: or {ID}
         const match = code.match(/\{(\d+)/);
         return match ? match[1] : null;
     }
-    // Extract Part Value (e.g., "26" from "{9:26}")
     function getPartValue(code) {
-        // Find :VALUE} or {VALUE}
+        // Look for {ID:VALUE} pattern, capturing VALUE
         const match = code.match(/:\s*([^}]+)}/);
-        return match ? match[1].trim() : (code.match(/\{(\d+)\}/)?.[1] || null); // Fallback for {ID} structure
+        if (match) {
+            return match[1].trim(); // Returns VALUE
+        }
+        // Look for {ID} pattern, capturing ID. This handles single-value codes.
+        const singleMatch = code.match(/\{(\d+)\}/);
+        if (singleMatch) {
+            return singleMatch[1]; // Returns ID (which acts as the single value)
+        }
+        return null; 
     }
 
 
     function condenseParts(parts) {
         if (!parts || parts.length === 0) return [];
 
-        const grouped = {}; // { 'ID': ['VALUE1', 'VALUE2', ...] }
-        const condensedParts = [];
+        const grouped = {};
+        const simpleParts = []; // For codes that are already condensed or are single {ID} blocks
 
         parts.forEach(code => {
             const id = getPartId(code);
             const value = getPartValue(code);
             
             if (id && value) {
-                // If it contains a colon, it's a value part, and we attempt to group it
+                // If it contains a colon, it's a multi-part structure and can be grouped
                 if (code.includes(':')) {
                     if (!grouped[id]) grouped[id] = [];
                     grouped[id].push(value);
                 } else {
-                    // It's a simple {ID} block (e.g., {217} or {999}), keep it as is
-                    condensedParts.push(code);
+                    // It's a simple {ID} block (e.g., {217} or {999}), keep it separate
+                    simpleParts.push(code);
                 }
-            } else if (id && !value && !code.includes(':')) {
-                 // It's a simple {ID} block (e.g., {217} or {999}), keep it as is
-                 condensedParts.push(code);
             } else {
                  // Malformed code or complex block, keep as is
-                 condensedParts.push(code);
+                 simpleParts.push(code);
             }
         });
 
+        const finalParts = [];
         // Process grouped parts
         for (const id in grouped) {
             const values = grouped[id];
@@ -449,14 +452,16 @@
 
             if (values.length === 1) {
                 // Single part: return to original format {ID:VALUE}
-                condensedParts.push(`{${id}:${values[0]}}`);
+                finalParts.push(`{${id}:${values[0]}}`);
             } else {
                 // Multiple parts: condense to {ID:[VALUE1 VALUE2 ...]}
-                condensedParts.push(`{${id}:[${values.join(' ')}]}`);
+                // NOTE: We trust the values are clean single numbers/strings now
+                finalParts.push(`{${id}:[${values.join(' ')}]}`);
             }
         }
         
-        return condensedParts;
+        finalParts.push(...simpleParts);
+        return finalParts;
     }
 
 
@@ -476,45 +481,40 @@
                  }
             });
             
-            // 2. --- DETERMINE BASE HEADER AND DYNAMIC PARTS ---
+            let baseHeader = '';
+            
             if (inputHasContent) {
-                // Use User's Input as Base and append selected parts
+                // --- Use User's Input as Base ---
+                // Clean the input aggressively: normalize spaces, strip internal pipes/braces for processing
+                const cleanedInput = baseInput.replace(/\s+/g, ' ').replace(/\{/g, ' {').replace(/\}/g, '} ').trim();
+                const inputParts = cleanedInput.split(/\s+/).filter(p => p.length > 0);
                 
-                // Clean the input aggressively: remove all newlines/pipes/double spaces for consistency
-                const cleanedInput = baseInput.replace(/\s+/g, ' ').replace(/\|/g, '').trim();
-                
-                // If the user's input is a full deserialized string (header + parts), we use it as the base
-                parts = cleanedInput.split(' ').filter(p => p.length > 0); 
-                
-                // Remove all existing part codes ({X:Y} or {X}) from the base to replace them
-                // This logic is complex, so for simplicity and safety: we only remove the user-selected PARTS
-                // and keep the base structure intact.
+                // Separate header from existing parts in the user's input
+                const headerParts = [];
+                const inputDynamicParts = [];
 
-                const baseHeaderParts = [];
-                const baseDynamicParts = [];
-
-                parts.forEach(p => {
+                let foundPart = false;
+                inputParts.forEach(p => {
                     if (p.startsWith('{') && p.endsWith('}')) {
-                        // This is a part code, add it to the list to be condensed
-                        baseDynamicParts.push(p);
+                        foundPart = true;
+                        inputDynamicParts.push(p);
+                    } else if (!foundPart) {
+                        headerParts.push(p);
                     } else {
-                        // This is part of the header (MFR, Type, Level, Seed, etc.)
-                        baseHeaderParts.push(p);
+                        // Anything after the first part block that isn't a part block is ignored or treated as malformed trail
                     }
                 });
 
-                // The parts list now contains the original dynamic parts + the new selected parts
-                const dynamicList = [...baseDynamicParts, ...rawParts];
+                baseHeader = headerParts.join(' ');
                 
-                // Start the final parts list with the original, cleaned header
-                parts = baseHeaderParts;
-
+                // Combine existing parts from input with newly selected parts
+                const dynamicList = [...inputDynamicParts, ...rawParts];
+                
                 // Condense the combined dynamic parts list
                 const condensedDynamicParts = condenseParts(dynamicList);
                 
-                // Add condensed parts to the final list
-                parts.push(...condensedDynamicParts);
-
+                // Recombine: Header + Condensed Parts
+                parts = [baseHeader, ...condensedDynamicParts].filter(p => p.length > 0);
 
             } else {
                 // --- Generated Base Serial (If Input is Empty) ---
@@ -523,16 +523,17 @@
                 const rarityCodeMap = { common: 217, uncommon: 218, rare: 219, epic: 220, legendary: 999 };
                 const rarityPartCode = `{${rarityCodeMap[dom.raritySel.value] || 0}}`;
                 
-                const header = `0, ${itemTypeId}, 1, 50| 2, ${rndSeed}||`;
-                parts.push(header);
-                parts.push(rarityPartCode); // Initial rarity part
-
-                // Condense the raw parts list
+                baseHeader = `0, ${itemTypeId}, 1, 50| 2, ${rndSeed}||`;
+                
+                parts.push(baseHeader);
+                parts.push(rarityPartCode); 
+                
                 const condensedDynamicParts = condenseParts(rawParts);
                 parts.push(...condensedDynamicParts);
             }
             
             // 3. Final Assembly: Join and add the mandatory pipe
+            // Ensure no excess spaces or pipes from empty components
             const newOutput = parts.join(' ').trim() + '|';
             
             lastGeneratedOutput = newOutput;
@@ -581,10 +582,13 @@
         const url = 'https://borderlands4-deserializer.nicnl.com/api/v1/deserialize';
         
         try {
+            // CRITICAL FIX: Strip the '@' prefix before sending Base85 serial to API
+            const cleanSerialB85 = serialB85.startsWith('@') ? serialB85.substring(1) : serialB85;
+
             const resp = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ serial_b85: serialB85 })
+                body: JSON.stringify({ serial_b85: cleanSerialB85 })
             });
 
             if (!resp.ok) {
