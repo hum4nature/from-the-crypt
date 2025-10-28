@@ -102,6 +102,7 @@
     <div class="card" id="inputCard">
         <div class="row" style="justify-content: space-between; align-items: center;">
              <label>Input Base Serial String (Base85 or Deserialized Parts)</label>
+             <!-- Re-added the Deserialize button -->
              <button class="small" id="deserializeBtn" title="Deserialize Base85 string from this input box" style="font-size: 12px; padding: 8px 12px;">🔗 Deserialize Base85</button>
         </div>
         <code id="inputSerialCode" contenteditable="plaintext-only" title="Paste Base85 and click 'Deserialize', OR paste Deserialized parts to use as a base."></code>
@@ -497,8 +498,8 @@
     // --- Input Detection & Routing ---
     function isBase85Serial(input) {
         const cleanedInput = input.trim(); // Handle leading/trailing spaces
-        // Base85 serials are long and start with @ or U (in some contexts, but @ is the standard prefix)
-        // Also check that it *doesn't* look like a part string, just in case
+        // Base85 serials are long and start with @ or U
+        // Also check that it *doesn't* look like a part string, to avoid false positives
         const looksLikePartString = cleanedInput.includes(',') || cleanedInput.includes('{') || cleanedInput.includes('|');
         return cleanedInput.length > 50 && (cleanedInput.startsWith('@') || cleanedInput.startsWith('U')) && !looksLikePartString;
     }
@@ -767,9 +768,11 @@
             // This listener handles manual typing of *part strings*
             dom.inputSerialCode.addEventListener('input', () => {
                 const input = dom.inputSerialCode.textContent.trim();
+                // This debounces the input
+                clearTimeout(rebuildTimer);
                 if (!isBase85Serial(input)) {
                     // Only trigger rebuild if it's NOT a Base85
-                    triggerDebouncedRebuild();
+                    rebuildTimer = setTimeout(rebuildOutputAndCallApi, 250); // 250ms delay on typing
                 }
             });
             
@@ -820,7 +823,11 @@
 
         } catch (error) {
             showMessage(error.message, true);
-            document.querySelectorAll('input, select, button').forEach(el => el.disabled = true);
+            // Disable all inputs/buttons/selects if init fails
+            document.querySelectorAll('input, select, button, [contenteditable]').forEach(el => {
+                el.disabled = true;
+                if (el.isContentEditable) el.contentEditable = false;
+            });
         } finally {
              dom.body.classList.remove('loading');
         }
