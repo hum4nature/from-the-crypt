@@ -76,6 +76,7 @@
         .manual-edit .manual-edit-indicator { display: inline; }
          /* Loading state - hides main content */
         .loading #mainContent { opacity: 0; pointer-events: none; }
+        .loading #inputCard { opacity: 0; pointer-events: none; }
     </style>
 </head>
 <body class="loading">
@@ -262,6 +263,9 @@
 
     // --- Utility Functions ---
     function showMessage(message, isError = true) {
+        // Ensure message area exists before trying to write to it
+        if (!dom.messageArea) return console.error("Message area not initialized.");
+        
         console.log(isError ? "Error:" : "Status:", message.replace(/<code>(.*?)<\/code>/g, '$1'));
         dom.messageArea.innerHTML = message;
         dom.messageArea.className = `message-area visible ${isError ? 'error' : 'success'}`;
@@ -286,7 +290,7 @@
         }, 1500);
     }
     
-    // --- Condensing Logic (omitted for brevity, content is correct) ---
+    // --- Condensing Logic (same as previous) ---
     function getPartId(code) {
         const match = code.match(/\{(\d+)/);
         return match ? match[1] : null;
@@ -464,11 +468,8 @@
     // Function to check if input looks like a Base85 serial (starts with @ or U, and is long enough)
     function isBase85Serial(input) {
         const cleanedInput = input.trim();
-        // Base85 serials are generally long and start with known markers
         if (cleanedInput.length < 50) return false;
-        // Check for markers OR Base85 start character
         const startsWithMarker = cleanedInput.startsWith('@') || cleanedInput.startsWith('U');
-        // Check for common deserialized separators to avoid false positives
         const looksLikePartString = cleanedInput.includes(',') || cleanedInput.includes('{') || cleanedInput.includes('|');
         
         return startsWithMarker && !looksLikePartString;
@@ -478,11 +479,9 @@
     function handleInputDetection() {
         const input = dom.inputSerialCode.textContent.trim();
         if (isBase85Serial(input)) {
-            // Found Base85: Route to Deserialize
             console.log("Input detected as Base85. Routing to deserialize API.");
             deserializeBase85(input);
         } else {
-            // Not Base85: Route to normal rebuild flow
             console.log("Input detected as Part Serial Header. Routing to rebuild output.");
             triggerDebouncedRebuild();
         }
@@ -509,7 +508,7 @@
             
             if (inputHasContent) {
                 // --- Use User's Input as Base ---
-                // 1a. Clean the input aggressively: remove '@', pipes, and normalize spaces.
+                // 1a. Clean the input aggressively: remove '@' and pipes, and normalize spaces.
                 const preCleanedInput = baseInput.replace(/@/g, '')
                                                 .replace(/\|/g, '')
                                                 .replace(/\s+/g, ' ').trim();
@@ -635,8 +634,8 @@
             // SUCCESS: Place the deserialized code into the Input Base Serial Box
             dom.inputSerialCode.textContent = deserializedCode.trim();
             
-            // Clear selections (this triggers rebuildOutput/API call via its event listener)
-            Object.values(builders).forEach(b => b.clear());
+            // This event immediately triggers handleInputDetection again, which routes to triggerDebouncedRebuild.
+            dom.inputSerialCode.dispatchEvent(new Event('input')); 
 
             showMessage('✅ Serial deserialized and loaded!', false);
 
@@ -689,6 +688,26 @@
 
     // --- Initialization ---
     async function initializeApp() {
+        // Move DOM setup here to guarantee element existence
+        Object.assign(dom, {
+            body: document.body,
+            messageArea: document.getElementById('message-area'),
+            itemTypeSel: document.getElementById('itemTypeSel'),
+            raritySel: document.getElementById('raritySel'),
+            outWrapper: document.getElementById('out'),
+            outCode: document.querySelector('#out code'),
+            inputSerialCode: document.getElementById('inputSerialCode'),
+            serial_b85: document.getElementById('serial_b85'),
+            additionalData: document.getElementById('additionalData'),
+            copyFull: document.getElementById('copyFull'),
+            copySerial: document.getElementById('copySerial'),
+            dice: document.getElementById('dice'),
+            copyFullStatus: document.getElementById('copyFullStatus'),
+            copyApiStatus: document.getElementById('copyApiStatus'),
+            undoEditBtn: document.getElementById('undoEdit'),
+            reserializeManualBtn: document.getElementById('reserializeManual'),
+        });
+        
         dom.body.classList.add('loading');
         try {
             const response = await fetch('bl4_parts_data.json');
