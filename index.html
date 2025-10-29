@@ -10,220 +10,140 @@
         * { box-sizing: border-box; }
         body { font-family: 'Inter', system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--ink); padding: 0; /* Remove body padding */ font-size: 16px; line-height: 1.5; margin: 0; }
 
-        /* --- NEW TAB NAVIGATION STYLES --- */
-        .tab-nav {
-            background-color: var(--card); /* Match card background */
-            border-bottom: 1px solid var(--line);
-            padding: 0 18px; /* Horizontal padding like body had */
-            margin-bottom: 18px; /* Space below nav */
-            display: flex;
-            gap: 10px;
-        }
-        .tab-link {
-            display: inline-block;
-            padding: 12px 16px;
-            color: var(--muted);
-            text-decoration: none;
-            border-bottom: 3px solid transparent; /* Placeholder for active state */
-            transition: color 0.2s ease, border-color 0.2s ease;
-            font-weight: 500;
-            font-size: 15px;
-        }
-        .tab-link:hover {
-            color: var(--ink);
-        }
-        .tab-link.active {
-            color: var(--accent-orange);
-            border-bottom-color: var(--accent-orange);
-        }
-        /* --- END NEW TAB STYLES --- */
+        /* --- TAB NAVIGATION STYLES --- */
+        .tab-nav { background-color: var(--card); border-bottom: 1px solid var(--line); padding: 0 18px; margin-bottom: 18px; display: flex; gap: 10px; }
+        .tab-link { display: inline-block; padding: 12px 16px; color: var(--muted); text-decoration: none; border-bottom: 3px solid transparent; transition: color 0.2s ease, border-color 0.2s ease; font-weight: 500; font-size: 15px; }
+        .tab-link:hover { color: var(--ink); }
+        .tab-link.active { color: var(--accent-orange); border-bottom-color: var(--accent-orange); }
+        /* --- END TAB STYLES --- */
 
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 18px 18px 18px; /* Padding moved here */ } /* Added container padding */
-        h2 { margin: 0 0 14px; border-bottom: 1px solid var(--line); padding-bottom: 8px; font-weight: 700; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 18px 18px 18px; /* Padding moved here */ }
+        h2 { margin: 0 0 14px; border-bottom: 1px solid var(--line); padding-bottom: 8px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; } /* Make h2 a flex container */
         .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
         .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; margin-bottom: 14px; }
         label { color: var(--muted); font-size: 12px; display: block; margin-bottom: 6px; font-weight: 400; }
-        select, input, textarea, button { background: #0f1720; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 16px; font-family: inherit; }
-        textarea { font-family: monospace; resize: vertical; } /* Added monospace & resize */
-        input::placeholder { color: var(--muted); opacity: 0.7; }
-        select[multiple] { padding: 4px; /* Adjust padding for multi-select */ }
-        select:focus, input:focus, textarea:focus, button:focus { outline: 2px solid var(--accent-orange); outline-offset: 1px; border-color: var(--accent-orange); }
+        select, input, button, textarea { background: #0f1720; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 16px; font-family: inherit; }
+        input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.7; }
+        select[multiple] { padding: 4px; }
+        select:focus, input:focus, button:focus, textarea:focus { outline: 2px solid var(--accent-orange); outline-offset: 1px; border-color: var(--accent-orange); }
         code { background:#0c121b; border: 1px solid var(--line); padding: 4px 8px; display: inline-block; border-radius: 6px; font-size: 0.9em; font-family: monospace; }
-        button { cursor: pointer; background-color: #2c2c4d; transition: background-color 0.2s ease; }
+        button { cursor: pointer; background-color: #2c2c4d; transition: background-color 0.2s ease; margin-right: 5px; /* Added slight margin */}
+        button:last-of-type { margin-right: 0; } /* Remove margin on last button in a group */
         button:hover { background-color: #4b4b7d; }
         button:disabled { background-color: #2c2c4d; opacity: 0.5; cursor: not-allowed; }
         button.small { padding: 6px 10px; border-radius: 8px; font-size: 14px; min-height: 38px; min-width: 38px; }
         .wrap { white-space: normal; word-break: break-word; }
+        #baseSerial {
+            width: 100%;
+            min-height: 80px; /* Slightly taller */
+            margin-top: 6px;
+            font-family: monospace;
+            font-size: 0.9em;
+            resize: vertical;
+        }
+        .input-button-group { margin-top: 10px; } /* Space above buttons */
 
-        /* Generic Builder Style */
-        .builderSection .row.titleRow { justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: nowrap; }
-        .builderSection .row.titleRow > div:first-child { font-weight: 700; color: var(--muted); font-size: 14px; white-space: nowrap; }
-        .builderSection .row.filterRow { justify-content: flex-end; gap: 8px; flex-grow: 1; }
-        .builderSection .row.filterRow input[type="text"] { flex-grow: 1; min-width: 150px; }
-        /* .builderSection .row.filterRow input.delimiter { width: 100px; flex-grow: 0; display: none; } */
+        /* --- COLLAPSIBLE STYLES --- */
+        .collapsible-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; margin-top: 0; }
+        .collapsible-content.expanded { max-height: 1000px; /* Adjust if content is larger */ margin-top: 14px; }
+        .toggle-btn { background: none; border: none; color: var(--muted); font-size: 1.5em; line-height: 1; padding: 0 5px; cursor: pointer; opacity: 0.7; transition: opacity 0.2s, color 0.2s; margin-left: 10px; }
+        .toggle-btn:hover { opacity: 1; }
+        .toggle-btn::before { content: '[+]'; color: var(--success-green); }
+        .toggle-btn.expanded::before { content: '[-]'; color: var(--danger-red); }
+        .builderSection .row.titleRow { justify-content: space-between; align-items: center; padding-bottom: 8px; margin-bottom: 0; border-bottom: 1px solid var(--line); }
+        .builderSection .row.titleRow > div:first-child { font-weight: 700; color: var(--muted); font-size: 1.1em; border-bottom: none; padding-bottom: 0; margin-bottom: 0; flex-grow: 1; }
+        .builderSection .row.filterRow { flex-grow: 0; flex-shrink: 0; width: auto; }
+        /* --- END COLLAPSIBLE STYLES --- */
+
+        /* Builder Styles */
         .builderSection .row.selects { margin-top: 8px; display: flex; gap: 10px; align-items: stretch; }
         .builderSection select { flex: 1; min-height: 220px; width: 100%; border-radius: 8px;}
         .builderSection .buttons { display: flex; flex-direction: column; gap: 8px; justify-content: center; width: 56px; align-items: center; }
         .builderSection .tip { margin-top: 10px; font-size: 12px; color: var(--muted); }
 
-        /* Collapsible Section Styles */
-        .collapsible .collapsible-content {
-            overflow: hidden;
-            max-height: 0;
-            transition: max-height 0.3s ease-out;
-            margin-top: 0; /* Ensure no margin when collapsed */
-        }
-        .collapsible .collapsible-content.expanded {
-            max-height: 1000px; /* Adjust if needed for very long content */
-            transition: max-height 0.5s ease-in;
-            margin-top: 10px; /* Add space when expanded */
-        }
-        .toggle-btn {
-            background: none; border: none; font-size: 1.2em; cursor: pointer;
-            padding: 0 8px; margin-left: 5px; color: var(--success-green); opacity: 0.7;
-            transition: opacity 0.2s ease, color 0.2s ease;
-        }
-        .toggle-btn:hover { opacity: 1; }
-        .toggle-btn.expanded-btn { color: var(--danger-red); }
-        .titleRow .toggle-btn { margin-left: auto; /* Push button to the right in builder title rows */ }
-        /* Ensure headers stay aligned with button */
-        .card > h2, .builderSection .row.titleRow > div:first-child { display: inline-block; /* Keep header text inline */ }
-
-        /* Output Box Styling */
-        .outCard code {
-            display: block; overflow: auto; width: 100%; white-space: pre-wrap; word-break: break-all;
-            max-height: 120px; /* Consistent max height */
-            min-height: 50px;
-            background: #0c121b; padding: 10px; border-radius: 8px; border: 2px solid var(--line); transition: border-color 0.3s ease;
-            font-family: monospace; /* Ensure monospace */
-        }
+        /* Output Card Styles */
+        .outCard code { display: block; overflow: auto; width: 100%; white-space: pre-wrap; word-break: break-all; max-height: 100px; min-height: 50px; background: #0c121b; padding: 10px; border-radius: 8px; border: 2px solid var(--line); transition: border-color 0.3s ease; }
         .outCard code[contenteditable="true"]:focus { outline: none; border-color: var(--edit-yellow); }
         .outCard code.manual-edit { border-color: var(--edit-yellow); }
-
-        #apiCard code#serial_b85 { /* Specific ID for API result */
-             max-height: 100px;
-             overflow-y: auto; /* Enable vertical scroll */
-             display: block; /* Ensure it behaves as a block */
-             white-space: pre-wrap; /* Allow wrapping */
-             word-break: break-all; /* Break long words/serials */
-        }
-        .sticky { position: sticky; top: 0; /* Adjust to 0 since body padding removed */ z-index: 20; background: var(--bg); /* Add bg to prevent content showing through */} /* Made sticky start from top */
-
-         /* Base Serial Input Box Styling */
-        #baseSerial {
-            width: 100%; min-height: 80px; margin-top: 6px; padding: 8px 10px;
-            background: #141c27; /* Slightly lighter background */
-            color: var(--ink); border: 1px solid var(--line); border-radius: 8px;
-            font-family: monospace; font-size: 0.9em;
-        }
-
-         /* Universal Message Area Styling (Fallback for Toast) */
-        #message-area {
-            padding: 10px 18px; /* Match container padding */
-            margin-bottom: 14px;
-            border-radius: 8px;
-            font-size: 14px;
-            display: none; /* Hidden by default */
-            border: 1px solid transparent;
-        }
+        #apiCard code { max-height: 100px; }
+        .sticky { position: sticky; top: 0; z-index: 20; background: var(--bg); }
+        #message-area { padding: 10px 18px; margin-bottom: 14px; border-radius: 8px; font-size: 14px; display: none; border: 1px solid transparent; } /* Kept for fallback, but toasts preferred */
         #message-area.visible { display: block; }
         #message-area.error { background-color: rgba(231, 76, 60, 0.2); border-color: var(--danger-red); color: var(--danger-red); }
         #message-area.success { background-color: rgba(40, 167, 69, 0.2); border-color: var(--success-green); color: var(--success-green); }
-
         .copy-status { font-size: 12px; color: var(--muted); margin-left: 5px; opacity: 0; transition: opacity 0.3s ease; }
         .copy-status.visible { opacity: 1; }
-
         .manual-edit-indicator { display: none; font-size: 11px; color: var(--edit-yellow); margin-left: 8px; }
         .outCard.manual-edit .manual-edit-indicator { display: inline; }
 
-        /* --- Style for Added Parts --- */
+        /* Style for scrollable API output */
+        #serial_b85 {
+            display: block; /* Ensure it behaves like a block for overflow */
+            overflow: auto; /* Add scrollbars when needed */
+            max-height: 100px; /* Match max-height of main output */
+            white-space: pre-wrap; /* Allow wrapping */
+            word-break: break-all; /* Break long strings */
+        }
+        /* END Style for scrollable API output */
+
+        /* --- NEW: Style for Added Parts --- */
         .added-part {
             color: var(--success-green);
             font-weight: 500; /* Slightly bolder */
         }
-        /* --- Style for Duplicate Parts --- */
-        .duplicate-part {
-            color: var(--accent-orange);
-            font-weight: bold;
-        }
-
-        /* --- NEW: Duplicate Info Styles --- */
-         #duplicateInfo {
-             font-size: 12px;
-             color: var(--muted);
-             margin-top: 10px;
-             padding-top: 10px;
-             border-top: 1px solid var(--line);
-             max-height: 100px; /* Limit height */
-             overflow-y: auto; /* Add scroll if needed */
-         }
-         #duplicateInfo h4 { /* Style for subheadings */
-             font-size: 13px;
-             color: var(--ink);
-             margin: 8px 0 4px 0;
-             font-weight: 600;
-         }
-         #duplicateInfo .duplicate-entry {
-             margin-left: 15px;
-             font-family: monospace;
-         }
-         /* --- END NEW --- */
+        /* --- END NEW Style --- */
 
         /* Message Toast Styles */
         .message-toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); display: none; align-items: center; gap: 10px; z-index: 10000; opacity: 0; transition: opacity 0.3s ease, bottom 0.3s ease; font-size: 15px; }
         .message-toast.show { display: flex; opacity: 1; bottom: 30px; }
-        .message-toast.success { background-color: rgba(40, 167, 69, 0.9); border: 1px solid var(--success-green); }
-        .message-toast.error { background-color: rgba(231, 76, 60, 0.9); border: 1px solid var(--danger-red); }
-        .message-toast.info { background-color: rgba(23, 162, 184, 0.9); border: 1px solid #17a2b8; }
-        .toast-icon { font-size: 1.2em; }
-
+        .message-toast.success { background: rgba(40, 167, 69, 0.9); border: 1px solid var(--success-green); color: #fff; }
+        .message-toast.error { background: rgba(231, 76, 60, 0.9); border: 1px solid var(--danger-red); color: #fff; }
+        .message-toast.info { background: rgba(44, 44, 77, 0.95); border: 1px solid var(--line); color: var(--ink); }
+        .toast-icon { font-size: 1.2em; line-height: 1; }
+        /* --- END Message Toast Styles --- */
 
         /* Responsive Adjustments */
         @media (max-width: 768px) {
-            .tab-nav { padding: 0 10px; margin-bottom: 10px; } /* Adjust padding */
-            .tab-link { padding: 10px 8px; font-size: 14px; } /* Smaller tabs */
-            .container { padding: 0 10px 10px 10px; } /* Adjust container padding */
-            .outCard code { max-height: 100px; } /* Slightly smaller max height on mobile */
+            .tab-nav { padding: 0 10px; margin-bottom: 10px; }
+            .tab-link { padding: 10px 8px; font-size: 14px; }
+            .container { padding: 0 10px 10px 10px; }
+            .outCard code { max-height: 120px; }
             .outCard .row { flex-wrap: wrap; }
-            .outCard .row button.small { min-height: 30px; } /* Smaller button size */
-            #dice { padding: 4px 8px !important; font-size: 12px !important; } /* Smaller dice button text */
-            .builderSection .row.selects { flex-direction: column; } /* Stack selects/buttons vertically */
-            .builderSection .buttons { flex-direction: row; width: auto; margin: 8px 0; } /* Horizontal buttons */
-            .builderSection select { min-height: 150px; } /* Reduce select height */
-            .collapsible .collapsible-content.expanded { max-height: 600px; /* Adjust max height for mobile */ }
+            .outCard .row button.small { min-height: 30px; }
+            #dice { padding: 4px 8px !important; font-size: 12px !important; }
+            .builderSection .row.titleRow { flex-wrap: wrap; }
+            .builderSection .row.filterRow { width: 100%; justify-content: space-between; margin-top: 5px;}
+            .message-toast { width: calc(100% - 40px); left: 20px; transform: none; }
         }
     </style>
 </head>
-<body class="loading"> <!-- Start with loading class -->
+<body>
 
-    <!-- NEW TAB NAVIGATION BAR -->
+    <!-- TAB NAVIGATION BAR -->
     <nav class="tab-nav">
         <a href="Deseralizer Comparator.html" class="tab-link">Comparator & Editor</a>
         <a href="Deseralizer Comparator.html#deserializer" class="tab-link">Deserializer</a>
-        <a href="bl4_decoder.html" class="tab-link active">Workstation</a> <!-- Use filename or # -->
+        <a href="bl4_decoder.html" class="tab-link active">Workstation</a>
     </nav>
-    <!-- END TAB NAVIGATION BAR -->
 
 <div class="container">
-    <div id="message-area"></div> <!-- Universal Message/Error display area -->
-    <h2>BL4 Weapon Part Editor (Workstation)</h2> <!-- Added subtitle -->
+    <div id="message-area"></div> <!-- Kept as fallback -->
 
-    <!-- Input Serial Section - UPDATED -->
-    <div class="card collapsible" id="inputCard"> <!-- Made collapsible -->
-         <h2>Input Base Serial String</h2> <!-- Added header -->
-         <div class="collapsible-content"> <!-- Content wrapper -->
-            <label for="baseSerial">Paste Serial (Game format @U...) or Deserialized Code Block:</label>
-            <textarea id="baseSerial" rows="3" placeholder="Paste @U... serial (click Deserialize first) OR deserialized format like: 9, 0, 1, 50| 2, 1626|| {80} {2}|"></textarea>
-             <p style="margin-top: 10px; opacity: 0.8; font-size: 0.9em;">
-                 <strong>Step 1:</strong> If you have a <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">@U...</code> serial, click <strong>"Deserialize Serial Code"</strong> first.<br>
-                 <strong>Step 2:</strong> Then click <strong>"Apply Code Block"</strong> to use the content below as the base for adding parts.
-             </p>
-            <div class="button-group" style="margin-top: 10px;">
-                <button class="btn btn-primary" id="applyInputBtn">Apply Code Block</button>
-                <button class="btn btn-info" id="deserializeBtn">Deserialize Serial Code</button>
-            </div>
-         </div>
+    <h2>BL4 Weapon Part Editor (Workstation)</h2>
+
+    <!-- Input Serial Section -->
+    <div class="card" id="inputCard">
+        <label for="baseSerial">Input Base Serial String (@U or Deserialized)</label>
+        <textarea id="baseSerial" rows="3" placeholder="Paste @U... serial (click Deserialize first) OR deserialized format like: 9, 0, 1, 50| 2, 1626|| {80} {2}|"></textarea>
+        <div class="input-button-group">
+            <button id="applyInputBtn">Apply Code Block</button> <!-- Renamed Button -->
+            <button id="deserializeBtn">Deserialize Serial Code</button>
+        </div>
+        <p style="margin-top: 10px; opacity: 0.8; font-size: 0.9em; color: var(--muted);">
+            If pasting a <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">@U...</code> serial, click "Deserialize" first, then "Apply Code Block".
+        </p>
     </div>
+    <!-- END Input Serial Section -->
 
     <!-- Output + API (Sticky) -->
     <div class="card outCard sticky">
@@ -237,13 +157,10 @@
             </div>
         </div>
         <div id="out" style="margin-top:6px"><code contenteditable="plaintext-only"><!-- Output code will appear here --></code></div>
-        <!-- NEW: Duplicate Info Area -->
-        <div id="duplicateInfo"></div>
-        <!-- END NEW -->
          <button class="small" id="dice" title="New random seed" style="margin-top: 10px; width: fit-content;">🎲 New Seed</button>
     </div>
 
-    <div class="card" id="apiCard" style="margin-bottom:14px">
+     <div class="card" id="apiCard" style="margin-bottom:14px">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
             <div>
                 <div style="color:var(--muted)">Validated Serial (API Result)</div>
@@ -259,11 +176,10 @@
         </div>
     </div>
 
-    <div id="mainContent">
-        <!-- Base Item Info (Simplified Placeholders) -->
-        <div class="card collapsible"> <!-- Made collapsible -->
-             <h2>Base Item Properties</h2> <!-- Added header -->
-             <div class="collapsible-content"> <!-- Content wrapper -->
+     <div id="mainContent">
+        <div class="card collapsible" id="baseItemCard">
+             <h2>Base Item Properties</h2>
+             <div class="collapsible-content">
                  <div class="row">
                     <div style="flex: 1;">
                         <label>Base Item Type (Placeholder)</label>
@@ -288,9 +204,7 @@
                  </div>
              </div>
         </div>
-
-        <!-- Builder Sections (Moved Legendary above Alt Fire) -->
-        <div class="card builderSection collapsible" data-key="legendaryPerks" data-name-field="name" data-code-field="code" data-id-prefix="LegPerk"> <!-- Made collapsible -->
+        <div class="card builderSection collapsible" data-key="legendaryPerks" data-name-field="name" data-code-field="code" data-id-prefix="LegPerk">
              <div class="row titleRow">
                  <div>Legendary Perk Part Variations</div>
                  <div class="row filterRow">
@@ -298,7 +212,7 @@
                     <button class="small" id="clearLegPerk" title="Clear Selected">❌</button>
                 </div>
             </div>
-             <div class="collapsible-content"> <!-- Content wrapper -->
+             <div class="collapsible-content">
                 <div class="row selects">
                     <select id="availLegPerk" multiple size="8" aria-label="Available Legendary Perks"></select>
                     <div class="buttons">
@@ -308,10 +222,9 @@
                     <select id="selLegPerk" multiple size="8" aria-label="Selected Legendary Perks"></select>
                 </div>
                  <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
-            </div>
+             </div>
         </div>
-
-        <div class="card builderSection collapsible" data-key="altFireModes" data-name-field="name" data-code-field="code" data-id-prefix="AltFire"> <!-- Made collapsible -->
+        <div class="card builderSection collapsible" data-key="altFireModes" data-name-field="name" data-code-field="code" data-id-prefix="AltFire">
             <div class="row titleRow">
                 <div>Alt Fire Mode Variations</div>
                 <div class="row filterRow">
@@ -319,7 +232,7 @@
                     <button class="small" id="clearAltFire" title="Clear Selected">❌</button>
                 </div>
             </div>
-             <div class="collapsible-content"> <!-- Content wrapper -->
+             <div class="collapsible-content">
                 <div class="row selects">
                     <select id="availAltFire" multiple size="8" aria-label="Available Alt Fire Modes"></select>
                     <div class="buttons">
@@ -331,8 +244,7 @@
                  <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
             </div>
         </div>
-
-        <div class="card builderSection collapsible" data-key="magazineModes" data-name-field="name" data-code-field="code" data-id-prefix="MagMode"> <!-- Made collapsible -->
+        <div class="card builderSection collapsible" data-key="magazineModes" data-name-field="name" data-code-field="code" data-id-prefix="MagMode">
              <div class="row titleRow">
                 <div>Magazine / Ammo Mode Variations</div>
                  <div class="row filterRow">
@@ -340,7 +252,7 @@
                     <button class="small" id="clearMagMode" title="Clear Selected">❌</button>
                 </div>
             </div>
-             <div class="collapsible-content"> <!-- Content wrapper -->
+             <div class="collapsible-content">
                 <div class="row selects">
                     <select id="availMagMode" multiple size="8" aria-label="Available Magazine/Ammo Modes"></select>
                     <div class="buttons">
@@ -350,10 +262,9 @@
                     <select id="selMagMode" multiple size="8" aria-label="Selected Magazine/Ammo Modes"></select>
                 </div>
                  <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
-            </div>
+             </div>
         </div>
-
-        <div class="card builderSection collapsible" data-key="ordnancePerks" data-name-field="name" data-code-field="code" data-id-prefix="OrdPerk"> <!-- Made collapsible -->
+        <div class="card builderSection collapsible" data-key="ordnancePerks" data-name-field="name" data-code-field="code" data-id-prefix="OrdPerk">
              <div class="row titleRow">
                 <div>Ordnance Legendary Perks (Heavy/Grenade)</div>
                  <div class="row filterRow">
@@ -361,7 +272,7 @@
                     <button class="small" id="clearOrdPerk" title="Clear Selected">❌</button>
                 </div>
             </div>
-             <div class="collapsible-content"> <!-- Content wrapper -->
+             <div class="collapsible-content">
                 <div class="row selects">
                     <select id="availOrdPerk" multiple size="8" aria-label="Available Ordnance Perks"></select>
                     <div class="buttons">
@@ -371,13 +282,14 @@
                     <select id="selOrdPerk" multiple size="8" aria-label="Selected Ordnance Perks"></select>
                 </div>
                  <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
-            </div>
+             </div>
         </div>
 
     </div> <!-- End mainContent -->
+
 </div> <!-- End container -->
 
-<!-- Message Toast -->
+<!-- Message Toast (Unchanged HTML Structure) -->
 <div id="messageToast" class="message-toast">
     <span id="toastIcon" class="toast-icon">✓</span>
     <span id="toastText">Success!</span>
@@ -392,22 +304,18 @@
     let rebuildTimer;
     let lastGeneratedOutput = '';
     let isManualEditMode = false;
-    let currentBaseInputString = ''; // Store the validated base string
+    let messageTimeout;
+    let currentBaseInputString = ''; // Store the applied base input
 
-    // --- DOM Elements Cache ---
+    // --- DOM Elements Cache (Removed loadingOverlay) ---
     const dom = {
         body: document.body,
-        messageArea: document.getElementById('message-area'), // Fallback
-        toast: document.getElementById('messageToast'),
-        toastIcon: document.getElementById('toastIcon'),
-        toastText: document.getElementById('toastText'),
+        messageArea: document.getElementById('message-area'),
         itemTypeSel: document.getElementById('itemTypeSel'),
         raritySel: document.getElementById('raritySel'),
         outWrapper: document.getElementById('out'),
         outCode: document.querySelector('#out code'),
-        baseSerial: document.getElementById('baseSerial'), // Textarea for input
-        applyInputBtn: document.getElementById('applyInputBtn'), // Apply button
-        deserializeBtn: document.getElementById('deserializeBtn'), // Deserialize button
+        baseSerial: document.getElementById('baseSerial'),
         serial_b85: document.getElementById('serial_b85'),
         additionalData: document.getElementById('additionalData'),
         copyFull: document.getElementById('copyFull'),
@@ -417,37 +325,41 @@
         copyApiStatus: document.getElementById('copyApiStatus'),
         undoEditBtn: document.getElementById('undoEdit'),
         reserializeManualBtn: document.getElementById('reserializeManual'),
-        duplicateInfo: document.getElementById('duplicateInfo'), // NEW: Duplicate info div
+        applyInputBtn: document.getElementById('applyInputBtn'),
+        deserializeBtn: document.getElementById('deserializeBtn'),
+        messageToast: document.getElementById('messageToast'),
+        toastIcon: document.getElementById('toastIcon'),
+        toastText: document.getElementById('toastText')
     };
 
-    // --- Utility Functions ---
-    function showMessage(text, type = 'info') { // Default type: info
-        if (dom.toast && dom.toastIcon && dom.toastText) {
-            dom.toastIcon.textContent = type === 'success' ? '✅' : (type === 'error' ? '❌' : 'ℹ️');
-            dom.toastText.innerHTML = text; // Use innerHTML to allow basic tags like <code>
-            dom.toast.className = `message-toast ${type} show`;
-
-            clearTimeout(dom.toast.timer);
-            dom.toast.timer = setTimeout(() => {
-                dom.toast.classList.remove('show');
-            }, type === 'error' ? 5000 : 3000); // Longer timeout for errors
-        } else { // Fallback to message area
+    // --- Utility Functions (Removed showLoading) ---
+    function showMessage(text, type = 'info', duration = 3000) {
+        if (!dom.messageToast || !dom.toastIcon || !dom.toastText) {
             console.warn("Toast elements not found, using fallback message area.");
-            dom.messageArea.innerHTML = text;
-            dom.messageArea.className = `message-area visible ${type}`; // Use type as class
-            dom.messageArea.style.display = 'block';
-
-            if (type !== 'error') {
-                clearTimeout(dom.messageArea.timer);
-                dom.messageArea.timer = setTimeout(() => {
-                    dom.messageArea.style.display = 'none';
-                    dom.messageArea.classList.remove('visible');
-                }, 3000);
+            const oldMessageArea = document.getElementById('message-area');
+            if (oldMessageArea) {
+                oldMessageArea.innerHTML = text.replace(/<code>(.*?)<\/code>/g, '$1');
+                oldMessageArea.className = `message-area visible ${type === 'success' ? 'success' : type === 'error' ? 'error' : ''}`;
+                oldMessageArea.style.display = 'block';
+                if (type !== 'error') {
+                    clearTimeout(oldMessageArea.timer);
+                    oldMessageArea.timer = setTimeout(() => {
+                        oldMessageArea.style.display = 'none';
+                        oldMessageArea.classList.remove('visible');
+                    }, duration);
+                }
             }
+            return;
         }
+        clearTimeout(messageTimeout);
+        dom.toastIcon.textContent = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+        dom.toastText.innerHTML = text; // Use innerHTML to render code tags if present
+        dom.messageToast.className = `message-toast ${type} show`;
+        messageTimeout = setTimeout(() => {
+            dom.messageToast.classList.remove('show');
+        }, duration);
     }
-
-    function showCopyStatus(statusElement, message) { // Keep this for inline copy feedback? Or switch to toast? Let's keep for now.
+    function showCopyStatus(statusElement, message) {
         if (!statusElement) return;
         statusElement.textContent = message;
         statusElement.classList.add('visible');
@@ -457,7 +369,42 @@
         }, 1500);
     }
 
-    // --- Generic Builder UI Logic (unchanged from previous working version) ---
+    // --- Collapsible Section Logic ---
+    function setupCollapsibleSections() {
+        const collapsibleCards = document.querySelectorAll('.card.collapsible');
+        collapsibleCards.forEach(card => {
+            const header = card.querySelector('h2') || card.querySelector('.row.titleRow');
+            const content = card.querySelector('.collapsible-content');
+            if (!header || !content) {
+                console.warn('Collapsible structure incorrect:', card);
+                return;
+            }
+            const toggleBtn = document.createElement('button');
+            toggleBtn.className = 'toggle-btn';
+            toggleBtn.setAttribute('aria-expanded', 'false');
+            toggleBtn.title = 'Toggle Section';
+            // Insert button appropriately within the header flex container
+            if (header.tagName === 'H2') {
+                header.appendChild(toggleBtn); // Append if it's a simple H2
+            } else if (header.classList.contains('titleRow')) {
+                 // Insert before the filter row if it exists
+                 const filterRow = header.querySelector('.filterRow');
+                 if (filterRow) {
+                     header.insertBefore(toggleBtn, filterRow);
+                 } else {
+                     header.appendChild(toggleBtn);
+                 }
+            }
+
+            toggleBtn.addEventListener('click', () => {
+                const isExpanded = content.classList.toggle('expanded');
+                toggleBtn.classList.toggle('expanded', isExpanded);
+                toggleBtn.setAttribute('aria-expanded', isExpanded);
+            });
+        });
+    }
+
+    // --- Generic Builder UI Logic ---
     function createBuilder(key, nameField, codeField, idPrefix) {
         const dataList = PAYLOAD[key] || [];
         const filterInput = document.getElementById(`filter${idPrefix}`);
@@ -468,18 +415,14 @@
         const clearBtn = document.getElementById(`clear${idPrefix}`);
 
         if (!filterInput || !availList || !selList || !addBtn || !remBtn || !clearBtn) {
-            const missing = ['filter', 'avail', 'sel', 'add', 'rem', 'clear']
-                            .filter(suffix => !document.getElementById(`${suffix}${idPrefix}`))
-                            .map(suffix => `<code>${suffix}${idPrefix}</code>`)
-                            .join(', ');
-            throw new Error(`Initialization Error: Missing DOM elements for builder prefix <code>${idPrefix}</code>: ${missing}. Check HTML IDs.`);
+            throw new Error(`Missing DOM elements for builder ${idPrefix}`);
         }
 
         let selectedItems = [];
         const codeToNameMap = {};
 
         if (!Array.isArray(dataList)) {
-            throw new Error(`Data Validation Error: Expected an array for key <code>${key}</code> in JSON data, but got <code>${typeof dataList}</code>.`);
+            throw new Error(`Expected array for key ${key}`);
         }
 
         dataList.forEach(item => {
@@ -547,24 +490,21 @@
         }
 
         function removeSelected() {
-            // Get indices of selected options to remove correctly handle duplicates visually selected
             const indicesToRemoveInView = Array.from(selList.selectedOptions)
                                             .map(opt => parseInt(opt.dataset.index, 10))
                                             .filter(index => !isNaN(index));
 
-            if (indicesToRemoveInView.length === 0) return; // Nothing selected to remove
+            if (indicesToRemoveInView.length === 0) return;
 
-            // Create a new list excluding items at the selected indices
             const newSelectedItems = [];
             for (let i = 0; i < selectedItems.length; i++) {
                 if (!indicesToRemoveInView.includes(i)) {
                     newSelectedItems.push(selectedItems[i]);
                 }
             }
-            selectedItems = newSelectedItems; // Update the master list
-            renderSelected(); // Re-render the selection box
+            selectedItems = newSelectedItems;
+            renderSelected();
         }
-
 
         function clearSelected() {
             selectedItems = [];
@@ -572,33 +512,23 @@
         }
 
         populateAvailable();
-
         filterInput.addEventListener('input', populateAvailable);
         addBtn.addEventListener('click', addSelected);
         remBtn.addEventListener('click', removeSelected);
         clearBtn.addEventListener('click', clearSelected);
-        selList.addEventListener('keydown', e => {
-            if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); removeSelected(); }
-        });
+        selList.addEventListener('keydown', e => { if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); removeSelected(); } });
         selList.addEventListener('dblclick', removeSelected);
         availList.addEventListener('dblclick', addSelected);
 
-
-        return { getSelectedItems: () => [...selectedItems], clear: clearSelected }; // Return a copy
+        return { getSelectedItems: () => selectedItems, clear: clearSelected };
     }
 
-    // --- Condensing Logic (with fix) ---
-    function getPartId(code) {
-        const match = code.match(/\{(\d+)/);
-        return match ? match[1] : null;
-    }
-
-   function condenseParts(parts) {
+    // --- Condensing Logic ---
+    function getPartId(code) { const match = code.match(/\{(\d+)/); return match ? match[1] : null; }
+    function condenseParts(parts) {
          if (!parts || parts.length === 0) return [];
-
          const grouped = {};
          const individualParts = [];
-
          parts.forEach(code => {
              const match = code.match(/^\{(\d+)(:\s*([^}\[\]]+)|:\s*\[([^\]]+)\])?\s*\}$/);
              if (match) {
@@ -609,253 +539,131 @@
                   individualParts.push(code.trim());
              }
          });
-
          const condensedParts = [];
-
          for (const id in grouped) {
              const codes = grouped[id];
              if (codes.length === 1) {
                  condensedParts.push(codes[0]);
              } else {
-                 let values = [];
-                 let isSimpleIdOnly = true;
-                 let malformedFound = false; // Flag for parts within the group that didn't parse correctly
-
+                 let values = []; let isSimpleIdOnly = true;
                  codes.forEach(code => {
                      const valueMatch = code.match(/:\s*([^}\[\]]+)\s*\}$/);
                      const arrayMatch = code.match(/:\s*\[([^\]]+)\]\s*\}$/);
                      const simpleIdMatch = code.match(/^\{(\d+)\}$/);
-
-                     if (arrayMatch) {
-                         values.push(...arrayMatch[1].trim().split(/\s+/).filter(v => v));
-                         isSimpleIdOnly = false;
-                     } else if (valueMatch) {
-                         values.push(valueMatch[1].trim());
-                         isSimpleIdOnly = false;
-                     } else if (!simpleIdMatch) {
-                          individualParts.push(code); // Treat as individual if format unclear
-                          malformedFound = true; // Mark that this group had issues
-                     }
-                     // If it *is* a simpleIdMatch, isSimpleIdOnly remains true initially
+                     if (arrayMatch) { values.push(...arrayMatch[1].trim().split(/\s+/).filter(v => v)); isSimpleIdOnly = false; }
+                     else if (valueMatch) { values.push(valueMatch[1].trim()); isSimpleIdOnly = false; }
+                     else if (!simpleIdMatch) { individualParts.push(code); }
                  });
-
-                 // If malformed parts were found and moved, don't try to condense the rest of this group
-                 if (malformedFound) continue;
-
-                 if (isSimpleIdOnly && codes.length > 0) {
-                      condensedParts.push(codes[0]); // Only simple {ID}s, add first one
-                 } else if (values.length > 0) {
+                 if (isSimpleIdOnly && codes.length > 0) { condensedParts.push(codes[0]); }
+                 else if (values.length > 0) {
                      const uniqueValues = [...new Set(values)];
-                     if (uniqueValues.length === 1 && codes.length > 1) {
-                          // Note: Even if only one unique value remains, keep array format if >1 item was condensed
-                          condensedParts.push(`{${id}:[${uniqueValues[0]}]}`);
-                     } else if (uniqueValues.length > 0) {
-                          condensedParts.push(`{${id}:[${uniqueValues.join(' ')}]}`);
-                     } else if (codes.length > 0 && !isSimpleIdOnly) { // Has : but no value extracted? Unlikely.
-                          condensedParts.push(codes[0]); // Fallback
-                     }
-                 } else if (codes.length > 0 && !isSimpleIdOnly) {
-                      // Fallback if non-simple types were present but somehow no values extracted
-                      condensedParts.push(codes[0]);
-                 }
-                  // Missing closing brace was here } <--- ADDED THIS
+                     if (uniqueValues.length === 1 && codes.length > 1) { condensedParts.push(`{${id}:[${uniqueValues[0]}]}`); }
+                     else if (uniqueValues.length > 0) { condensedParts.push(`{${id}:[${uniqueValues.join(' ')}]}`); }
+                     else if (codes.length > 0) { condensedParts.push(codes[0]); }
+                 } else if (codes.length > 0 && !isSimpleIdOnly) { condensedParts.push(codes[0]); }
+                 // Added missing closing brace
              }
          }
-
          return [...condensedParts, ...individualParts];
      }
 
 
-    // --- Output Rebuilding & API ---
+    // --- Output Rebuilding ---
     function rebuildOutput() {
         try {
-            // 1. Determine Base Header and Base Dynamic Parts
-            let baseHeader = '';
-            let baseDynamicParts = [];
-            const baseInput = currentBaseInputString.trim(); // Use the applied base string
+            rndSeed = Math.floor(1000 + Math.random() * 9000); // Always generate a new seed for rebuild
 
+            const baseInput = currentBaseInputString; // Read from global var
+            let baseHeader = '';
+            let baseDynamicParts = []; // Parts parsed FROM the base input string
+
+            // 1. Parse Base Input
             if (baseInput) {
                 const headerMatch = baseInput.match(/^([^\{]*\|\|\s*)/);
                 if (headerMatch) {
                     baseHeader = headerMatch[0].trim();
-                    const remaining = baseInput.substring(headerMatch[0].length).trim().replace(/\|+$/, '').trim(); // Remove trailing pipes
+                    const remaining = baseInput.substring(headerMatch[0].length).trim();
                     baseDynamicParts = remaining ? remaining.split(/\s+/).filter(p => p.length > 0) : [];
                 } else {
                      const firstBlockIndex = baseInput.indexOf('{');
-                     if (firstBlockIndex === 0) {
-                         baseHeader = '';
-                         const remaining = baseInput.replace(/\|+$/, '').trim();
-                         baseDynamicParts = remaining ? remaining.split(/\s+/).filter(p => p.length > 0) : [];
-                     } else if (firstBlockIndex > 0) {
-                          baseHeader = baseInput.substring(0, firstBlockIndex).trim();
-                          const remaining = baseInput.substring(firstBlockIndex).trim().replace(/\|+$/, '').trim();
-                          baseDynamicParts = remaining ? remaining.split(/\s+/).filter(p => p.length > 0) : [];
-                     } else {
-                          baseHeader = baseInput.replace(/\|+$/, '').trim(); // Treat whole input as header if no parts
-                          baseDynamicParts = [];
-                     }
+                     if (firstBlockIndex === 0) { baseHeader = ''; baseDynamicParts = baseInput.split(/\s+/).filter(p => p.length > 0); }
+                     else if (firstBlockIndex > 0) { baseHeader = baseInput.substring(0, firstBlockIndex).trim(); baseDynamicParts = baseInput.substring(firstBlockIndex).trim().split(/\s+/).filter(p => p.length > 0); }
+                     else { baseHeader = baseInput; baseDynamicParts = []; }
                 }
             } else {
-                 // Generate Base Header if no input applied
+                // Generate Base Header if no input provided
                 const typeMap = { gun: 1, shield: 2, grenade: 3, classmod: 4, enhancement: 5 };
                 const itemTypeId = typeMap[dom.itemTypeSel.value] || 0;
-                rndSeed = Math.floor(1000 + Math.random() * 9000); // New seed for generated header
-                baseHeader = `${itemTypeId}, 0, 1, 50| 2, ${rndSeed}||`;
+                 baseHeader = `${itemTypeId}, 0, 1, 50| 2, ${rndSeed}||`;
+                 // Rarity part added as a dynamic part if no base input
                  const rarityCodeMap = { common: 217, uncommon: 218, rare: 219, epic: 220, legendary: 999 };
                  const rarityPart = `{${rarityCodeMap[dom.raritySel.value] || 0}}`;
-                 baseDynamicParts.push(rarityPart); // Add default rarity if generating
+                 baseDynamicParts.push(rarityPart);
             }
 
             // 2. Collect parts from ALL builders
-            let builderPartsRaw = [];
+            const builderPartsRaw = [];
             Object.values(builders).forEach(builder => {
                 if (typeof builder.getSelectedItems === 'function') {
                     builderPartsRaw.push(...builder.getSelectedItems());
                 }
             });
-            const builderPartsSet = new Set(builderPartsRaw); // Set for quick lookups
+            const builderPartsSet = new Set(builderPartsRaw); // Use Set for efficient lookup
 
-            // 3. Condense all parts (base dynamic + builder)
+            // 3. Combine and Condense ALL dynamic parts (base + builder)
             const allPartsToCondense = [...baseDynamicParts, ...builderPartsRaw];
-            const condensedParts = condenseParts(allPartsToCondense);
+            const condensedParts = condenseParts(allPartsToCondense); // Note: condenseParts returns the string representation {ID} or {ID:V} or {ID:[A B]}
 
-            // --- Detailed Duplicate Analysis ---
-            const simpleBlockCounts = {};
-            const arrayValueCounts = {};
-            const arrayIdValueMap = {}; // Tracks which values belong to which array IDs
-            const allValuesInArrays = new Set();
-            const allSimpleBlockIds = new Set();
-
-            condensedParts.forEach(partStr => {
-                const simpleMatch = partStr.match(/^\{(\d+)\}$/);
-                const arrayMatch = partStr.match(/^\{(\d+):\s*\[([^\]]+)\]\s*\}$/);
-
-                if (simpleMatch) {
-                    const id = simpleMatch[1];
-                    simpleBlockCounts[id] = (simpleBlockCounts[id] || 0) + 1;
-                    allSimpleBlockIds.add(id);
-                } else if (arrayMatch) {
-                    const id = arrayMatch[1];
-                    const values = arrayMatch[2].trim().split(/\s+/).filter(v => v);
-                    if (!arrayIdValueMap[id]) arrayIdValueMap[id] = new Set();
-                    values.forEach(val => {
-                        arrayValueCounts[val] = (arrayValueCounts[val] || 0) + 1;
-                        allValuesInArrays.add(val);
-                        arrayIdValueMap[id].add(val);
-                    });
-                }
-            });
-
-            const duplicateSimpleBlocks = Object.entries(simpleBlockCounts).filter(([id, count]) => count > 1);
-            const duplicateArrayValues = Object.entries(arrayValueCounts).filter(([val, count]) => count > 1);
-            const duplicatesInBoth = [...allSimpleBlockIds].filter(id => allValuesInArrays.has(id));
-
-            let duplicatesHtml = '<h4>Duplicate Parts Info</h4>';
-            let foundDuplicates = false;
-
-            if (duplicateSimpleBlocks.length > 0) {
-                 duplicatesHtml += `<h5>Blocks repeated:</h5>`;
-                 duplicateSimpleBlocks.forEach(([id, count]) => {
-                     duplicatesHtml += `<div class="duplicate-entry">{${id}} occurs ${count} times</div>`;
-                 });
-                foundDuplicates = true;
-            }
-             if (duplicateArrayValues.length > 0) {
-                 duplicatesHtml += `<h5>Values repeated in arrays:</h5>`;
-                 duplicateArrayValues.forEach(([val, count]) => {
-                     // Find which array IDs this value appeared in
-                     const originatingIds = Object.entries(arrayIdValueMap)
-                                              .filter(([id, valueSet]) => valueSet.has(val))
-                                              .map(([id]) => `{${id}:[...]}`);
-                     duplicatesHtml += `<div class="duplicate-entry">${val} occurs ${count} times (in ${[...new Set(originatingIds)].join(', ')})</div>`;
-                 });
-                 foundDuplicates = true;
-             }
-             if (duplicatesInBoth.length > 0) {
-                 duplicatesHtml += `<h5>IDs/Values in both Blocks & Arrays:</h5>`;
-                 duplicatesInBoth.forEach(idOrVal => {
-                      const simpleCount = simpleBlockCounts[idOrVal] || 0;
-                      const arrayCount = arrayValueCounts[idOrVal] || 0;
-                     const originatingArrayIds = Object.entries(arrayIdValueMap)
-                                              .filter(([arrId, valueSet]) => valueSet.has(idOrVal))
-                                              .map(([arrId]) => `{${arrId}:[...]}`);
-                     duplicatesHtml += `<div class="duplicate-entry">${idOrVal}: Blocks [${simpleCount}], Arrays [${arrayCount}] (in ${[...new Set(originatingArrayIds)].join(', ')})</div>`;
-                 });
-                 foundDuplicates = true;
-             }
-
-            if (!foundDuplicates) {
-                 duplicatesHtml += '<div>None</div>';
-            }
-            dom.duplicateInfo.innerHTML = duplicatesHtml; // Update the info div
-             // --- END Detailed Duplicate Analysis ---
-
-            // 4. Build Output HTML, highlighting duplicates (orange) then added parts (green)
+            // 4. Build Output HTML, highlighting builder parts
             let outputHtml = '';
             if (baseHeader) {
                 outputHtml += baseHeader; // Add header first
             }
 
-            const duplicatePartsSet = new Set( // Regenerate set based on combined counts for highlighting
-                 [...duplicateSimpleBlocks.map(([id]) => `{${id}}`),
-                  ...duplicateArrayValues.flatMap(([val]) => // Find all array blocks containing this duplicate value
-                       Object.entries(arrayIdValueMap)
-                           .filter(([id, valueSet]) => valueSet.has(val))
-                           .map(([id, valueSet]) => `{${id}:[${[...valueSet].join(' ')}]}`) // Reconstruct approximate block string
-                  )
-                 ]
-            );
-
             condensedParts.forEach((partStr, index) => {
                 let isAdded = false;
+                 // Check if this condensed part originated from a builder part
                  const arrayMatch = partStr.match(/^\{(\d+):\s*\[([^\]]+)\]\s*\}$/);
                  if (arrayMatch) {
+                     // If it's an array block, check if ANY of its constituent values came from builders
                      const id = arrayMatch[1];
                      const values = arrayMatch[2].trim().split(/\s+/);
                      isAdded = values.some(val => builderPartsSet.has(`{${id}:${val}}`));
-                     if (!isAdded) isAdded = builderPartsSet.has(`{${id}}`); // Check if simple {ID} version was added
+                     // Also check if a simple {ID} part contributed (less common for arrays)
+                     if (!isAdded) isAdded = builderPartsSet.has(`{${id}}`);
                  } else {
+                     // If it's a simple {ID} or {ID:Value}, check directly
                      isAdded = builderPartsSet.has(partStr);
                  }
-
-                 // Check if this part (or any part containing a duplicated value) is considered a duplicate for highlighting
-                 let isDuplicateHighlight = duplicatePartsSet.has(partStr); // Check simple block or fully reconstructed array block
-                 if (!isDuplicateHighlight && arrayMatch) { // Check if array contains *any* duplicated value
-                     const id = arrayMatch[1];
-                     const values = arrayMatch[2].trim().split(/\s+/);
-                     isDuplicateHighlight = values.some(val => arrayValueCounts[val] > 1);
-                 }
-
 
                 // Add space before part if needed
                 if ((baseHeader || index > 0) && outputHtml.length > 0 && !outputHtml.endsWith(' ')) {
                      outputHtml += ' ';
                 }
 
-                // Append part, prioritize duplicate highlighting
-                if (isDuplicateHighlight) {
-                    outputHtml += `<span class="duplicate-part">${partStr}</span>`; // Orange highlight for duplicates
-                } else if (isAdded) {
-                    outputHtml += `<span class="added-part">${partStr}</span>`; // Green highlight for added (non-duplicate) parts
+                // Append part, wrapped if it was added
+                if (isAdded) {
+                    outputHtml += `<span class="added-part">${partStr}</span>`;
                 } else {
-                    outputHtml += partStr; // Plain text for base/non-added parts
+                    outputHtml += partStr;
                 }
             });
 
             // 5. Add final pipe correctly
-            let finalOutputStringForPipeCheck = outputHtml.replace(/<[^>]*>/g, '').trim(); // Get text version for logic check
-            if (condensedParts.length > 0 && !finalOutputStringForPipeCheck.endsWith('|')) {
+            let finalOutputString = outputHtml.replace(/<[^>]*>/g, ''); // Get text version for logic check
+            if (condensedParts.length > 0 && !finalOutputString.endsWith('|')) {
                  outputHtml += '|'; // Add trailing pipe if parts exist after header and pipe isn't already there
-            } else if (!baseHeader && condensedParts.length > 0 && !finalOutputStringForPipeCheck.endsWith('|')) {
+            } else if (!baseHeader && condensedParts.length > 0 && !finalOutputString.endsWith('|')) {
                  outputHtml += '|'; // Add trailing pipe if no header but parts exist
             }
-             // Cleanup potential multiple spaces ONLY IN TEXT for storage
-             lastGeneratedOutput = outputHtml.replace(/<[^>]*>/g, '').replace(/\s{2,}/g, ' ').trim();
+             // Cleanup potential multiple spaces (do this on the HTML string carefully)
+             outputHtml = outputHtml.replace(/\s{2,}/g, ' ').replace(/ <span/g, '<span').replace(/span> /g, 'span>'); // Clean spaces around spans
 
+            lastGeneratedOutput = outputHtml.replace(/<[^>]*>/g, ''); // Store plain text version
 
-            // Update output display if not manually editing
+            // Update output display using innerHTML if not manually editing
             if (document.activeElement !== dom.outCode) {
-                 dom.outCode.innerHTML = outputHtml; // Render HTML
+                 dom.outCode.innerHTML = outputHtml; // Set HTML content
                  // If we rebuild automatically, turn off manual edit mode
                  if (isManualEditMode) {
                      isManualEditMode = false;
@@ -872,294 +680,141 @@
         } catch (err) {
             showMessage(`Error generating output: <code>${err.message}</code>. Check builder setup and data.`, 'error');
             console.error("Output Generation Error:", err);
-            dom.outCode.innerHTML = '[Error generating output]'; // Use innerHTML here too
+            dom.outCode.textContent = '[Error generating output]'; // Use textContent for error
             lastGeneratedOutput = '';
-            dom.duplicateInfo.innerHTML = '<h4>Duplicate Parts Info</h4><div>Error</div>'; // Clear duplicates on error
         }
     }
 
 
-     // --- Debounced Triggers and API Logic ---
-     function triggerDebouncedRebuild() {
-         clearTimeout(rebuildTimer);
-         rebuildTimer = setTimeout(rebuildOutputAndCallApi, 50);
-     }
-     function triggerDebouncedApiCall() {
-         clearTimeout(apiCallTimer);
-         if (!isManualEditMode) {
-             apiCallTimer = setTimeout(callReserialize, 400);
-         }
-     }
-    function rebuildOutputAndCallApi() {
-        rebuildOutput();
-        triggerDebouncedApiCall();
-    }
+     // --- Debounced Triggers and API Logic (Unchanged) ---
+     function triggerDebouncedRebuild() { clearTimeout(rebuildTimer); rebuildTimer = setTimeout(rebuildOutputAndCallApi, 50); }
+     function triggerDebouncedApiCall() { clearTimeout(apiCallTimer); if (!isManualEditMode) { apiCallTimer = setTimeout(callReserialize, 400); } }
+    function rebuildOutputAndCallApi() { rebuildOutput(); triggerDebouncedApiCall(); }
 
-    async function callReserialize() {
-      // No loading overlay calls
-      if (dom.serial_b85) dom.serial_b85.textContent = 'Fetching...';
-      if (dom.additionalData) dom.additionalData.textContent = '';
-      dom.copySerial.disabled = true;
+    const API_BASE_URL = 'https://borderlands4-deserializer.nicnl.com/api/v1';
 
-      try {
-        const outText = lastGeneratedOutput; // Use the stored text version for API call
-
-        if (!outText || outText === '[Error generating output]' || !outText.endsWith('|')) {
-          if (dom.serial_b85) dom.serial_b85.textContent = '[No valid serial to send]';
-           showMessage('Cannot call API: Output serial is invalid or empty.', 'error');
-          return;
-        }
-
-        const resp = await fetch('https://borderlands4-deserializer.nicnl.com/api/v1/reserialize', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ deserialized: outText })
-        });
-
-        if (!resp.ok) {
-            let errorText = `HTTP ${resp.status} - ${resp.statusText}`;
-            try { const errorData = await resp.json(); errorText += `: ${errorData.error || errorData.message || 'Unknown API error'}`; }
-            catch (_) {}
-            throw new Error(errorText);
-        }
-
-        const data = await resp.json();
-        if (dom.serial_b85) dom.serial_b85.textContent = data.serial_b85 || '[No serial returned]';
-        if (dom.additionalData) dom.additionalData.textContent = data.additional_data || '[No details]';
-        dom.copySerial.disabled = !data.serial_b85;
-
-      } catch (err) {
-        console.error('Reserialize API error:', err);
-        if (dom.serial_b85) dom.serial_b85.textContent = `[API error: ${err.message}]`;
-        if (dom.additionalData) dom.additionalData.textContent = '';
-        dom.copySerial.disabled = true;
-        // Only show message if it's not an abort error (common during rapid input)
-        if (!err.message.includes('aborted')) {
-             showMessage(`API Error: ${err.message}`, 'error');
-        }
-      } finally {
-           // No loading overlay calls
-      }
-    }
-
-    // --- NEW: Input Handling Functions ---
     async function deserializeSerial() {
         const input = dom.baseSerial.value.trim();
-        if (!input) {
-            showMessage('Please enter a serial code to deserialize', 'info');
-            return;
-        }
-        if (!input.startsWith('@U')) {
-             showMessage('Input must be a game serial starting with @U to use Deserialize.', 'error');
-             return;
-        }
-
-        // No loading overlay
-        showMessage('Deserializing via API...', 'info');
-
+        if (!input) { showMessage('Please enter a serial code in the input box first.', 'error'); return; }
+        if (!input.startsWith('@U')) { showMessage('Input does not look like a B85 serial (must start with @U). Cannot deserialize.', 'error'); return; }
+        // showLoading(true); // REMOVED
         try {
-            const response = await fetch(`${API_BASE_URL}/deserialize_bulk`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify([input]) // Send as array
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Deserialize API error: ${response.status} - ${errorText}`);
-            }
-
-            const result = await response.json();
-            const firstKey = Object.keys(result)[0];
-
-            if (result[firstKey] && result[firstKey].deserialized) {
-                const deserialized = result[firstKey].deserialized;
-                dom.baseSerial.value = deserialized; // Update textarea
-                currentBaseInputString = deserialized; // Store immediately
-                showMessage('✅ Deserialization successful! Click "Apply Code Block" to use.', 'success');
-                rebuildOutputAndCallApi(); // Rebuild with the new base
-            } else {
-                throw new Error(result[firstKey]?.error || 'Deserialization failed: Unknown API response');
-            }
-
-        } catch (error) {
-            showMessage('Deserialization failed: ' + error.message, 'error');
-        } finally {
-            // No loading overlay
-        }
+            const serial = input;
+            const response = await fetch(`${API_BASE_URL}/deserialize_bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify([serial]) });
+            if (!response.ok) { const errorText = await response.text(); throw new Error(`Deserialize request failed: ${response.status} - ${errorText}`); }
+            const result = await response.json(); const firstKey = Object.keys(result)[0];
+            if (result[firstKey] && result[firstKey].success !== false && result[firstKey].deserialized) {
+                const deserialized = result[firstKey].deserialized; dom.baseSerial.value = deserialized;
+                showMessage('✅ Deserialization successful! Now click "Apply Code Block" to continue.', 'success', 4000);
+            } else { throw new Error(result[firstKey]?.error || 'Deserialization failed: API did not return expected data.'); }
+        } catch (error) { console.error('Deserialize API Error:', error); showMessage('Deserialization failed: ' + error.message, 'error', 5000); }
     }
 
     function applyInput() {
-         const input = dom.baseSerial.value.trim();
-         if (!input) {
-             currentBaseInputString = ''; // Clear base if input is empty
-             showMessage('Base input cleared. Generating default header.', 'info');
-             rebuildOutputAndCallApi();
-             return;
-         }
-
-         // Validate format before applying
-         if (input.startsWith('@U')) {
-            showMessage('⚠️ Cannot apply game serial directly. Click "Deserialize Serial Code" first.', 'error');
-            return;
-         }
-         const deserializedPattern = /(\|\|\s*)|(\{)/; // Basic check for || or {
-         if (!deserializedPattern.test(input)) {
-             showMessage('⚠️ Invalid format. Expected deserialized code block (containing || or { }).', 'error');
-             return;
-         }
-
-         currentBaseInputString = input; // Store the validated input
-         showMessage('✅ Base code block applied.', 'success');
-         rebuildOutputAndCallApi(); // Rebuild with the new base
+        const input = dom.baseSerial.value.trim();
+        if (!input) { showMessage('Input box is empty. Paste a deserialized string or deserialize a @U code first.', 'error'); return; }
+        if (input.startsWith('@U')) { showMessage('⚠️ Input looks like a B85 serial! Please click "Deserialize Serial Code" first, then "Apply Code Block".', 'error', 5000); return; }
+        const deserializedPattern = /\|\|/;
+        if (!deserializedPattern.test(input)) { showMessage('⚠️ Invalid format! Expected deserialized format containing "||". Please check input or deserialize first.', 'error', 5000); return; }
+        currentBaseInputString = input;
+        showMessage('Input applied successfully. Rebuilding...', 'success', 2000);
+        rebuildOutputAndCallApi();
     }
 
-    // --- Collapsible Sections ---
-    function setupCollapsibleSections() {
-        document.querySelectorAll('.collapsible').forEach(section => {
-            const header = section.querySelector('h2') || section.querySelector('.row.titleRow > div:first-child');
-            const content = section.querySelector('.collapsible-content');
-            const titleRow = section.querySelector('.row.titleRow'); // Specific check for builders
-
-            if (!header || !content) {
-                 console.warn("Collapsible section missing header or content:", section);
-                 return;
+    async function callReserialize() {
+        if (dom.serial_b85) dom.serial_b85.textContent = 'Fetching...';
+        if (dom.additionalData) dom.additionalData.textContent = '';
+        dom.copySerial.disabled = true;
+        try {
+            const outText = (dom.outCode?.textContent || '').trim();
+            if (!outText || outText === '[Error generating output]' || !outText.endsWith('|')) {
+                if (dom.serial_b85) dom.serial_b85.textContent = '[No valid serial to send]';
+                showMessage('No valid serial to send to API', 'info'); return;
             }
-
-            // Create button
-            const toggleBtn = document.createElement('button');
-            toggleBtn.textContent = '+';
-            toggleBtn.className = 'toggle-btn small'; // Add small class
-            toggleBtn.title = 'Expand/Collapse Section';
-
-             // Insert button differently for builders vs regular cards
-             if (titleRow) {
-                 // For builders, append to the titleRow (flexbox handles alignment)
-                 titleRow.appendChild(toggleBtn);
-             } else if (header.tagName === 'H2') {
-                 // For regular cards, insert after the H2
-                 header.insertAdjacentElement('afterend', toggleBtn);
-                 header.style.display = 'inline-block'; // Ensure header stays inline
-                 toggleBtn.style.marginLeft = '10px'; // Add some space after h2
-             } else {
-                 header.parentNode.insertBefore(toggleBtn, header.nextSibling); // General fallback
-             }
-
-            // Add click listener
-            toggleBtn.addEventListener('click', () => {
-                const isExpanded = content.classList.toggle('expanded');
-                toggleBtn.textContent = isExpanded ? '−' : '+'; // Use minus for expanded
-                toggleBtn.classList.toggle('expanded-btn', isExpanded);
-            });
-        });
+            const resp = await fetch(`${API_BASE_URL}/reserialize`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deserialized: outText }) });
+            if (!resp.ok) { let errorText = `HTTP ${resp.status} - ${resp.statusText}`; try { const errorData = await resp.json(); errorText += `: ${errorData.error || errorData.message || 'Unknown API error'}`; } catch (_) {} throw new Error(errorText); }
+            const data = await resp.json();
+            if (dom.serial_b85) dom.serial_b85.textContent = data.serial_b85 || '[No serial returned]';
+            if (dom.additionalData) dom.additionalData.textContent = data.additional_data || '[No details]';
+            dom.copySerial.disabled = !data.serial_b85;
+        } catch (err) {
+            console.error('Reserialize API error:', err);
+            if (dom.serial_b85) dom.serial_b85.textContent = `[API error: ${err.message}]`;
+            if (dom.additionalData) dom.additionalData.textContent = '';
+            dom.copySerial.disabled = true;
+            if (!err.message.includes('aborted')) { showMessage(`API Error: ${err.message}`, 'error'); }
+        }
     }
 
     // --- Initialization ---
     async function initializeApp() {
-        dom.body.classList.add('loading'); // Keep initial loading class for setup
+        currentBaseInputString = '';
         try {
             const response = await fetch('bl4_parts_data.json');
             if (!response.ok) throw new Error(`HTTP error ${response.status} fetching <code>bl4_parts_data.json</code>.`);
-
             try { PAYLOAD = await response.json(); }
             catch (jsonError) { throw new Error(`Failed to parse <code>bl4_parts_data.json</code>: ${jsonError.message}.`); }
-
             const requiredKeys = ['altFireModes', 'magazineModes', 'legendaryPerks', 'ordnancePerks'];
             const missingKeys = requiredKeys.filter(key => !PAYLOAD[key] || !Array.isArray(PAYLOAD[key]));
             if (missingKeys.length > 0) throw new Error(`Data Validation Error: Key(s) <code>${missingKeys.join(', ')}</code> missing/invalid in JSON.`);
 
-            // Initialize builders
             document.querySelectorAll('.builderSection').forEach(section => {
-                 const key = section.dataset.key;
-                 const nameField = section.dataset.nameField;
-                 const codeField = section.dataset.codeField;
-                 const idPrefix = section.dataset.idPrefix;
+                 const key = section.dataset.key; const nameField = section.dataset.nameField;
+                 const codeField = section.dataset.codeField; const idPrefix = section.dataset.idPrefix;
                  if (key && nameField && codeField && idPrefix && PAYLOAD[key]) {
                      try { builders[key] = createBuilder(key, nameField, codeField, idPrefix); }
                      catch (builderError) { throw new Error(`Failed to init builder for ${key}: ${builderError.message}`); }
-                 } else { console.warn("Skipping builder section, missing data attributes or data not found in PAYLOAD:", section, key); }
+                 } else { console.warn("Skipping builder section, missing data or attributes:", section, key); }
             });
-
-            setupCollapsibleSections(); // Setup collapse/expand AFTER builders are initialized
 
             // --- Setup Event Listeners ---
             dom.itemTypeSel.addEventListener('change', triggerDebouncedRebuild);
             dom.raritySel.addEventListener('change', triggerDebouncedRebuild);
-            dom.dice.onclick = () => { triggerDebouncedRebuild(); }; // Rebuild uses new random seed automatically
-
-            // NEW Input listeners
+            dom.dice.onclick = () => { rndSeed = Math.floor(1000 + Math.random()*9000); triggerDebouncedRebuild(); };
             dom.applyInputBtn.addEventListener('click', applyInput);
             dom.deserializeBtn.addEventListener('click', deserializeSerial);
 
-            // Manual Edit Handling
+            // Manual Edit Handling - Clear highlighting on input
             dom.outCode.addEventListener('input', () => {
                 isManualEditMode = true;
                 dom.outCode.classList.add('manual-edit');
                 dom.outWrapper.classList.add('manual-edit');
                 dom.outWrapper.querySelector('.manual-edit-indicator').style.display = 'inline';
-                 // Clear highlights when manual editing starts
-                 const text = dom.outCode.textContent;
-                 dom.outCode.innerHTML = text; // Replace HTML with plain text
                 clearTimeout(apiCallTimer); // Stop automatic API calls
             });
 
             dom.undoEditBtn.addEventListener('click', () => {
                 if (lastGeneratedOutput) {
-                    // Re-apply the last generated output and trigger a rebuild to restore highlighting
-                    currentBaseInputString = dom.baseSerial.value.trim(); // Re-read base in case it changed
-                    rebuildOutput(); // This will regenerate HTML and update dom.outCode.innerHTML if not focused
-                     // Ensure manual edit mode is off AFTER rebuild
-                    isManualEditMode = false;
+                    isManualEditMode = false; // Turn off manual mode first
+                    currentBaseInputString = lastGeneratedOutput; // Restore plain text
+                    rebuildOutput(); // Rebuild to regenerate HTML highlighting
                     dom.outCode.classList.remove('manual-edit');
                     dom.outWrapper.classList.remove('manual-edit');
                     dom.outWrapper.querySelector('.manual-edit-indicator').style.display = 'none';
                     triggerDebouncedApiCall(); // Resume automatic API calls
-                    showMessage('Manual edit undone.', 'info');
+                    showCopyStatus(dom.copyFullStatus, 'Edit Undone');
                 } else {
-                    showMessage('No previous output to restore!', 'error');
+                    showCopyStatus(dom.copyFullStatus, 'No history!');
                 }
             });
 
-
             dom.reserializeManualBtn.addEventListener('click', callReserialize); // Allow manual API trigger
 
-            // Copy Buttons
-             dom.copyFull.addEventListener('click', async () => {
-                 const outputElement = dom.outCode;
-                 const textToCopy = outputElement.textContent.trim(); // Always copy text content
-                try {
-                    if (!textToCopy || textToCopy.startsWith('[')) return showMessage('No output to copy!', 'info');
-                    await navigator.clipboard.writeText(textToCopy);
-                    showMessage('Output copied!', 'success');
-                } catch(e) { console.error('Copy Output failed:', e); showMessage('Copy failed!', 'error'); }
-             });
-             dom.copySerial.addEventListener('click', async () => {
-                 const outputElement = dom.serial_b85;
-                 const textToCopy = outputElement.textContent.trim();
-                try {
-                     if (!textToCopy || textToCopy.startsWith('[')) return showMessage('No API serial to copy!', 'info');
-                    await navigator.clipboard.writeText(textToCopy);
-                     showMessage('API Serial copied!', 'success');
-                } catch(e) { console.error('Copy API Serial failed:', e); showMessage('Copy failed!', 'error'); }
-             });
+            // Copy Buttons (Unchanged)
+             dom.copyFull.addEventListener('click', async () => { try { const text = (dom.outCode?.textContent || '').trim(); if (!text || text.startsWith('[')) return showMessage('No output to copy!', 'error'); await navigator.clipboard.writeText(text); showMessage('Output copied!', 'success'); } catch(e) { console.error('Copy Output failed:', e); showMessage('Copy failed!', 'error'); } });
+             dom.copySerial.addEventListener('click', async () => { try { const text = (dom.serial_b85?.textContent || '').trim(); if (!text || text.startsWith('[')) return showMessage('No API serial to copy!', 'error'); await navigator.clipboard.writeText(text); showMessage('API serial copied!', 'success'); } catch(e) { console.error('Copy API Serial failed:', e); showMessage('Copy failed!', 'error'); } });
 
-            // Initial build and API call
-            applyInput(); // Apply initial textarea content (likely empty)
-            // setTimeout(callReserialize, 150); // Initial API call triggered by applyInput->rebuild->debounce
-            // dom.messageArea.style.display = 'none'; // Use toast now
-
+             setupCollapsibleSections(); // Unchanged call
+             rebuildOutput(); // Initial build
+             setTimeout(callReserialize, 150); // Initial API call
         } catch (error) {
-             showMessage(`Initialization Error: ${error.message}`, 'error');
-            // Consider disabling parts of the UI if init fails catastrophically
-            // document.querySelectorAll('#mainContent button, #mainContent select').forEach(el => el.disabled = true);
-        } finally {
-             dom.body.classList.remove('loading');
+            showMessage(error.message, 'error', 10000);
+             document.querySelectorAll('input, select, button, [contenteditable]').forEach(el => el.disabled = true);
+             if (dom.baseSerial) dom.baseSerial.disabled = true;
+             if (dom.outCode) dom.outCode.contentEditable = false;
         }
     }
-
-    // Start the app
     document.addEventListener('DOMContentLoaded', initializeApp);
-
 </script>
 </body>
 </html>
