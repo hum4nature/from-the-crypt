@@ -246,7 +246,7 @@
     { "name": "Fire", "code": "{1:12}" },
     { "name": "Radiation", "code": "{1:13}" },
     { "name": "Shock", "code": "{1:14}" },
-	{ "name": "Corrosive/Cryo - Non-Maliwan", "code": "{1:40}" },
+    { "name": "Corrosive/Cryo - Non-Maliwan", "code": "{1:40}" },
     { "name": "Corrosive/Fire - Non-Maliwan", "code": "{1:44}" },
     { "name": "Corrosive/Radiation - Non-Maliwan", "code": "{1:32}" },
     { "name": "Corrosive/Shock - Non-Maliwan", "code": "{1:47}" },
@@ -376,5 +376,6 @@
     { "name": "uv fish (Unknown / Misc)", "code": "{298:[6 8]}" }
   ]
 }
+
 
 
