@@ -492,7 +492,7 @@
             const query = (filterInput.value || '').toLowerCase();
             availList.innerHTML = '';
 
-            (dataList || [])
+            let processedList = (dataList || [])
                 .filter(item => {
                     const code = item[codeField];
                     if (code === undefined || code === null) return false;
@@ -500,15 +500,17 @@
                     // Use actual code format in search text
                     const searchText = `${name} ${code}`.toLowerCase(); // Check name and code block
                     return !query || searchText.includes(query);
-                })
-                // --- MODIFICATION: Custom Sort for Legendary Perks ---
-                .sort((a, b) => {
+                });
+
+            // --- MODIFICATION START: Custom Sorting Logic ---
+            if (key !== 'weaponSkins' && key !== 'weaponElements') {
+                 processedList.sort((a, b) => {
                      const codeA = a[codeField];
                      const codeB = b[codeField];
                      const nameA = codeToNameMap[codeA] || '';
                      const nameB = codeToNameMap[codeB] || '';
 
-                     // Specifically for legendary perks
+                     // Specifically for legendary perks: Move "Color Spray" to bottom
                      if (key === 'legendaryPerks') {
                          const aIsColorSpray = nameA.startsWith("Color Spray");
                          const bIsColorSpray = nameB.startsWith("Color Spray");
@@ -517,18 +519,21 @@
                          if (!aIsColorSpray && bIsColorSpray) return -1; // Move B down
                          // If both are Color Spray or neither is, sort alphabetically
                      }
-                     // Default alphabetical sort for all other cases
+                     // Default alphabetical sort for all other applicable cases
                      return nameA.localeCompare(nameB);
-                 })
-                 // --- END MODIFICATION ---
-                .forEach(item => {
-                    const code = item[codeField];
-                    const displayName = codeToNameMap[code];
-                    const o = document.createElement('option');
-                    o.value = code; // Value is the code block string
-                    o.textContent = `${displayName} ${code}`; // Display name and code block
-                    fragment.appendChild(o);
-                });
+                 });
+             }
+             // --- MODIFICATION END ---
+
+             processedList.forEach(item => {
+                const code = item[codeField];
+                const displayName = codeToNameMap[code];
+                const o = document.createElement('option');
+                o.value = code; // Value is the code block string
+                o.textContent = `${displayName} ${code}`; // Display name and code block
+                fragment.appendChild(o);
+             });
+
             availList.appendChild(fragment);
         }
 
