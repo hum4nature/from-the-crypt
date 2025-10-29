@@ -198,16 +198,16 @@
     { "name": "Whiskey Foxtrot \"Scrap Cannon\"", "code": "{18:92}" },
     { "name": "Wombo Combo \"Rip Rockets\"", "code": "{18:64}" },
     { "name": "Zipper \"Prison Rules\"", "code": "{2:1}" },
- 		{ "name": "Color Spray Cryo Incen Shock"", "code": "{9:1}" },
-		{ "name": "Color Spray Cryo Incen Rad""", "code": "{9:16}}" },
-		{ "name": "Color Spray Corrosive Rad Shock"", "code": "{9:71}" },
-		{ "name": "Color Spray Corrosive Incen Shock"", "code": "{9:72}" },
-		{ "name": "Color Spray Corrosive Incen Rad"", "code": "{9:73}" },
-		{ "name": "Color Spray Corrosive Corrosive Cryo Shock"", "code": "{9:74}" },
-		{ "name": "Color Spray Corrosive Cryo Rad"", "code": "{9:75}" },
-		{ "name": "Color Spray Corrosive Cryo Incen"", "code": "{9:76}" },
-		{ "name": "Color Spray Incen Rad Shock"", "code": "{9:77}" },
-		{ "name": "Color Spray Cryo Rad Shock"", "code": "{9:84}" }
+ 	{ "name": "Color Spray Cryo Incen Shock"", "code": "{9:1}" },
+	{ "name": "Color Spray Cryo Incen Rad""", "code": "{9:16}}" },
+	{ "name": "Color Spray Corrosive Rad Shock"", "code": "{9:71}" },
+	{ "name": "Color Spray Corrosive Incen Shock"", "code": "{9:72}" },
+	{ "name": "Color Spray Corrosive Incen Rad"", "code": "{9:73}" },
+	{ "name": "Color Spray Corrosive Corrosive Cryo Shock"", "code": "{9:74}" },
+	{ "name": "Color Spray Corrosive Cryo Rad"", "code": "{9:75}" },
+	{ "name": "Color Spray Corrosive Cryo Incen"", "code": "{9:76}" },
+	{ "name": "Color Spray Incen Rad Shock"", "code": "{9:77}" },
+	{ "name": "Color Spray Cryo Rad Shock"", "code": "{9:84}" }
   ],
   "ordnancePerks": [
     { "name": "Ghost Skull - *Halloween Event* (Grenade)", "code": "{272:11}" },
@@ -376,3 +376,4 @@
     { "name": "uv fish (Unknown / Misc)", "code": "{298:[6 8]}" }
   ]
 }
+
