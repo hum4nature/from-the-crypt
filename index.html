@@ -457,7 +457,7 @@
         });
     }
 
-    // --- Generic Builder UI Logic (Unchanged) ---
+    // --- Generic Builder UI Logic ---
     function createBuilder(key, nameField, codeField, idPrefix) {
         const dataList = PAYLOAD[key] || [];
         const filterInput = document.getElementById(`filter${idPrefix}`);
@@ -491,6 +491,7 @@
             const fragment = document.createDocumentFragment();
             const query = (filterInput.value || '').toLowerCase();
             availList.innerHTML = '';
+
             (dataList || [])
                 .filter(item => {
                     const code = item[codeField];
@@ -500,11 +501,26 @@
                     const searchText = `${name} ${code}`.toLowerCase(); // Check name and code block
                     return !query || searchText.includes(query);
                 })
-                .sort((a, b) => { // Sort alphabetically by display name
-                     const nameA = codeToNameMap[a[codeField]] || '';
-                     const nameB = codeToNameMap[b[codeField]] || '';
+                // --- MODIFICATION: Custom Sort for Legendary Perks ---
+                .sort((a, b) => {
+                     const codeA = a[codeField];
+                     const codeB = b[codeField];
+                     const nameA = codeToNameMap[codeA] || '';
+                     const nameB = codeToNameMap[codeB] || '';
+
+                     // Specifically for legendary perks
+                     if (key === 'legendaryPerks') {
+                         const aIsColorSpray = nameA.startsWith("Color Spray");
+                         const bIsColorSpray = nameB.startsWith("Color Spray");
+
+                         if (aIsColorSpray && !bIsColorSpray) return 1; // Move A down
+                         if (!aIsColorSpray && bIsColorSpray) return -1; // Move B down
+                         // If both are Color Spray or neither is, sort alphabetically
+                     }
+                     // Default alphabetical sort for all other cases
                      return nameA.localeCompare(nameB);
                  })
+                 // --- END MODIFICATION ---
                 .forEach(item => {
                     const code = item[codeField];
                     const displayName = codeToNameMap[code];
