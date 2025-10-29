@@ -240,7 +240,7 @@
     { "name": "Sidewinder \"MIA\" (Ordnance)", "code": "{273:38}" },
     { "name": "Sprezzatura \"Gungnir\" (Ordnance)", "code": "{273:34}" }
   ],
-  "elements": [
+  "weaponElements": [
     { "name": "Corrosive", "code": "{1:10}" },
     { "name": "Cryo", "code": "{1:11}" },
     { "name": "Fire", "code": "{1:12}" },
@@ -287,7 +287,7 @@
     { "name": "Shock/Fire - Maliwan", "code": "{1:6}" },
     { "name": "Shock/Radiation - Maliwan", "code": "{1:5}" }
   ],
-  "skins": [
+  "weaponSkins": [
     { "name": "Gold Universal Camo (Unknown / Misc)", "code": "{7:19}" },
     { "name": "Pink Camo (Unknown / Misc)", "code": "{254:14}" },
     { "name": "Gold Code for SMG's (Unknown / Misc)", "code": "{16:70}" },
@@ -376,6 +376,7 @@
     { "name": "uv fish (Unknown / Misc)", "code": "{298:[6 8]}" }
   ]
 }
+
 
 
 
