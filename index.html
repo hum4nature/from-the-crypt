@@ -2,293 +2,454 @@
 <html>
 <head>
     <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1, maximum-scale=1" name="viewport"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
     <title>BL4 Decoder & Generic Selector</title>
-    <!-- Using Tailwind CSS for rapid UI development -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Base styles adapted from Enhancement_Editor.html */
+        /* Base styles adapted from Enhancement_Editor.html & index (12).html */
         :root {
-            --bg: #0b0f14;
-            --card: #0e1520;
-            --ink: #e6f0ff;
-            --muted: #a6b4c8;
-            --line: #1f2a3a;
+            --bg:#0b0f14;
+            --card:#0e1520;
+            --ink:#e6f0ff;
+            --muted:#a6b4c8;
+            --line:#1f2a3a;
             --accent-orange: #e59400;
             --danger-red: #e74c3c;
             --success-green: #28a745;
+            --info-blue: #0ea5e9; /* Added */
             --edit-yellow: #ffc107;
+            --dup-singular: #3b82f6; /* Blue for {ID} */
+            --dup-specific: #f97316; /* Orange for {X:Y} */
+            --dup-array: #eab308;    /* Yellow for array values */
         }
         * { box-sizing: border-box; }
-        body { font-family: 'Inter', system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--ink); font-size: 16px; line-height: 1.5; margin: 0; }
+        html, body { height: 100%; margin: 0; padding: 0; }
+        body { font-family: 'Inter', system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--ink); font-size: 16px; line-height: 1.5; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 18px; } /* Main content container */
 
         /* --- TAB NAVIGATION STYLES --- */
         .tab-nav { background-color: var(--card); border-bottom: 1px solid var(--line); padding: 0 18px; margin-bottom: 18px; display: flex; gap: 10px; }
-        .tab-link { display: inline-block; padding: 12px 16px; border: none; background: none; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s ease; font-size: 1rem; }
-        .tab-link.active { color: var(--ink); border-bottom-color: var(--accent-orange); }
+        .tab-link { display: inline-block; padding: 12px 16px; border: none; background: none; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s ease; }
         .tab-link:hover { color: var(--ink); }
-        .tab-content { display: none; padding: 0 18px; /* Padding for content */ }
+        .tab-link.active { color: var(--ink); border-bottom-color: var(--accent-orange); font-weight: 500; }
+        .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* --- General Component Styles --- */
-        .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 18px; }
+        /* --- CARD STYLES --- */
+        .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-bottom: 18px; }
+        .card h2 { margin: 0 0 14px; font-size: 1.1rem; font-weight: 500; display: flex; justify-content: space-between; align-items: center; }
+
+        /* --- COLLAPSIBLE STYLES --- */
+        .collapsible-content { display: none; margin-top: 10px; }
+        .collapsible-content.expanded { display: block; }
+        .toggle-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1.2rem; padding: 0 5px; line-height: 1; transition: transform 0.2s ease; margin-left: auto; /* Push to right */ }
+        .toggle-btn::before { content: '▶'; display: inline-block; }
+        .toggle-btn.expanded::before { content: '▼'; }
+
+        /* --- FORM ELEMENTS & BUTTONS --- */
         label { color: var(--muted); font-size: 12px; display: block; margin-bottom: 6px; }
-        select, input[type="text"], input[type="number"], textarea, button { background: #0f1720; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 1rem; transition: border-color 0.2s ease; }
-        select:focus, input:focus, textarea:focus, button:focus { outline: none; border-color: var(--accent-orange); }
-        select[multiple] { min-height: 150px; }
-        button { cursor: pointer; background: #1f2a3a; transition: background-color 0.2s ease; }
-        button:hover { background: #2a3a4a; }
-        button.primary { background: var(--accent-orange); color: var(--bg); }
-        button.primary:hover { background: #ffae1a; }
-        button.small { padding: 6px 10px; border-radius: 8px; font-size: 0.9rem; }
-        code, pre { background: #0c121b; border: 1px solid var(--line); padding: 8px 10px; border-radius: 8px; font-family: 'Courier New', Courier, monospace; word-wrap: break-word; white-space: pre-wrap; color: var(--muted); }
-        pre { max-height: 300px; overflow-y: auto; }
-        .output-code { min-height: 50px; cursor: text; }
+        select, input[type="text"], input[type="number"], textarea, button { background: #0f1720; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: inherit; transition: background-color 0.2s, border-color 0.2s; }
+        select, input[type="text"], input[type="number"], textarea { width: 100%; }
+        select[multiple] { padding: 5px; } /* Reduce padding for multi-selects */
+        textarea { resize: vertical; min-height: 60px; font-family: monospace; }
+        button { cursor: pointer; background-color: #1f2a3a; }
+        button:hover { background-color: #2c3a4f; }
+        button:disabled { cursor: not-allowed; opacity: 0.5; }
+        button.primary { background-color: var(--accent-orange); color: #0b0f14; font-weight: 500; }
+        button.primary:hover { background-color: #ffae1a; }
+        button.danger { background-color: var(--danger-red); }
+        button.danger:hover { background-color: #f76c5c; }
+        button.small { padding: 6px 10px; border-radius: 8px; font-size: 0.9em; }
 
-        /* Layout Helpers */
-        .grid-cols-auto { grid-template-columns: auto 1fr; }
-        .grid-cols-fr-auto-fr { grid-template-columns: 1fr auto 1fr; }
+        /* --- UTILITY & LAYOUT --- */
+        .row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
+        .flex-1 { flex: 1; min-width: 120px; /* Prevent shrinking too much */ }
+        .space-y-4 > * + * { margin-top: 1rem; }
+        .mt-4 { margin-top: 1rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .font-mono { font-family: monospace; }
+        .text-sm { font-size: 0.875rem; }
+        .text-xs { font-size: 0.75rem; }
+        .text-muted { color: var(--muted); }
+        .block { display: block; }
+        .w-full { width: 100%; }
 
-        /* Collapsible Sections */
-        .collapsible-header { cursor: pointer; padding: 10px; background: #1a2433; border-radius: 8px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
-        .collapsible-header:hover { background: #202b3d; }
-        .collapsible-content { padding: 10px; border: 1px solid var(--line); border-radius: 8px; border-top-left-radius: 0; border-top-right-radius: 0; margin-top: -5px; display: none; }
-        .collapsible-content.open { display: block; }
-        .collapsible-arrow { transition: transform 0.3s ease; }
-        .collapsible-header.open .collapsible-arrow { transform: rotate(90deg); }
+        /* --- CODE & OUTPUT --- */
+        code { background: #0c121b; border: 1px solid var(--line); padding: 10px; display: block; border-radius: 8px; font-family: 'Courier New', Courier, monospace; font-size: 0.95em; white-space: pre-wrap; word-break: break-all; }
+        #out code { outline: none; } /* Remove focus outline for contenteditable */
+        #out { position: relative; } /* Needed for indicator positioning */
+        .manual-edit-indicator { display: none; position: absolute; top: 5px; right: 5px; background-color: var(--edit-yellow); color: #0b0f14; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
+        #out.manual-edit .manual-edit-indicator { display: inline; }
+        #out code.manual-edit { border-color: var(--edit-yellow); box-shadow: 0 0 5px var(--edit-yellow); }
+        .added-part { background-color: #2c3a4f; padding: 0 2px; border-radius: 3px; }
 
-        /* Message Area */
-        #messageArea { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: var(--card); color: var(--ink); padding: 10px 20px; border-radius: 8px; border: 1px solid var(--line); z-index: 1000; opacity: 0; transition: opacity 0.5s ease; pointer-events: none; }
-        #messageArea.show { opacity: 1; }
-        #messageArea.error { background-color: var(--danger-red); color: white; border-color: darkred; }
-        #messageArea.success { background-color: var(--success-green); color: white; border-color: darkgreen; }
-        #messageArea.warning { background-color: var(--edit-yellow); color: black; border-color: orange; }
+        /* --- DUPLICATE HIGHLIGHTING --- */
+        .dup-singular { color: var(--dup-singular); font-weight: bold; } /* Blue for {ID} */
+        .dup-specific { color: var(--dup-specific); font-weight: bold; } /* Orange for {X:Y} */
+        .dup-array-value { color: var(--dup-array); font-weight: bold; } /* Yellow for array values */
 
-        /* Selector List Box Specific Styles */
-        .selector-box select { width: 100%; }
-        .selector-buttons { display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 0 10px; }
+        /* --- BUILDER SECTION --- */
+        .builderSection .titleRow { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .builderSection .filterRow { gap: 5px; flex-wrap: nowrap; }
+        .builderSection .filterRow input { flex-grow: 1; }
+        .builderSection .selects { display: flex; gap: 10px; align-items: stretch; }
+        .builderSection select { flex: 1; min-height: 150px; }
+        .builderSection .buttons { display: flex; flex-direction: column; justify-content: center; gap: 10px; }
+        .builderSection .buttons button { padding: 8px 10px; }
+        .builderSection .tip { font-size: 0.8rem; color: var(--muted); margin-top: 5px; text-align: center; }
 
-        /* Disabled state */
-        input:disabled, select:disabled, textarea:disabled, button:disabled { opacity: 0.6; cursor: not-allowed; background: #1a2433; }
-        [contenteditable="false"] { opacity: 0.6; cursor: not-allowed; background: #1a2433; }
+        /* --- API SECTION --- */
+        .apiResult { background: #0c121b; border: 1px solid var(--line); padding: 10px; border-radius: 8px; margin-top: 5px; min-height: 40px; font-family: monospace; font-size: 0.9em; white-space: pre-wrap; word-break: break-all; }
+        .copy-status { display: inline-block; margin-left: 8px; color: var(--success-green); font-size: 0.8em; opacity: 0; transition: opacity 0.3s; }
+        .copy-status.visible { opacity: 1; }
 
-        /* --- Style for Added Parts --- */
-        .added-part {
-            color: var(--success-green);
-            font-weight: 500; /* Slightly bolder */
-        }
-        /* --- END NEW Style --- */
+        /* --- MESSAGE TOAST --- */
+        .message-toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 8px; padding: 12px 16px; position: fixed; z-index: 100; left: 50%; transform: translateX(-50%); bottom: 30px; font-size: 1rem; opacity: 0; transition: visibility 0s 0.3s, opacity 0.3s ease-out; display: flex; align-items: center; gap: 10px; }
+        .message-toast.show { visibility: visible; opacity: 1; transition: visibility 0s, opacity 0.3s ease-in; }
+        .message-toast.success { background-color: var(--success-green); color: white; }
+        .message-toast.error { background-color: var(--danger-red); color: white; }
+        .message-toast.info { background-color: var(--info-blue); color: white; }
+        .message-toast code { background: rgba(0,0,0,0.2); padding: 2px 4px; border-radius: 4px; font-size: 0.9em; border: none; }
+        .toast-icon { font-size: 1.2rem; }
 
-        /* --- Style for Duplicate Info --- */
-        #duplicateInfoContainer {
-            margin-top: 10px;
-        }
-        #duplicateInfoOutput {
-            font-size: 12px;
-            color: var(--muted);
-            margin-top: 5px;
-            white-space: normal; /* Allow wrapping */
-            word-break: break-all; /* Break long strings if needed */
-            line-height: 1.4;
-        }
-        /* --- END Duplicate Info Style --- */
+        /* --- DUPLICATE INFO AREA --- */
+        #duplicateInfoContainer { margin-top: 10px; }
+        #duplicateInfoOutput { font-size: 0.85rem; color: var(--muted); margin-top: 8px; white-space: pre-wrap; background: #0c121b; border: 1px solid var(--line); padding: 8px; border-radius: 6px; }
 
-        /* --- Styles for Duplicate Highlighting --- */
-        .dup-singular {
-            color: #3498db; /* Blue */
-            font-weight: 500;
-        }
-        .dup-specific {
-            color: #e67e22; /* Orange */
-            font-weight: 500;
-        }
-        .dup-array-value {
-            color: #f1c40f; /* Yellow */
-            background-color: rgba(241, 196, 15, 0.1); /* Slight yellow background */
-            padding: 0 2px;
-            border-radius: 3px;
-            font-weight: 500;
-        }
-        /* --- END Duplicate Highlighting Styles --- */
     </style>
 </head>
 <body>
 
-    <!-- Tab Navigation -->
+    <!-- --- TAB NAVIGATION BAR --- -->
     <nav class="tab-nav">
-        <button class="tab-link active" data-tab="decoder">Decoder/Editor</button>
-        <button class="tab-link" data-tab="selector">Generic Selector</button>
-        <button class="tab-link" data-tab="api">API Info</button>
+        <button class="tab-link active" data-tab="tab-decoder">Decoder/Editor</button>
+        <button class="tab-link" data-tab="tab-selector">Generic Selector</button>
+        <button class="tab-link" data-tab="tab-api">API Info</button>
     </nav>
 
-    <!-- Tab Content -->
-    <div id="decoder" class="tab-content active">
-        <div class="card grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Serial Input -->
+<div class="container">
+
+    <!-- --- TAB CONTENT: Decoder/Editor --- -->
+    <div id="tab-decoder" class="tab-content active">
+
+        <div class="card space-y-4">
+            <h2 class="text-xl font-semibold">Input Serial Code</h2>
             <div>
-                <label for="serialOutputCode">Edit Serial Code:</label>
-                <div id="serialOutputCode" contenteditable="true" class="output-code p-2 border border-gray-600 rounded-md bg-gray-900 min-h-[100px]" spellcheck="false">15, 0, 1, 50| 2, 2303|| {98} {75} {2} {6} {1:12} {66} {72} {14} {27} {35} {34} {41} {58} {28} {7} {18} {12} {12} {12}</div>
-                <div class="mt-2 flex gap-2">
-                     <button id="rebuildAndCallApiBtn" class="primary small">Generate Serial String (Manual)</button>
-                     <button id="copyFull" class="small">Copy Output</button>
-                </div>
+                <label for="baseSerial">Paste Deserialized String OR B85 Serial (@U...)</label>
+                <textarea id="baseSerial" class="font-mono text-sm" placeholder="Paste deserialized code (e.g., 7, 0, 1, 50| 2, 1234|| {1} {2}) OR a B85 serial (@U...)"></textarea>
             </div>
-             <!-- API Results -->
-             <div>
-                 <div>
-                     <label for="apiSerialOutput">New Serial (from API):</label>
-                     <pre id="apiSerialOutput">[API results will appear here]</pre>
-                     <button id="copySerial" class="small mt-1">Copy API Serial</button>
-                 </div>
-                 <div class="mt-4">
-                     <label for="detailsOutput">Details (from API):</label>
-                     <pre id="detailsOutput" class="text-xs">[Deserialized details will appear here]</pre>
-                 </div>
-             </div>
+            <div class="row">
+                <button id="deserializeBtn" class="primary">Deserialize Serial Code</button>
+                <button id="applyInputBtn">Apply Code Block to Editor</button>
+                 <span class="text-xs text-muted">(Click Deserialize first if pasting @U code, then Apply)</span>
+            </div>
         </div>
 
-         <!-- Collapsible Sections for Parts -->
-         <div id="partSelectorsContainer">
-            <!-- Sections will be dynamically added here -->
-         </div>
-
-         <!-- Decoded Output Section -->
-         <div class="card mt-4">
-            <h2 class="text-xl font-semibold mb-2">Decoded Blocks</h2>
-            <div id="decodedOutput" class="space-y-1 text-sm">
-                <!-- Decoded parts will appear here -->
+        <div class="card space-y-4">
+            <h2 class="text-xl font-semibold">Generated Output & Controls</h2>
+            <div id="out">
+                <label for="outCode" class="block mb-2">Edit Serial Code (Editable - Manual edits disable auto-update)</label>
+                <code id="outCode" contenteditable="true" class="font-mono text-sm">[Output will appear here]</code>
+                <span class="manual-edit-indicator">Manual Edit Mode</span>
             </div>
-         </div>
-    </div>
+             <div id="duplicateInfoContainer">
+                <button id="analyzeDuplicatesBtn" class="small">Show Duplicate Info</button>
+                <div id="duplicateInfoOutput"></div>
+            </div>
+            <div class="row">
+                <button id="copyFull">Copy Output <span id="copyFullStatus" class="copy-status"></span></button>
+                <button id="undoEdit" class="danger small" title="Revert manual edits and use builder output">Undo Manual Edit</button>
+                 <button id="reserializeManual" class="small" title="Manually trigger API call with current output text">Force API Call</button>
+            </div>
+        </div>
 
-    <div id="selector" class="tab-content">
-        <div class="card">
-            <h2 class="text-xl font-semibold mb-3">Generic Part Selector</h2>
-            <div class="mb-4">
-                <label for="datasetSelector">Select Dataset:</label>
-                <select id="datasetSelector" class="w-full md:w-1/3">
-                    <!-- Options added dynamically -->
-                     <option value="legendaryPerks">Legendary Perks (Example)</option>
-                     <option value="enhancementStats">Enhancement Stats (Example)</option>
+        <div id="mainContent">
+            <!-- Base Item Card -->
+            <div class="card collapsible" id="baseItemCard">
+                 <h2>Base Item Properties</h2>
+                 <div class="collapsible-content">
+                     <div class="row">
+                        <div style="flex: 1;">
+                            <label>Base Item Type (Placeholder)</label>
+                            <select id="itemTypeSel">
+                                <option value="gun">Generic Gun</option>
+                                <option value="shield">Shield</option>
+                                <option value="grenade">Grenade Mod</option>
+                                <option value="classmod">Class Mod</option>
+                                <option value="enhancement">Enhancement</option>
+                            </select>
+                        </div>
+                         <div style="flex: 1;">
+                            <label>Rarity (Placeholder)</label>
+                            <select id="raritySel">
+                                <option value="common">Common</option>
+                                <option value="uncommon">Uncommon</option>
+                                <option value="rare">Rare</option>
+                                <option value="epic">Epic</option>
+                                <option value="legendary">Legendary</option>
+                            </select>
+                        </div>
+                     </div>
+                 </div>
+            </div>
+            <!-- Legendary Perks -->
+            <div class="card builderSection collapsible" data-key="legendaryPerks" data-name-field="name" data-code-field="code" data-id-prefix="LegPerk">
+                 <div class="row titleRow">
+                     <div>Legendary Perk Part Variations</div>
+                     <div class="row filterRow">
+                        <input id="filterLegPerk" placeholder="Filter..." type="text"/>
+                        <button class="small" id="clearLegPerk" title="Clear Selected">❌</button>
+                    </div>
+                </div>
+                 <div class="collapsible-content">
+                    <div class="row selects">
+                        <select id="availLegPerk" multiple size="8" aria-label="Available Legendary Perks"></select>
+                        <div class="buttons">
+                            <button id="addLegPerk" title="Add Selected">»</button>
+                            <button id="remLegPerk" title="Remove Selected">«</button>
+                        </div>
+                        <select id="selLegPerk" multiple size="8" aria-label="Selected Legendary Perks"></select>
+                    </div>
+                     <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
+                 </div>
+            </div>
+            <!-- Alt Fire Modes -->
+            <div class="card builderSection collapsible" data-key="altFireModes" data-name-field="name" data-code-field="code" data-id-prefix="AltFire">
+                <div class="row titleRow">
+                    <div>Alt Fire Mode Variations</div>
+                    <div class="row filterRow">
+                        <input id="filterAltFire" placeholder="Filter..." type="text"/>
+                        <button class="small" id="clearAltFire" title="Clear Selected">❌</button>
+                    </div>
+                </div>
+                 <div class="collapsible-content">
+                    <div class="row selects">
+                        <select id="availAltFire" multiple size="8" aria-label="Available Alt Fire Modes"></select>
+                        <div class="buttons">
+                            <button id="addAltFire" title="Add Selected">»</button>
+                            <button id="remAltFire" title="Remove Selected">«</button>
+                        </div>
+                        <select id="selAltFire" multiple size="8" aria-label="Selected Alt Fire Modes"></select>
+                    </div>
+                     <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
+                </div>
+            </div>
+            <!-- Magazine Modes -->
+            <div class="card builderSection collapsible" data-key="magazineModes" data-name-field="name" data-code-field="code" data-id-prefix="MagMode">
+                 <div class="row titleRow">
+                    <div>Magazine / Ammo Mode Variations</div>
+                     <div class="row filterRow">
+                        <input id="filterMagMode" placeholder="Filter..." type="text"/>
+                        <button class="small" id="clearMagMode" title="Clear Selected">❌</button>
+                    </div>
+                </div>
+                 <div class="collapsible-content">
+                    <div class="row selects">
+                        <select id="availMagMode" multiple size="8" aria-label="Available Magazine/Ammo Modes"></select>
+                        <div class="buttons">
+                            <button id="addMagMode" title="Add Selected">»</button>
+                            <button id="remMagMode" title="Remove Selected">«</button>
+                        </div>
+                        <select id="selMagMode" multiple size="8" aria-label="Selected Magazine/Ammo Modes"></select>
+                    </div>
+                     <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
+                </div>
+            </div>
+
+            <!-- ----- Elements Section ----- -->
+            <div class="card builderSection collapsible" data-key="weaponElements" data-name-field="name" data-code-field="code" data-id-prefix="Elem">
+                 <div class="row titleRow">
+                     <div>Elements</div>
+                     <div class="row filterRow">
+                        <input id="filterElem" placeholder="Filter..." type="text"/>
+                        <button class="small" id="clearElem" title="Clear Selected">❌</button>
+                    </div>
+                </div>
+                 <div class="collapsible-content">
+                    <div class="row selects">
+                        <select id="availElem" multiple size="8" aria-label="Available Elements"></select>
+                        <div class="buttons">
+                            <button id="addElem" title="Add Selected">»</button>
+                            <button id="remElem" title="Remove Selected">«</button>
+                        </div>
+                        <select id="selElem" multiple size="8" aria-label="Selected Elements"></select>
+                    </div>
+                     <div class="tip">Double-click to add/remove. Handles primary {1:X} and secondary {1:Y} element codes.</div>
+                 </div>
+            </div>
+            <!-- ----- END Elements Section ----- -->
+
+            <!-- Ordnance Perks -->
+            <div class="card builderSection collapsible" data-key="ordnancePerks" data-name-field="name" data-code-field="code" data-id-prefix="OrdPerk">
+                 <div class="row titleRow">
+                    <div>Ordnance Legendary Perks (Heavy/Grenade)</div>
+                     <div class="row filterRow">
+                        <input id="filterOrdPerk" placeholder="Filter..." type="text"/>
+                        <button class="small" id="clearOrdPerk" title="Clear Selected">❌</button>
+                    </div>
+                </div>
+                 <div class="collapsible-content">
+                    <div class="row selects">
+                        <select id="availOrdPerk" multiple size="8" aria-label="Available Ordnance Perks"></select>
+                        <div class="buttons">
+                            <button id="addOrdPerk" title="Add Selected">»</button>
+                            <button id="remOrdPerk" title="Remove Selected">«</button>
+                        </div>
+                        <select id="selOrdPerk" multiple size="8" aria-label="Selected Ordnance Perks"></select>
+                    </div>
+                     <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
+                 </div>
+            </div>
+
+            <!-- ----- Skins/Camo Section ----- -->
+            <div class="card builderSection collapsible" data-key="weaponSkins" data-name-field="name" data-code-field="code" data-id-prefix="Skin">
+                 <div class="row titleRow">
+                     <div>Skins / Camo</div>
+                     <div class="row filterRow">
+                        <input id="filterSkin" placeholder="Filter..." type="text"/>
+                        <button class="small" id="clearSkin" title="Clear Selected">❌</button>
+                    </div>
+                </div>
+                 <div class="collapsible-content">
+                    <div class="row selects">
+                        <select id="availSkin" multiple size="8" aria-label="Available Weapon Skins"></select>
+                        <div class="buttons">
+                            <button id="addSkin" title="Add Selected">»</button>
+                            <button id="remSkin" title="Remove Selected">«</button>
+                        </div>
+                        <select id="selSkin" multiple size="8" aria-label="Selected Weapon Skins"></select>
+                    </div>
+                     <div class="tip">Double-click to add/remove. Note: Skins often use specific block formats like `"c", XX|`. This builder adds the raw code block. May require manual adjustment.</div>
+                 </div>
+            </div>
+            <!-- ----- END Skins/Camo Section ----- -->
+
+        </div> <!-- End mainContent -->
+
+    </div> <!-- End tab-decoder -->
+
+    <!-- --- TAB CONTENT: Generic Selector --- -->
+    <div id="tab-selector" class="tab-content">
+        <div class="card space-y-4">
+            <h2 class="text-xl font-semibold">Generic Part Selector</h2>
+            <div>
+                <label for="selectorDataset">Select Dataset:</label>
+                <select id="selectorDataset">
+                    <option value="legendaryPerks">Legendary Perks (Example)</option>
+                    <option value="enhancementStats">Enhancement Stats (Example)</option>
+                    <!-- Add more options here as PAYLOAD is populated -->
                 </select>
             </div>
-
-            <div class="grid grid-cols-fr-auto-fr gap-4 items-start selector-box">
-                <!-- Available List -->
-                <div>
-                    <label for="selectorAvailableList">Available:</label>
-                    <select id="selectorAvailableList" multiple></select>
+            <div class="row selects">
+                 <div style="flex: 1;">
+                     <label for="selectorAvailable">Available:</label>
+                    <input id="selectorFilter" placeholder="Filter available..." type="text" class="mb-2 w-full"/>
+                    <select id="selectorAvailable" multiple size="10" aria-label="Available Generic Items"></select>
+                 </div>
+                 <div class="buttons">
+                    <button id="selectorAddBtn" title="Add Selected">»</button>
+                    <button id="selectorRemoveBtn" title="Remove Selected">«</button>
                 </div>
-
-                <!-- Add/Remove Buttons -->
-                <div class="selector-buttons">
-                    <button id="selectorAddBtn" class="small">→</button>
-                    <button id="selectorRemoveBtn" class="small">←</button>
-                </div>
-
-                <!-- Selected List -->
-                <div>
-                    <label for="selectorSelectedList">Selected:</label>
-                    <select id="selectorSelectedList" multiple></select>
+                <div style="flex: 1;">
+                    <label for="selectorSelected">Selected:</label>
+                    <select id="selectorSelected" multiple size="10" aria-label="Selected Generic Items"></select>
                 </div>
             </div>
-
-             <!-- Output Area -->
-             <div class="mt-4">
-                <label for="selectorOutput">Generated Output:</label>
-                <pre id="selectorOutput">[Select items to generate output]</pre>
-                 <button id="copySelectorOutputBtn" class="small mt-1">Copy Selector Output</button>
+            <div>
+                 <label for="selectorOutput">Generated Output:</label>
+                 <code id="selectorOutput" class="font-mono text-sm">[Selected items output]</code>
              </div>
         </div>
-    </div>
+    </div> <!-- End tab-selector -->
 
-    <div id="api" class="tab-content">
-         <div class="card">
-             <h2 class="text-xl font-semibold mb-3">API Information</h2>
-             <p>Endpoint: <code class="text-sm">https://borderlands4-deserializer.nicnl.com/api/v1/reserialize</code></p>
-             <p class="mt-2">Method: <code class="text-sm">POST</code></p>
-             <p class="mt-2">Content-Type: <code class="text-sm">application/json</code></p>
-             <p class="mt-2">Request Body Example:</p>
-             <pre class="text-xs">{ "deserialized": "15, 0, 1, 50| 2, 2303|| {98} ..." }</pre>
-             <p class="mt-2">The API is called automatically when the 'Edit Serial Code' field is modified (debounced) or when 'Generate Serial String (Manual)' is clicked.</p>
-         </div>
-    </div>
+    <!-- --- TAB CONTENT: API Info --- -->
+    <div id="tab-api" class="tab-content">
+        <div class="card space-y-4">
+            <h2 class="text-xl font-semibold">API Interaction</h2>
+             <div>
+                <label>New Serial (from API):</label>
+                <div id="serial_b85" class="apiResult">[API Serial will appear here]</div>
+                <button id="copySerial" disabled>Copy API Serial <span id="copyApiStatus" class="copy-status"></span></button>
+             </div>
+             <div>
+                 <label>Details (from API):</label>
+                <div id="additionalData" class="apiResult">[Additional data from API will appear here]</div>
+             </div>
+             <p class="text-xs text-muted">API Endpoint: https://borderlands4-deserializer.nicnl.com/api/v1/reserialize</p>
+        </div>
+    </div> <!-- End tab-api -->
 
-    <!-- Message Area -->
-    <div id="messageArea"></div>
+</div> <!-- End container -->
+
+<!-- Message Toast -->
+<div id="messageToast" class="message-toast">
+    <span id="toastIcon" class="toast-icon">✓</span>
+    <span id="toastText">Success!</span>
+</div>
 
 <script>
-(function() {
-    'use strict';
-
-    // --- Configuration & Constants ---
-    const API_ENDPOINT = 'https://borderlands4-deserializer.nicnl.com/api/v1/reserialize';
-    const API_DEBOUNCE_MS = 400;
-
-    // --- DOM Element References ---
-    const dom = {
-        serialOutputCode: document.getElementById('serialOutputCode'),
-        apiSerialOutput: document.getElementById('apiSerialOutput'),
-        detailsOutput: document.getElementById('detailsOutput'),
-        rebuildAndCallApiBtn: document.getElementById('rebuildAndCallApiBtn'),
-        copyFull: document.getElementById('copyFull'),
-        copySerial: document.getElementById('copySerial'),
-        partSelectorsContainer: document.getElementById('partSelectorsContainer'),
-        decodedOutput: document.getElementById('decodedOutput'),
-        messageArea: document.getElementById('messageArea'),
-        // Generic Selector Elements
-        datasetSelector: document.getElementById('datasetSelector'),
-        selectorAvailableList: document.getElementById('selectorAvailableList'),
-        selectorSelectedList: document.getElementById('selectorSelectedList'),
-        selectorAddBtn: document.getElementById('selectorAddBtn'),
-        selectorRemoveBtn: document.getElementById('selectorRemoveBtn'),
-        selectorOutput: document.getElementById('selectorOutput'),
-        copySelectorOutputBtn: document.getElementById('copySelectorOutputBtn'),
-        // Tabs
-        tabLinks: document.querySelectorAll('.tab-link'),
-        tabContents: document.querySelectorAll('.tab-content'),
-        // Output section elements for duplicate highlighting/analysis
-        outWrapper: document.querySelector('.outCard'), // The card containing the output
-        outCode: document.getElementById('out')?.querySelector('code'),
-        analyzeDuplicatesBtn: document.getElementById('analyzeDuplicatesBtn'),
-        duplicateInfoOutput: document.getElementById('duplicateInfoOutput'),
-        // Input elements needed for rebuilding
-        baseSerialInput: document.getElementById('baseSerial'),
-        itemTypeSel: document.getElementById('itemType'), // Assuming IDs exist
-        raritySel: document.getElementById('rarity'), // Assuming IDs exist
-        applyInputBtn: document.getElementById('applyInputBtn'),
-        deserializeBtn: document.getElementById('deserializeBtn'),
-        reserializeManualBtn: document.getElementById('reserializeManual'),
-        undoEditBtn: document.getElementById('undoEdit'),
-        copyFullStatus: document.getElementById('copyFullStatus'),
-        serial_b85: document.getElementById('serial_b85') // For API copy
-    };
-
-    // --- State Variables ---
-    let apiAbortController = null;
-    let apiDebounceTimeout = null;
-    let messageTimeout = null;
-    let selectorSelectedItems = []; // Array to hold selected items with duplicates for the generic selector
-    let currentSelectorDatasetKey = 'legendaryPerks'; // Default dataset key
-    let PAYLOAD = {}; // Will be loaded async
-    const builders = {}; // Will hold builder instances
+    // Global variables
+    let PAYLOAD = {}; // Initialize as empty object
+    const builders = {};
+    let apiCallTimer;
+    let rebuildTimer;
     let lastGeneratedOutput = '';
     let isManualEditMode = false;
+    let messageTimeout;
     let currentBaseInputString = ''; // Store the applied base input
 
-    // --- Utility Functions (Moved Up) ---
+    // --- DOM Elements Cache ---
+    const dom = {
+        body: document.body,
+        messageArea: document.getElementById('message-area'), // Legacy, use Toast
+        itemTypeSel: document.getElementById('itemTypeSel'),
+        raritySel: document.getElementById('raritySel'),
+        outWrapper: document.getElementById('out'),
+        outCode: document.querySelector('#out code'),
+        baseSerial: document.getElementById('baseSerial'),
+        serial_b85: document.getElementById('serial_b85'),
+        additionalData: document.getElementById('additionalData'),
+        copyFull: document.getElementById('copyFull'),
+        copySerial: document.getElementById('copySerial'),
+        // dice removed
+        copyFullStatus: document.getElementById('copyFullStatus'),
+        copyApiStatus: document.getElementById('copyApiStatus'),
+        undoEditBtn: document.getElementById('undoEdit'),
+        reserializeManualBtn: document.getElementById('reserializeManual'),
+        applyInputBtn: document.getElementById('applyInputBtn'),
+        deserializeBtn: document.getElementById('deserializeBtn'),
+        messageToast: document.getElementById('messageToast'),
+        toastIcon: document.getElementById('toastIcon'),
+        toastText: document.getElementById('toastText'),
+        analyzeDuplicatesBtn: document.getElementById('analyzeDuplicatesBtn'),
+        duplicateInfoOutput: document.getElementById('duplicateInfoOutput')
+    };
+
+    // --- Utility Functions ---
     function showMessage(text, type = 'info', duration = 3000) {
-        if (!dom.messageArea) { console.warn("Message area not found, cannot show:", text); return; } // Add check
-        if (messageTimeout) clearTimeout(messageTimeout);
-        // Use innerHTML to allow basic tags like <code>
-        dom.messageArea.innerHTML = text; // Changed from textContent
-        dom.messageArea.className = `show ${type}`; // Add type class (error, success, warning)
+        if (!dom.messageToast || !dom.toastIcon || !dom.toastText) {
+            console.warn("Toast elements not found, logging message instead:", type, text);
+            return;
+        }
+        clearTimeout(messageTimeout);
+        dom.toastIcon.textContent = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+        dom.toastText.innerHTML = text; // Use innerHTML to render code tags if present
+        dom.messageToast.className = `message-toast ${type} show`;
         messageTimeout = setTimeout(() => {
-            if (dom.messageArea) dom.messageArea.className = ''; // Remove 'show' and type class
+            dom.messageToast.classList.remove('show');
         }, duration);
     }
-
-    // Debounce function
+    function showCopyStatus(statusElement, message) {
+        if (!statusElement) return;
+        statusElement.textContent = message;
+        statusElement.classList.add('visible');
+        clearTimeout(statusElement.timer);
+        statusElement.timer = setTimeout(() => {
+            statusElement.classList.remove('visible');
+        }, 1500);
+    }
+    // Simple debounce function
     function debounce(func, wait) {
         let timeout;
         return function executedFunction(...args) {
@@ -301,700 +462,759 @@
         };
     }
 
-     // --- Show Copy Status (Moved Up, was inline before) ---
-     function showCopyStatus(el, msg) {
-         if (!el) return;
-         el.textContent = msg;
-         setTimeout(() => el.textContent = '', 1200);
-     }
 
+    // --- Collapsible Section Logic ---
+    function setupCollapsibleSections() {
+        const collapsibleCards = document.querySelectorAll('.card.collapsible');
+        collapsibleCards.forEach(card => {
+            const header = card.querySelector('h2') || card.querySelector('.row.titleRow');
+            const content = card.querySelector('.collapsible-content');
+            if (!header || !content) {
+                console.warn('Collapsible structure incorrect:', card);
+                return;
+            }
+            if (header.querySelector('.toggle-btn')) return; // Already initialized
 
-    // --- Core Data Structures (Parts & Lookups) ---
-    // Example PAYLOAD structure matching reference files
-    const EXAMPLE_PAYLOAD = {
-        legendaryPerks: [
-             { name: "God Killer", group: "Firmware", code: "244:1", variant: "Firm" },
-             { name: "Reel Big Fist", group: "Firmware", code: "244:2", variant: "Firm" },
-             { name: "Lifeblood", group: "Firmware", code: "244:3", variant: "Firm" },
-             { name: "Airstrike", group: "Firmware", code: "244:4", variant: "Firm" },
-             { name: "High Caliber", group: "Firmware", code: "244:5", variant: "Firm" },
-        ],
-        enhancementStats: [
-             { text: "Acc +75%", value: 168 }, { text: "ADS +75%", value: 169 },
-             { text: "Crit DMG +75%", value: 170 }, { text: "DMG +38%", value: 171 },
-             { text: "Equip +150%", value: 172 }, { text: "Fire Rate +38%", value: 173 },
-             { text: "Mag +75%", value: 174 }, { text: "Reload +38%", value: 175 },
-        ],
-    };
+            const toggleBtn = document.createElement('button');
+            toggleBtn.className = 'toggle-btn';
+            toggleBtn.setAttribute('aria-expanded', 'false');
+            toggleBtn.title = 'Toggle Section';
 
-    // --- PART DATA FOR DECODER/EDITOR ---
-    // Simplified structure based on index (12).html for brevity
-    const PARTS_DATA = {
-        itemInfo: [{ text: "Item Level", value: "level", type: "number", min: 1, max: 99 }, ],
-        core: [{ text: "Item Type / Manufacturer", value: "itemType" }], // Dynamically populated
-        elements: [
-            { text: "No Element", value: "" }, { text: "Corrosive", value: "{1:10}" },
-            { text: "Cryo", value: "{1:11}" }, { text: "Incendiary", value: "{1:12}" },
-            { text: "Radiation", value: "{1:13}" }, { text: "Shock", value: "{1:14}" },
-        ],
-        legendaryPerks: [], // To be populated from PAYLOAD
-        ordnancePerks: [
-              {text: "No Ordnance Perk", value: ""}, {text: "Whistler {282:25}", value: "{282:25}"},
-        ]
-    };
+            if (header.tagName === 'H2') {
+                header.appendChild(toggleBtn);
+            } else if (header.classList.contains('titleRow')) {
+                 const filterRow = header.querySelector('.filterRow');
+                 if (filterRow) header.insertBefore(toggleBtn, filterRow);
+                 else header.appendChild(toggleBtn);
+            }
 
-    // Combine all selectable parts into one array for easier processing
-    let ALL_SELECTABLE_PARTS = []; // Will be built after PAYLOAD load
+            toggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent card click if needed
+                const isExpanded = content.classList.toggle('expanded');
+                toggleBtn.classList.toggle('expanded', isExpanded);
+                toggleBtn.setAttribute('aria-expanded', isExpanded);
+            });
 
-    // --- Lookup Maps for Decoding ---
-    const genericParts = {}; // For {ID} blocks
-    const specificParts = {}; // For {X:Y} blocks
-
-    function buildLookupMapsAndPartData() {
-        // Populate PARTS_DATA from loaded PAYLOAD
-        PARTS_DATA.legendaryPerks = (PAYLOAD.legendaryPerks || []).map(p => ({ text: p.name, value: `{${p.code}}` }));
-        // Add similar mappings for other parts from PAYLOAD (e.g., altFireModes, magazineModes)
-
-        ALL_SELECTABLE_PARTS = Object.values(PARTS_DATA).flat();
-
-        // Build Lookups
-        genericParts = {}; // Clear previous
-        specificParts = {}; // Clear previous
-
-        ALL_SELECTABLE_PARTS.forEach(part => {
-             if (!part || !part.value) return; // Skip empty/invalid
-
-             const genericMatch = part.value.match(/^\{(\d+)\}$/);
-             const specificMatch = part.value.match(/^\{(\d+:\d+)\}$/); // Match {X:Y}
-
-             if (genericMatch) {
-                 genericParts[genericMatch[1]] = part.text;
-             } else if (specificMatch) {
-                 specificParts[specificMatch[1]] = part.text;
+             const startExpanded = card.classList.contains('start-expanded');
+             if (startExpanded) {
+                 content.classList.add('expanded');
+                 toggleBtn.classList.add('expanded');
+                 toggleBtn.setAttribute('aria-expanded', 'true');
              }
         });
-         // Add firmware and other known blocks
-         genericParts['ft'] = 'Firmware Lock'; genericParts['c'] = 'Skin/Color';
-         (PAYLOAD.enhancementStats || []).forEach(stat => {
-            specificParts[`247:${stat.value}`] = `Enhancement: ${stat.text}`;
-         });
-
-         console.log("Built Generic Parts Lookup:", genericParts);
-         console.log("Built Specific Parts Lookup:", specificParts);
     }
 
+    // --- Generic Builder UI Logic ---
+    function createBuilder(key, nameField, codeField, idPrefix) {
+        const dataList = PAYLOAD[key] || [];
+        const filterInput = document.getElementById(`filter${idPrefix}`);
+        const availList = document.getElementById(`avail${idPrefix}`);
+        const selList = document.getElementById(`sel${idPrefix}`);
+        const addBtn = document.getElementById(`add${idPrefix}`);
+        const remBtn = document.getElementById(`rem${idPrefix}`);
+        const clearBtn = document.getElementById(`clear${idPrefix}`);
 
-    // --- API Call Logic ---
-    const callReserialize = async () => {
-        if (!dom.serialOutputCode || !dom.apiSerialOutput || !dom.detailsOutput) return; // Check DOM elements
-        if (apiAbortController) apiAbortController.abort();
-        apiAbortController = new AbortController();
-        const signal = apiAbortController.signal;
-
-        const deserializedString = (dom.serialOutputCode.textContent || '').trim();
-        if (!deserializedString) {
-            dom.apiSerialOutput.textContent = '[Input serial code above]';
-            dom.detailsOutput.textContent = '[Input serial code above]';
-            return;
+        if (!filterInput || !availList || !selList || !addBtn || !remBtn || !clearBtn) {
+            console.error(`Missing DOM elements for builder ${idPrefix}. Skipping.`);
+            return { getSelectedItems: () => [], clear: () => {} }; // Return dummy object
         }
 
-        dom.apiSerialOutput.textContent = '[Calling API...]';
-        dom.detailsOutput.textContent = '[Calling API...]';
+        let selectedItems = []; // Stores { code: "{X:Y}", uniqueId: number }
+        let nextUniqueId = 0;
+        const codeToNameMap = {};
 
-        try {
-            const response = await fetch(API_ENDPOINT, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ deserialized: deserializedString }), signal: signal,
+        if (!Array.isArray(dataList)) {
+            console.error(`Expected array for key ${key}, received:`, dataList);
+            return { getSelectedItems: () => [], clear: () => {} }; // Return dummy object
+        }
+
+        // Pre-process data
+        dataList.forEach(item => {
+            const code = item[codeField];
+            if (code === undefined || code === null || typeof code !== 'string') return;
+            const name = item[nameField] || 'Unnamed Item';
+            const variant = item.variant ? ` "${item.variant}"` : '';
+            const group = item.group ? ` (${item.group})` : '';
+            codeToNameMap[code.trim()] = `${name}${variant}${group}`;
+        });
+
+        function populateAvailable() {
+            const fragment = document.createDocumentFragment();
+            const query = (filterInput.value || '').toLowerCase();
+            availList.innerHTML = '';
+
+            (dataList || [])
+                .filter(item => {
+                    const code = item[codeField];
+                    if (code === undefined || code === null || typeof code !== 'string') return false;
+                    const name = codeToNameMap[code.trim()] || '';
+                    const searchText = `${name} ${code}`.toLowerCase();
+                    return !query || searchText.includes(query);
+                })
+                .sort((a, b) => {
+                     const codeA = a[codeField]?.trim();
+                     const codeB = b[codeField]?.trim();
+                     const nameA = codeToNameMap[codeA] || '';
+                     const nameB = codeToNameMap[codeB] || '';
+                     return nameA.localeCompare(nameB);
+                 })
+                .forEach(item => {
+                    const code = item[codeField].trim();
+                    const displayName = codeToNameMap[code] || 'Unknown';
+                    const o = document.createElement('option');
+                    o.value = code;
+                    o.textContent = `${displayName} ${code}`;
+                    fragment.appendChild(o);
+                });
+            availList.appendChild(fragment);
+        }
+
+        function renderSelected() {
+            const scrollState = { top: selList.scrollTop, left: selList.scrollLeft };
+            const selectedUniqueIds = new Set(Array.from(selList.selectedOptions).map(opt => opt.value));
+            selList.innerHTML = '';
+            selectedItems.forEach(item => {
+                const name = codeToNameMap[item.code] || 'Unknown Code';
+                const o = document.createElement('option');
+                o.value = item.uniqueId.toString(); // Use uniqueId as value for selection tracking
+                o.textContent = `${name} ${item.code}`;
+                o.dataset.code = item.code; // Store actual code in data attribute
+                if (selectedUniqueIds.has(o.value)) o.selected = true;
+                selList.appendChild(o);
             });
-            if (!response.ok) {
-                const errorData = await response.text();
-                throw new Error(`API Error ${response.status}: ${errorData || response.statusText}`);
-            }
-            const data = await response.json();
-            dom.apiSerialOutput.textContent = data?.serial_b85 || '[No serial returned]';
-            dom.detailsOutput.textContent = JSON.stringify(data?.additional_data || {}, null, 2);
-        } catch (error) {
-             if (error.name === 'AbortError') { console.log('API request aborted (debounced)'); return; }
-            console.error('API call failed:', error);
-            const errorMessage = `API Call Failed: ${error.message}`;
-            dom.apiSerialOutput.textContent = `[${errorMessage}]`;
-            dom.detailsOutput.textContent = `[${errorMessage}]`;
-             showMessage(errorMessage, 'error', 5000);
-        } finally {
-            apiAbortController = null;
+            selList.scrollTop = scrollState.top; selList.scrollLeft = scrollState.left;
+             if (!isManualEditMode) triggerDebouncedRebuild();
         }
-    };
-    const debouncedApiCall = debounce(callReserialize, API_DEBOUNCE_MS);
 
-    // --- Serial Parsing & Decoding Logic ---
-    function parseSerialString(serial) { /* ... function unchanged ... */
-        if (!serial) return { header: [], blocks: [] };
-        const parts = serial.split('||');
-        if (parts.length < 2) return { header: [], blocks: [] }; // Basic validation
-
-        const headerPart = parts[0].trim();
-        const blocksPart = parts[1].trim();
-
-        // Parse header (simple split for now, might need refinement)
-        const header = headerPart.split('|').map(s => s.trim());
-
-        // Parse blocks: handles {X}, {X:Y}, {X:[A B C]}, "ft", "c"
-        const blockRegex = /\{(\d+)(?::(\d+|\[[\d\s]+\]))?\}|("?[a-zA-Z]+"?)/g;
-        const blocks = [];
-        let match;
-        while ((match = blockRegex.exec(blocksPart)) !== null) {
-            if (match[3]) { // Quoted string like "ft" or "c"
-                blocks.push({ raw: match[3].replace(/"/g, ''), type: 'string' });
-            } else if (match[2]) { // Has colon: {X:Y} or {X:[A B C]}
-                const id = match[1];
-                const valuePart = match[2];
-                if (valuePart.startsWith('[')) { // Array block
-                    const values = valuePart.slice(1, -1).trim().split(/\s+/).map(Number);
-                    blocks.push({ id, values, raw: match[0], type: 'array' });
-                } else { // Specific block {X:Y}
-                    blocks.push({ id, value: parseInt(valuePart, 10), raw: match[0], type: 'specific' });
-                }
-            } else { // Generic block {X}
-                blocks.push({ id: match[1], raw: match[0], type: 'generic' });
-            }
+        function addSelected() {
+            Array.from(availList.selectedOptions).forEach(opt => {
+                selectedItems.push({ code: opt.value, uniqueId: nextUniqueId++ });
+            });
+            renderSelected();
         }
-        return { header, blocks };
+
+        function removeSelected() {
+            const idsToRemove = new Set(Array.from(selList.selectedOptions).map(opt => parseInt(opt.value, 10)));
+            if (idsToRemove.size === 0) return;
+            selectedItems = selectedItems.filter(item => !idsToRemove.has(item.uniqueId));
+            renderSelected();
+        }
+
+        function clearSelected() {
+            selectedItems = [];
+            renderSelected();
+        }
+
+        populateAvailable();
+        filterInput.addEventListener('input', debounce(populateAvailable, 200));
+        addBtn.addEventListener('click', addSelected);
+        remBtn.addEventListener('click', removeSelected);
+        clearBtn.addEventListener('click', clearSelected);
+        selList.addEventListener('keydown', e => { if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); removeSelected(); } });
+        selList.addEventListener('dblclick', removeSelected);
+        availList.addEventListener('dblclick', addSelected);
+
+        return { getSelectedItems: () => selectedItems.map(item => item.code), clear: clearSelected };
     }
-     function decodeBlocks(parsedSerial) { /* ... function unchanged ... */
-         return parsedSerial.blocks.map(block => {
-             let name = `Unknown (${block.raw})`;
-             let details = '';
 
-             try {
-                 if (block.type === 'string') {
-                     name = genericParts[block.raw] || `Unknown String (${block.raw})`;
-                 } else if (block.type === 'generic') {
-                     name = genericParts[block.id] || `Unknown Generic (${block.raw})`;
-                 } else if (block.type === 'specific') {
-                     const key = `${block.id}:${block.value}`;
-                     name = specificParts[key] || `Unknown Specific (${block.raw})`;
-                 } else if (block.type === 'array') {
-                     name = genericParts[block.id] || `Unknown Array Block (${block.id})`;
-                     // Try decoding individual values if they are known specific parts within this block ID context
-                      const decodedValues = block.values.map(val => {
-                         const key = `${block.id}:${val}`;
-                         return specificParts[key] || `val ${val}`; // Show known name or just the value
-                      });
-                     details = `[${decodedValues.join(', ')}]`;
-                      // Special case for enhancement block (247)
-                      if (block.id === '247') {
-                           name = 'Enhancement Stats';
-                           const statValues = block.values.map(val => specificParts[`247:${val}`] || `Unknown Stat (${val})`);
-                           details = `[${statValues.join(' | ')}]`;
-                      }
-                 }
-             } catch (e) {
-                 console.error("Error decoding block:", block, e);
-                 name = `Error Decoding (${block.raw})`;
-             }
+    // --- Condensing Logic ---
+     function getPartId(code) { const match = code.match(/\{(\d+)/); return match ? match[1] : null; }
+     function condenseParts(parts) {
+          if (!parts || parts.length === 0) return [];
+          const grouped = {};
+          const individualParts = []; // For parts not matching standard formats or added manually
+          const finalCondensed = [];
 
-             return { raw: block.raw, name, details };
-         });
-     }
-     function renderBlocks(decodedData) { /* ... function unchanged ... */
-         if (!dom.decodedOutput) return;
-         dom.decodedOutput.innerHTML = decodedData.map(d => `
-             <div>
-                 <code>${d.raw}</code>: ${d.name} ${d.details ? `<span class="text-gray-400 text-xs">${d.details}</span>` : ''}
-             </div>
-         `).join('');
-     }
+          parts.forEach(code => {
+              if (typeof code !== 'string' || !code.trim()) return; // Skip invalid entries
+              const trimmedCode = code.trim();
+              // Regex handles spaces around ':', within '[]', and optional values
+              const match = trimmedCode.match(/^\s*\{(\d+)(?:\s*:\s*([^}\[\]]+)|\s*:\s*\[([^\]]+)\])?\s*\}\s*$/);
+              if (match) {
+                  const id = match[1];
+                  const value = match[2]?.trim(); // Single value
+                  const arrayValuesStr = match[3]?.trim(); // Values inside brackets
+                  const valuesFromArray = arrayValuesStr ? arrayValuesStr.split(/\s+/).filter(v => v) : [];
 
-    // --- Serial Building Logic ---
-    function rebuildOutput() { /* ... function unchanged ... */
-        if (!dom.serialOutputCode) return; // Add check
+                  if (!grouped[id]) grouped[id] = { simple: 0, values: new Set() };
+
+                  if (value) {
+                      grouped[id].values.add(value);
+                  } else if (valuesFromArray.length > 0) {
+                      valuesFromArray.forEach(v => grouped[id].values.add(v));
+                  } else {
+                      grouped[id].simple++;
+                  }
+              } else if (!trimmedCode.includes('||')) {
+                   individualParts.push(trimmedCode);
+              }
+          });
+
+          // Process grouped parts
+          for (const id in grouped) {
+               const group = grouped[id];
+               const hasValues = group.values.size > 0;
+               const hasSimple = group.simple > 0;
+
+               if (hasValues) {
+                    const sortedValues = Array.from(group.values).sort(); // Sort for consistency
+                    finalCondensed.push(`{${id}:[${sortedValues.join(' ')}]}`);
+               }
+               // Add simple {ID} only if it existed AND (EITHER no values existed OR values also existed)
+               // This prevents adding {ID} if ONLY {ID:[...]} was input, but allows {ID} {ID:V} -> {ID} {ID:[V]}
+               if (hasSimple && (!hasValues || hasValues)) {
+                    finalCondensed.push(`{${id}}`);
+               }
+          }
+
+          return [...finalCondensed, ...individualParts]; // Combine and return
+      }
+
+    // --- Duplicate Analysis Logic ---
+    function analyzeDuplicates(condensedPartsString) {
+        const counts = { singular: {}, specific: {}, arrayValues: {} };
+        const parts = condensedPartsString.match(/\{[^}]+\}/g) || [];
+
+        parts.forEach(part => {
+            const singularMatch = part.match(/^\{(\d+)\}$/);
+            const specificMatch = part.match(/^\{(\d+):([^\[\]]+)\}$/); // Match non-array specifics
+            const arrayMatch = part.match(/^\{(\d+):\[([^\]]+)\]\}$/);
+
+            if (singularMatch) {
+                const id = singularMatch[1];
+                counts.singular[id] = (counts.singular[id] || 0) + 1;
+            } else if (specificMatch) {
+                // Treat specific parts like {X:Y} as unique entities for counting
+                counts.specific[part] = (counts.specific[part] || 0) + 1;
+            } else if (arrayMatch) {
+                const id = arrayMatch[1];
+                const values = arrayMatch[2].trim().split(/\s+/);
+                const valueCounts = {};
+                values.forEach(val => {
+                    valueCounts[val] = (valueCounts[val] || 0) + 1;
+                });
+                for (const val in valueCounts) {
+                    if (valueCounts[val] > 1) {
+                         // Store as "ID:Value" to track duplicates within specific arrays
+                         const key = `${id}:${val}`;
+                         counts.arrayValues[key] = (counts.arrayValues[key] || 0) + valueCounts[val];
+                    }
+                }
+            }
+        });
+
+        // Filter out non-duplicates
+        const duplicates = { singular: {}, specific: {}, arrayValues: {} };
+        for (const key in counts.singular) if (counts.singular[key] > 1) duplicates.singular[key] = counts.singular[key];
+        for (const key in counts.specific) if (counts.specific[key] > 1) duplicates.specific[key] = counts.specific[key];
+        // Array values already filtered for > 1 internally during counting
+        duplicates.arrayValues = counts.arrayValues;
+
+
+        return duplicates;
+    }
+
+    function formatDuplicateAnalysis(duplicates) {
+        let output = '';
+        const singularKeys = Object.keys(duplicates.singular);
+        const specificKeys = Object.keys(duplicates.specific);
+        const arrayValueKeys = Object.keys(duplicates.arrayValues);
+
+        if (singularKeys.length > 0) {
+            output += 'Duplicates (Singular Blocks):\n';
+            singularKeys.forEach(key => { output += `  {${key}} occurs ${duplicates.singular[key]} times\n`; });
+        }
+        if (specificKeys.length > 0) {
+            output += (output ? '\n' : '') + 'Duplicates (Specific Parts):\n';
+            specificKeys.forEach(key => { output += `  ${key} occurs ${duplicates.specific[key]} times\n`; });
+        }
+        if (arrayValueKeys.length > 0) {
+            output += (output ? '\n' : '') + 'Duplicates (Inside Array Blocks):\n';
+            arrayValueKeys.forEach(key => {
+                 const [id, val] = key.split(':');
+                 output += `  Value ${val} occurs ${duplicates.arrayValues[key]} times in {${id}:[...]}\n`;
+             });
+        }
+
+        return output || 'No significant duplicates found.';
+    }
+
+    function analyzeAndDisplayDuplicates() {
+        if (!dom.outCode || !dom.duplicateInfoOutput) return;
+        const currentOutput = dom.outCode.textContent || '';
+        const duplicates = analyzeDuplicates(currentOutput);
+        dom.duplicateInfoOutput.textContent = formatDuplicateAnalysis(duplicates);
+    }
+
+
+    // --- Output Rebuilding ---
+    function rebuildOutput() {
+        if (!dom.outCode) return;
         try {
-             let currentSeed = '1234'; // Default placeholder
-             const headerMatchSeed = currentBaseInputString.match(/\|\s*\d+,\s*(\d+)\|\|/);
-             if (headerMatchSeed) {
-                 currentSeed = headerMatchSeed[1];
-             }
+            let currentSeed = '1234'; // Default placeholder if needed
+            const seedMatch = currentBaseInputString.match(/\|\s*\d+,\s*(\d+)\s*\|\|/);
+            if (seedMatch) currentSeed = seedMatch[1];
+            else {
+                 const simpleSeedMatch = currentBaseInputString.match(/\|\s*\d+,\s*(\d+)\s*$/);
+                 if (simpleSeedMatch) currentSeed = simpleSeedMatch[1];
+            }
 
-            const baseInput = currentBaseInputString; // Read from global var
+            const baseInput = currentBaseInputString;
             let baseHeader = '';
-            let baseDynamicParts = []; // Parts parsed FROM the base input string
+            let baseDynamicParts = [];
 
-            // 1. Parse Base Input
             if (baseInput) {
-                const headerMatch = baseInput.match(/^([^\{]*\|\|\s*)/);
-                 const seedMatch = baseInput.match(/\|\s*\d+,\s*(\d+)\|\|/);
-                 if (seedMatch) currentSeed = seedMatch[1];
-
-                if (headerMatch) {
-                    const headerParts = headerMatch[0].trim().split('||')[0].split('|');
-                     if (headerParts.length === 2) {
-                         const firstPart = headerParts[0].trim();
-                         const secondPartParts = headerParts[1].trim().split(',');
-                         if (secondPartParts.length === 2) {
-                             baseHeader = `${firstPart}| ${secondPartParts[0].trim()}, ${currentSeed}||`;
-                         } else { baseHeader = headerMatch[0].trim(); }
-                     } else { baseHeader = headerMatch[0].trim(); }
-                    const remaining = baseInput.substring(headerMatch[0].length).trim();
-                    baseDynamicParts = remaining ? remaining.split(/\s+/).filter(p => p.length > 0) : [];
-                } else {
+                 const headerMatch = baseInput.match(/^([^\{]*\|\|\s*)/);
+                 if (headerMatch) {
+                     const headerContent = headerMatch[0].trim();
+                     const parts = headerContent.split('||')[0].split('|');
+                     if (parts.length === 2) {
+                         const firstPart = parts[0].trim();
+                         const secondPartParts = parts[1].trim().split(',');
+                         if (secondPartParts.length === 2) baseHeader = `${firstPart}| ${secondPartParts[0].trim()}, ${currentSeed}||`;
+                         else baseHeader = headerContent;
+                     } else baseHeader = headerContent;
+                     const remaining = baseInput.substring(headerMatch[0].length).trim();
+                     baseDynamicParts = remaining ? remaining.split(/\s+/).filter(p => p.length > 0 && p !== '|') : [];
+                 } else {
                      const firstBlockIndex = baseInput.indexOf('{');
-                     if (firstBlockIndex === 0) { baseHeader = ''; baseDynamicParts = baseInput.split(/\s+/).filter(p => p.length > 0); }
-                     else if (firstBlockIndex > 0) {
+                     if (firstBlockIndex === 0) {
+                          baseHeader = '';
+                          baseDynamicParts = baseInput.split(/\s+/).filter(p => p.length > 0 && p !== '|');
+                     } else if (firstBlockIndex > 0) {
                          baseHeader = baseInput.substring(0, firstBlockIndex).trim();
                           const simpleHeaderParts = baseHeader.split('|');
                           if (simpleHeaderParts.length === 2) {
                               const firstPart = simpleHeaderParts[0].trim();
                               const secondPartParts = simpleHeaderParts[1].trim().split(',');
-                               if (secondPartParts.length === 2) { baseHeader = `${firstPart}| ${secondPartParts[0].trim()}, ${currentSeed}`; }
+                               if (secondPartParts.length === 2) baseHeader = `${firstPart}| ${secondPartParts[0].trim()}, ${currentSeed}`;
                           }
-                         baseDynamicParts = baseInput.substring(firstBlockIndex).trim().split(/\s+/).filter(p => p.length > 0);
+                         baseDynamicParts = baseInput.substring(firstBlockIndex).trim().split(/\s+/).filter(p => p.length > 0 && p !== '|');
+                     } else {
+                          baseHeader = baseInput.replace(/\|$/, '').trim(); // Treat as header, remove trailing pipe if present
+                          baseDynamicParts = [];
                      }
-                     else { baseHeader = baseInput; baseDynamicParts = []; }
                 }
-            } else { // Generate Base Header if no input
-                // Requires dom.itemTypeSel and dom.raritySel to be defined
-                const itemTypeId = dom.itemTypeSel ? ({"gun": 1, "shield": 2, "grenade": 3, "classmod": 4, "enhancement": 5})[dom.itemTypeSel.value] || 0 : 0;
-                 baseHeader = `${itemTypeId}, 0, 1, 50| 2, ${currentSeed}||`;
-                 const rarityCode = dom.raritySel ? ({"common": 217, "uncommon": 218, "rare": 219, "epic": 220, "legendary": 999})[dom.raritySel.value] || 0 : 0;
-                 if (rarityCode) baseDynamicParts.push(`{${rarityCode}}`);
+            } else {
+                const typeMap = { gun: 1, shield: 2, grenade: 3, classmod: 4, enhancement: 5 };
+                const itemTypeId = typeMap[dom.itemTypeSel?.value] || 0;
+                baseHeader = `${itemTypeId}, 0, 1, 50| 2, ${currentSeed}||`;
+                const rarityCodeMap = { common: 217, uncommon: 218, rare: 219, epic: 220, legendary: 999 };
+                 const rarityPart = `{${rarityCodeMap[dom.raritySel?.value] || 0}}`;
+                 if (rarityPart !== '{0}') baseDynamicParts.push(rarityPart);
             }
 
-            // 2. Collect parts from ALL builders
-            const builderPartsRaw = [];
-            Object.values(builders).forEach(builder => {
-                if (typeof builder.getSelectedItems === 'function') {
-                    builderPartsRaw.push(...builder.getSelectedItems());
-                }
-            });
-            const builderPartsSet = new Set(builderPartsRaw);
+            const builderPartsRaw = Object.values(builders).flatMap(b => typeof b.getSelectedItems === 'function' ? b.getSelectedItems() : []);
+            const builderPartsSet = new Set(builderPartsRaw); // Set of raw added parts like "{X:Y}"
 
-            // 3. Combine and Condense
-            // NOTE: Condense logic needs to be defined
-            // const allPartsToCondense = [...baseDynamicParts, ...builderPartsRaw];
-            // const condensedParts = condenseParts(allPartsToCondense); // Assuming condenseParts exists
-            const condensedParts = [...baseDynamicParts, ...builderPartsRaw]; // Placeholder without condense
+            const allPartsToCondense = [...baseDynamicParts, ...builderPartsRaw];
+            const condensedParts = condenseParts(allPartsToCondense); // Array of condensed strings like "{X:[A B]}" or "{Y}"
 
-            // 3.5 Analyze Condensed Parts for Duplicates
-             const tempSerialForAnalysis = baseHeader + ' ' + condensedParts.join(' ');
-             const analysis = analyzeDuplicates(tempSerialForAnalysis);
-             const duplicateSingularSet = new Set(analysis.duplicates.singular);
-             const duplicateSpecificSet = new Set(analysis.duplicates.specific);
-             const duplicateArrayValueSet = new Set(analysis.duplicates.arrayValues);
+            // --- Analyze AFTER condensing ---
+            const condensedStringForAnalysis = condensedParts.join(' ');
+            const duplicates = analyzeDuplicates(condensedStringForAnalysis);
 
-            // 4. Build Output HTML with highlighting
-            let outputHtml = '';
-            if (baseHeader) outputHtml += baseHeader;
-
+            // --- Build Output HTML with Highlighting ---
+            let outputHtml = baseHeader ? baseHeader : ''; // Start with header
             condensedParts.forEach((partStr, index) => {
-                let isAdded = false; let highlightClass = ''; let processedPartStr = partStr;
-                 const arrayMatch = partStr.match(/^\{(\d+):\s*\[([^\]]+)\]\s*\}$/);
-                 if (arrayMatch) {
-                     const id = arrayMatch[1]; const values = arrayMatch[2].trim().split(/\s+/);
-                     isAdded = values.some(val => builderPartsSet.has(`{${id}:${val}}`)) || builderPartsSet.has(`{${id}}`);
-                     const highlightedValues = values.map(val => duplicateArrayValueSet.has(`${id}-${val}`) ? `<span class="dup-array-value">${val}</span>` : val);
-                     processedPartStr = `{${id}:[${highlightedValues.join(' ')}]}`;
+                 if ((baseHeader || index > 0) && outputHtml.length > 0 && !outputHtml.endsWith(' ')) outputHtml += ' ';
+
+                 const singularMatch = partStr.match(/^\{(\d+)\}$/);
+                 const specificMatch = partStr.match(/^\{(\d+):([^\[\]]+)\}$/); // Match only non-array specific parts for specific highlighting
+                 const arrayMatch = partStr.match(/^\{(\d+):\[([^\]]+)\]\}$/);
+
+                 if (singularMatch && duplicates.singular[singularMatch[1]]) {
+                      outputHtml += `<span class="dup-singular">${partStr}</span>`; // Blue
+                 } else if (specificMatch && duplicates.specific[partStr]) {
+                      outputHtml += `<span class="dup-specific">${partStr}</span>`; // Orange
+                 } else if (arrayMatch) {
+                      const id = arrayMatch[1];
+                      const values = arrayMatch[2].trim().split(/\s+/);
+                      let highlightedValues = values.map(val => {
+                           const key = `${id}:${val}`;
+                           return duplicates.arrayValues[key] ? `<span class="dup-array-value">${val}</span>` : val; // Yellow for duplicates *within* array
+                      }).join(' ');
+                      outputHtml += `{${id}:[${highlightedValues}]}`;
                  } else {
-                     isAdded = builderPartsSet.has(partStr);
-                      const singularMatch = partStr.match(/^\{(\d+)\}$/);
-                      const specificMatch = partStr.match(/^\{(\d+:\d+)\}$/);
-                      if (singularMatch && duplicateSingularSet.has(singularMatch[1])) highlightClass = 'dup-singular';
-                      else if (specificMatch && duplicateSpecificSet.has(specificMatch[1])) highlightClass = 'dup-specific';
+                      outputHtml += partStr; // No duplicate or not highlightable type
                  }
-                if ((baseHeader || index > 0) && outputHtml.length > 0 && !outputHtml.endsWith(' ')) outputHtml += ' ';
-                const addedSpanStart = isAdded ? '<span class="added-part">' : ''; const addedSpanEnd = isAdded ? '</span>' : '';
-                const dupSpanStart = highlightClass ? `<span class="${highlightClass}">` : ''; const dupSpanEnd = highlightClass ? '</span>' : '';
-                outputHtml += `${addedSpanStart}${dupSpanStart}${processedPartStr}${dupSpanEnd}${addedSpanEnd}`;
             });
 
-            // 5. Add final pipe and clean up
+            // Add final pipe
             let finalOutputString = outputHtml.replace(/<[^>]*>/g, '');
-            if (condensedParts.length > 0 && !finalOutputString.endsWith('|')) outputHtml += '|';
-            else if (!baseHeader && condensedParts.length > 0 && !finalOutputString.endsWith('|')) outputHtml += '|';
-             outputHtml = outputHtml.replace(/\s{2,}/g, ' ').replace(/ <span/g, '<span').replace(/span> /g, 'span>');
-            lastGeneratedOutput = outputHtml.replace(/<[^>]*>/g, '');
+             if ((baseHeader || condensedParts.length > 0) && !finalOutputString.endsWith('|')) {
+                 outputHtml += '|';
+             }
 
-            // Update output display
-            if (dom.outCode && document.activeElement !== dom.outCode) {
+            outputHtml = outputHtml.replace(/\s{2,}/g, ' ').replace(/ <span/g, '<span').replace(/span> /g, 'span>').trim();
+            lastGeneratedOutput = outputHtml.replace(/<[^>]*>/g, ''); // Store plain text
+
+            if (document.activeElement !== dom.outCode) {
                  dom.outCode.innerHTML = outputHtml;
                  if (isManualEditMode) {
                      isManualEditMode = false;
-                     if(dom.outCode) dom.outCode.classList.remove('manual-edit');
-                     if(dom.outWrapper) {
-                        dom.outWrapper.classList.remove('manual-edit');
-                        const indicator = dom.outWrapper.querySelector('.manual-edit-indicator');
-                        if (indicator) indicator.style.display = 'none';
+                     dom.outCode.classList.remove('manual-edit');
+                     if (dom.outWrapper) {
+                         const indicator = dom.outWrapper.querySelector('.manual-edit-indicator');
+                         dom.outWrapper.classList.remove('manual-edit');
+                         if(indicator) indicator.style.display = 'none';
                      }
                  }
             }
-            if (dom.duplicateInfoOutput) dom.duplicateInfoOutput.textContent = ''; // Clear duplicate info
-            // Ensure message area is hidden unless an error occurs later
-            if (dom.messageArea && dom.messageArea.style.display !== 'none' && !dom.messageArea.classList.contains('error')) {
-                 dom.messageArea.style.display = 'none';
-            }
+             // Clear duplicate analysis display on rebuild
+             if (dom.duplicateInfoOutput) dom.duplicateInfoOutput.textContent = '';
+
         } catch (err) {
             showMessage(`Error generating output: <code>${err.message}</code>. Check builder setup and data.`, 'error');
             console.error("Output Generation Error:", err);
-            if(dom.outCode) dom.outCode.textContent = '[Error generating output]';
+            if (dom.outCode) dom.outCode.textContent = '[Error generating output]';
             lastGeneratedOutput = '';
-            if(dom.duplicateInfoOutput) dom.duplicateInfoOutput.textContent = '';
         }
     }
 
-    // --- Dynamic UI Population (Decoder/Editor) ---
-    function createSelector(partConfig, idPrefix = 'part-') { /* ... function unchanged ... */
-        const container = document.createElement('div');
-        container.className = 'mb-3';
 
-        const label = document.createElement('label');
-        label.htmlFor = idPrefix + partConfig.value;
-        label.textContent = partConfig.text + ':';
-        container.appendChild(label);
+     // --- Debounced Triggers and API Logic ---
+     const debouncedRebuild = debounce(rebuildOutputAndCallApi, 50);
+     const debouncedApiCall = debounce(callReserialize, 400);
 
-        if (partConfig.type === 'number') {
-            const input = document.createElement('input');
-            input.type = 'number';
-            input.id = idPrefix + partConfig.value;
-            input.min = partConfig.min || 0;
-            if (partConfig.max) input.max = partConfig.max;
-            input.value = partConfig.defaultValue || '';
-            input.className = 'w-full md:w-auto';
-            input.addEventListener('change', rebuildOutput);
-            input.addEventListener('input', rebuildOutput); // More responsive
-            container.appendChild(input);
-        } else { // Default to select dropdown
-            const select = document.createElement('select');
-            select.id = idPrefix + partConfig.value;
-            select.className = 'w-full';
+     function triggerDebouncedRebuild() { if (!isManualEditMode) debouncedRebuild(); }
+     function triggerDebouncedApiCall() { if (!isManualEditMode) debouncedApiCall(); }
+     function rebuildOutputAndCallApi() { rebuildOutput(); triggerDebouncedApiCall(); }
 
-             // Add options
-             (partConfig.options || [partConfig]).forEach(option => {
-                 const opt = document.createElement('option');
-                 opt.value = option.value;
-                 opt.textContent = option.text;
-                 select.appendChild(opt);
-             });
+    const API_BASE_URL = 'https://borderlands4-deserializer.nicnl.com/api/v1';
 
-            select.addEventListener('change', rebuildOutput);
-            container.appendChild(select);
+    async function deserializeSerial() {
+        const input = dom.baseSerial?.value.trim();
+        if (!input) { showMessage('Please enter a serial code in the input box first.', 'error'); return; }
+        if (!input.startsWith('@U')) { showMessage('Input does not look like a B85 serial (must start with @U). Cannot deserialize.', 'error'); return; }
+        showMessage('Deserializing...', 'info', 2000);
+        try {
+            const response = await fetch(`${API_BASE_URL}/deserialize_bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify([input]) });
+            if (!response.ok) { const errorText = await response.text(); throw new Error(`Deserialize request failed: ${response.status} - ${errorText}`); }
+            const result = await response.json(); const firstKey = Object.keys(result)[0];
+            if (result[firstKey] && result[firstKey].success !== false && result[firstKey].deserialized) {
+                const deserialized = result[firstKey].deserialized;
+                if (dom.baseSerial) dom.baseSerial.value = deserialized;
+                showMessage('✅ Deserialization successful! Now click "Apply Code Block" to continue.', 'success', 4000);
+            } else { throw new Error(result[firstKey]?.error || 'Deserialization failed: API did not return expected data.'); }
+        } catch (error) { console.error('Deserialize API Error:', error); showMessage('Deserialization failed: ' + error.message, 'error', 5000); }
+    }
+
+    function applyInput() {
+        const input = dom.baseSerial?.value.trim();
+        if (!input) { showMessage('Input box is empty. Paste a deserialized string or deserialize a @U code first.', 'error'); return; }
+        if (input.startsWith('@U')) { showMessage('⚠️ Input looks like a B85 serial! Please click "Deserialize Serial Code" first, then "Apply Code Block".', 'error', 5000); return; }
+        const deserializedPattern = /\|\|/; // Basic check
+        if (!deserializedPattern.test(input) && !input.includes('|')) {
+             showMessage('⚠️ Invalid format! Expected deserialized format containing "||" or at least "|". Please check input or deserialize first.', 'error', 5000);
+             return;
         }
-        return container;
-     }
-    function populatePartSelectors() { /* ... function unchanged ... */
-        if (!dom.partSelectorsContainer) return;
-        dom.partSelectorsContainer.innerHTML = ''; // Clear previous
-
-         // Group parts logically (Example: Item Info, Core, Elements, Specific Parts...)
-         const sections = {
-             'Item Info': ['itemInfo'],
-             'Core': ['core', 'elements'],
-             'Legendary Perks': ['legendaryPerks'],
-             'Ordnance Perks': ['ordnancePerks'],
-         };
-
-         // Manually add Item Type options (example)
-         const coreData = PARTS_DATA.core.find(p => p.value === 'itemType');
-         if (coreData) {
-            coreData.options = [
-                {text: "Order / Assault Rifle", value: "15, 0"}, {text: "Jakobs / Shotgun", value: "9, 0"},
-                {text: "Maliwan / Sniper", value: "25, 0"},
-            ];
-         }
-
-
-         Object.entries(sections).forEach(([sectionTitle, partKeys]) => {
-             const sectionContainer = document.createElement('div');
-             sectionContainer.className = 'mb-4';
-
-             const header = document.createElement('div');
-             header.className = 'collapsible-header';
-             header.innerHTML = `<span>${sectionTitle}</span><span class="collapsible-arrow">▶</span>`;
-             sectionContainer.appendChild(header);
-
-             const content = document.createElement('div');
-             content.className = 'collapsible-content p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4';
-
-             partKeys.forEach(key => {
-                 const partList = PARTS_DATA[key];
-                 if (partList && partList.length > 0) {
-                     const configs = Array.isArray(partList) ? partList : [partList];
-                     configs.forEach(partConfig => {
-                        if (!partConfig) return; // Skip if partConfig is null/undefined
-                        // Check if it's a config object with options OR a type 'number'
-                        if (partConfig.options || partConfig.type === 'number') {
-                             content.appendChild(createSelector(partConfig));
-                        } else if (configs.length > 1 && !partConfig.options && partConfig.type !== 'number') {
-                            // If it's part of a list (like elements) but doesn't have its own options, group them
-                            // Check if a dropdown for this key already exists
-                            let existingSelect = content.querySelector(`#part-${key}`);
-                            if (!existingSelect) {
-                                // Create a single dropdown for the group
-                                const combinedConfig = { text: sectionTitle, value: key, options: configs.filter(Boolean) }; // Filter out nulls
-                                content.appendChild(createSelector(combinedConfig));
-                            }
-                            // Options are added within createSelector for the combinedConfig
-                        } else {
-                            // Single item config (like itemInfo previously)
-                             content.appendChild(createSelector(partConfig));
-                        }
-
-                     });
-                 }
-             });
-             sectionContainer.appendChild(content);
-             dom.partSelectorsContainer.appendChild(sectionContainer);
-         });
-         setupCollapsibleSections();
-     }
-     function setupCollapsibleSections() { /* ... function unchanged ... */
-         document.querySelectorAll('.collapsible-header').forEach(header => {
-             header.addEventListener('click', () => {
-                 const content = header.nextElementSibling;
-                 if (content) {
-                    const isOpen = content.classList.contains('open');
-                    content.classList.toggle('open', !isOpen);
-                    header.classList.toggle('open', !isOpen);
-                 }
-             });
-         });
-      }
-
-
-    // --- Generic Selector Logic ---
-    function getDatasetFromPayload(key) { return PAYLOAD[key] || []; }
-    function populateSelectorAvailableList() { /* ... function unchanged ... */
-        const dataset = getDatasetFromPayload(currentSelectorDatasetKey);
-        dom.selectorAvailableList.innerHTML = ''; // Clear existing options
-
-        dataset.forEach((item, index) => {
-            const option = document.createElement('option');
-            option.value = item.code || item.value || index;
-            option.textContent = item.name || item.text || `Item ${index + 1}`;
-            option.dataset.itemData = JSON.stringify(item);
-            dom.selectorAvailableList.appendChild(option);
-        });
+        currentBaseInputString = input;
+         // Clear all builder selections when applying new base input
+         Object.values(builders).forEach(builder => { if (typeof builder.clear === 'function') builder.clear(); });
+        showMessage('Input applied successfully. Builders cleared. Rebuilding...', 'success', 2500);
+        rebuildOutputAndCallApi(); // Rebuild with cleared builders and trigger API
     }
-    function updateSelectorSelectedList() { /* ... function unchanged ... */
-        dom.selectorSelectedList.innerHTML = ''; // Clear existing
-        selectorSelectedItems.forEach((item, index) => {
-            const option = document.createElement('option');
-            option.value = item.value;
-            option.textContent = item.text;
-            option.dataset.originalIndex = index;
-            dom.selectorSelectedList.appendChild(option);
-        });
-        renderSelectorOutput(); // Update output whenever selection changes
+
+    async function callReserialize() {
+        if (dom.serial_b85) dom.serial_b85.textContent = 'Fetching...';
+        if (dom.additionalData) dom.additionalData.textContent = '';
+        if (dom.copySerial) dom.copySerial.disabled = true;
+        try {
+            const outText = (dom.outCode?.textContent || '').trim();
+             const isValidSerial = outText.includes('||') && outText.endsWith('|');
+             const isJustHeader = !outText.includes('{') && outText.includes('|') && !outText.endsWith('|') || outText.includes('||'); // Header only might lack parts/trailing pipe
+
+             if (!outText || outText === '[Error generating output]' || (!isValidSerial && !isJustHeader)) {
+                 if (dom.serial_b85) dom.serial_b85.textContent = '[No valid serial to send]';
+                 // Don't show toast for this common case, just update status
+                 return;
+              }
+            const resp = await fetch(`${API_BASE_URL}/reserialize`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deserialized: outText }) });
+            if (!resp.ok) { let errorText = `HTTP ${resp.status} - ${resp.statusText}`; try { const errorData = await resp.json(); errorText += `: ${errorData.error || errorData.message || 'Unknown API error'}`; } catch (_) {} throw new Error(errorText); }
+            const data = await resp.json();
+            if (dom.serial_b85) dom.serial_b85.textContent = data.serial_b85 || '[No serial returned]';
+            if (dom.additionalData) dom.additionalData.textContent = data.additional_data || '[No details]';
+            if (dom.copySerial) dom.copySerial.disabled = !data.serial_b85;
+        } catch (err) {
+            console.error('Reserialize API error:', err);
+            if (dom.serial_b85) dom.serial_b85.textContent = `[API error: ${err.message}]`;
+            if (dom.additionalData) dom.additionalData.textContent = '';
+            if (dom.copySerial) dom.copySerial.disabled = true;
+            if (!err.message.includes('aborted')) showMessage(`API Error: ${err.message}`, 'error');
+        }
     }
-    function handleSelectorAdd() { /* ... function unchanged ... */
-        Array.from(dom.selectorAvailableList.selectedOptions).forEach(option => {
-            selectorSelectedItems.push({ value: option.value, text: option.textContent });
-        });
-        updateSelectorSelectedList();
-     }
-    function handleSelectorRemove() { /* ... function unchanged ... */
-        const indicesToRemove = Array.from(dom.selectorSelectedList.selectedOptions)
-            .map(option => parseInt(option.dataset.originalIndex, 10))
-            .sort((a, b) => b - a);
 
-        indicesToRemove.forEach(index => {
-            if (index >= 0 && index < selectorSelectedItems.length) {
-                selectorSelectedItems.splice(index, 1);
-            }
-        });
-        updateSelectorSelectedList();
-     }
-     function renderSelectorOutput() { /* ... function unchanged ... */
-         let outputString = "";
-         const selectedValues = selectorSelectedItems.map(item => item.value);
+     // --- Generic Selector Tab Logic ---
+     function setupGenericSelector() {
+         const selectorDataset = document.getElementById('selectorDataset');
+         const selectorFilter = document.getElementById('selectorFilter');
+         const selectorAvailable = document.getElementById('selectorAvailable');
+         const selectorSelected = document.getElementById('selectorSelected');
+         const selectorAddBtn = document.getElementById('selectorAddBtn');
+         const selectorRemoveBtn = document.getElementById('selectorRemoveBtn');
+         const selectorOutput = document.getElementById('selectorOutput');
 
-         if (selectedValues.length === 0) {
-             dom.selectorOutput.textContent = "[Select items to generate output]";
+         if (!selectorDataset || !selectorFilter || !selectorAvailable || !selectorSelected || !selectorAddBtn || !selectorRemoveBtn || !selectorOutput) {
+             console.error("Missing elements for Generic Selector tab.");
              return;
          }
 
-         if (currentSelectorDatasetKey === 'enhancementStats') {
-             const numericValues = selectedValues.map(v => typeof v === 'number' ? v : (v.match(/\d+/)?.[0])).filter(Boolean);
-             if (numericValues.length > 0) outputString = `{247:[${numericValues.join(' ')}]}`;
-         } else if (currentSelectorDatasetKey === 'legendaryPerks') {
-              outputString = selectedValues.join(' ');
-         } else {
-             outputString = selectedValues.join(' ');
+         let currentSelectorData = [];
+         let currentSelectorSelectedItems = []; // { code: "{X:Y}", uniqueId: number }
+         let currentSelectorUniqueId = 0;
+         let currentSelectorConfig = {};
+
+         const examplePayload = { // Using example data directly here
+            legendaryPerks: [
+                { name: "Hellfire", code: "{19:20}" },
+                { name: "Seventh Sense", code: "{3:81}" }
+                // ... more perks ...
+            ],
+            enhancementStats: [
+                { name: "Damage +10%", code: "{247:1}" },
+                { name: "Reload +15%", code: "{247:2}" }
+                // ... more stats ...
+            ]
+         };
+
+         function loadDataset() {
+             const key = selectorDataset.value;
+             currentSelectorData = examplePayload[key] || []; // Use example payload
+             currentSelectorSelectedItems = [];
+             currentSelectorUniqueId = 0;
+             currentSelectorFilter.value = '';
+
+             // Define how to display and output based on dataset key (customize as needed)
+             switch(key) {
+                 case 'enhancementStats':
+                     currentSelectorConfig = { nameField: 'name', codeField: 'code', outputPrefix: '{247:[', outputSuffix: ']}', outputSeparator: ' ' };
+                     break;
+                 case 'legendaryPerks':
+                 default:
+                     currentSelectorConfig = { nameField: 'name', codeField: 'code', outputPrefix: '', outputSuffix: '', outputSeparator: ' ' };
+                     break;
+             }
+             populateSelectorAvailableList();
+             updateSelectorSelectedList();
+             renderSelectorOutput();
          }
 
-         dom.selectorOutput.textContent = outputString || "[Output formatting not defined for this dataset]";
-      }
+         function populateSelectorAvailableList() {
+             selectorAvailable.innerHTML = '';
+             const query = selectorFilter.value.toLowerCase();
+             const { nameField = 'name', codeField = 'code' } = currentSelectorConfig;
+
+             currentSelectorData
+                 .filter(item => {
+                     const name = item[nameField] || '';
+                     const code = item[codeField] || '';
+                     const searchText = `${name} ${code}`.toLowerCase();
+                     return !query || searchText.includes(query);
+                 })
+                 .sort((a, b) => (a[nameField] || '').localeCompare(b[nameField] || ''))
+                 .forEach(item => {
+                     const o = document.createElement('option');
+                     o.value = item[codeField];
+                     o.textContent = `${item[nameField]} ${item[codeField]}`;
+                     selectorAvailable.appendChild(o);
+                 });
+         }
+
+          function updateSelectorSelectedList() {
+             const scrollState = { top: selectorSelected.scrollTop, left: selectorSelected.scrollLeft };
+             const selectedUniqueIds = new Set(Array.from(selectorSelected.selectedOptions).map(opt => opt.value));
+             selectorSelected.innerHTML = '';
+             const { nameField = 'name' } = currentSelectorConfig;
+
+             currentSelectorSelectedItems.forEach(item => {
+                 const name = currentSelectorData.find(d => d[currentSelectorConfig.codeField] === item.code)?.[nameField] || 'Unknown';
+                 const o = document.createElement('option');
+                 o.value = item.uniqueId.toString();
+                 o.textContent = `${name} ${item.code}`;
+                 o.dataset.code = item.code;
+                 if (selectedUniqueIds.has(o.value)) o.selected = true;
+                 selectorSelected.appendChild(o);
+             });
+             selectorSelected.scrollTop = scrollState.top; selectorSelected.scrollLeft = scrollState.left;
+         }
 
 
-    // --- Tab Switching Logic ---
-    function setupTabs() { /* ... function unchanged ... */
-        dom.tabLinks.forEach(link => {
+         function handleSelectorAdd() {
+             Array.from(selectorAvailable.selectedOptions).forEach(opt => {
+                 currentSelectorSelectedItems.push({ code: opt.value, uniqueId: currentSelectorUniqueId++ });
+             });
+             updateSelectorSelectedList();
+             renderSelectorOutput();
+         }
+
+         function handleSelectorRemove() {
+             const idsToRemove = new Set(Array.from(selectorSelected.selectedOptions).map(opt => parseInt(opt.value, 10)));
+             if (idsToRemove.size === 0) return;
+             currentSelectorSelectedItems = currentSelectorSelectedItems.filter(item => !idsToRemove.has(item.uniqueId));
+             updateSelectorSelectedList();
+             renderSelectorOutput();
+         }
+
+         function renderSelectorOutput() {
+             const { outputPrefix = '', outputSuffix = '', outputSeparator = ' ' } = currentSelectorConfig;
+             const codes = currentSelectorSelectedItems.map(item => item.code);
+
+             if (outputPrefix === '{247:[') { // Special condense for 247
+                 const uniqueCodes = [...new Set(codes.map(c => c.match(/\d+/)?.[0]).filter(Boolean))]; // Extract numbers
+                 selectorOutput.textContent = uniqueCodes.length > 0 ? `${outputPrefix}${uniqueCodes.join(outputSeparator)}${outputSuffix}` : '';
+             } else {
+                 selectorOutput.textContent = codes.length > 0 ? `${outputPrefix}${codes.join(outputSeparator)}${outputSuffix}` : '';
+             }
+         }
+
+         selectorDataset.addEventListener('change', loadDataset);
+         selectorFilter.addEventListener('input', debounce(populateSelectorAvailableList, 200));
+         selectorAddBtn.addEventListener('click', handleSelectorAdd);
+         selectorRemoveBtn.addEventListener('click', handleSelectorRemove);
+         selectorAvailable.addEventListener('dblclick', handleSelectorAdd);
+         selectorSelected.addEventListener('dblclick', handleSelectorRemove);
+         selectorSelected.addEventListener('keydown', e => { if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); handleSelectorRemove(); } });
+
+         loadDataset(); // Initial load
+     }
+
+      // --- Tab Switching Logic ---
+      function setupTabs() {
+        const tabLinks = document.querySelectorAll('.tab-link');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabLinks.forEach(link => {
             link.addEventListener('click', () => {
                 const tabId = link.getAttribute('data-tab');
-                dom.tabLinks.forEach(l => l.classList.remove('active'));
+
+                // Deactivate all links and contents
+                tabLinks.forEach(l => l.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+
+                // Activate the clicked link and corresponding content
                 link.classList.add('active');
-                dom.tabContents.forEach(content => {
-                    content.classList.toggle('active', content.id === tabId);
-                });
+                const activeContent = document.getElementById(tabId);
+                if (activeContent) {
+                    activeContent.classList.add('active');
+                } else {
+                    console.error("Tab content not found for ID:", tabId);
+                }
             });
         });
-    }
+     }
 
-    // --- Duplicate Analysis Logic (NEW - Now correctly placed) ---
-    function analyzeDuplicates(serialString) { /* ... function unchanged ... */
-        const counts = { singular: {}, specific: {}, arrayValues: {} };
-        const parts = (serialString.split('||')[1] || '').trim().split(/\s+/).filter(p => p.length > 0);
-        parts.forEach(part => {
-            const singularMatch = part.match(/^\{(\d+)\}$/);
-            const specificMatch = part.match(/^\{(\d+:\d+)\}$/);
-            const arrayMatch = part.match(/^\{(\d+):\[([^\]]+)\]\}$/);
-            if (singularMatch) { counts.singular[singularMatch[1]] = (counts.singular[singularMatch[1]] || 0) + 1; }
-            else if (specificMatch) { counts.specific[specificMatch[1]] = (counts.specific[specificMatch[1]] || 0) + 1; }
-            else if (arrayMatch) {
-                const id = arrayMatch[1];
-                const values = arrayMatch[2].trim().split(/\s+/).filter(v => v);
-                values.forEach(val => { counts.arrayValues[`${id}-${val}`] = (counts.arrayValues[`${id}-${val}`] || 0) + 1; });
-            }
-        });
-        const duplicates = {
-            singular: Object.entries(counts.singular).filter(([, count]) => count > 1).map(([id]) => id),
-            specific: Object.entries(counts.specific).filter(([, count]) => count > 1).map(([key]) => key),
-            arrayValues: Object.entries(counts.arrayValues).filter(([, count]) => count > 1).map(([key]) => key)
-        };
-        return { counts, duplicates };
-    }
-    function formatDuplicateAnalysis(analysis) { /* ... function unchanged ... */
-        const { counts, duplicates } = analysis; let output = "";
-        const singularDups = duplicates.singular.map(id => `{${id}} (${counts.singular[id]} times)`);
-        if (singularDups.length > 0) output += `Singular blocks: ${singularDups.join(', ')}. `;
-        const specificDups = duplicates.specific.map(key => `{${key}} (${counts.specific[key]} times)`);
-        if (specificDups.length > 0) output += `Specific blocks: ${specificDups.join(', ')}. `;
-        const arrayDups = duplicates.arrayValues.map(key => { const [id, val] = key.split('-'); return `${val} (${counts.arrayValues[key]} times in {${id}:[...]})`; });
-        if (arrayDups.length > 0) output += `Array values: ${arrayDups.join(', ')}.`;
-        return output.trim() || "No duplicates found.";
-    }
-    function analyzeAndDisplayDuplicates() { /* ... function unchanged ... */
-        const currentSerial = dom.outCode?.textContent || '';
-        if (!currentSerial || currentSerial.startsWith('[')) {
-            if(dom.duplicateInfoOutput) dom.duplicateInfoOutput.textContent = 'No output serial to analyze.';
-            return;
-        }
-        const analysis = analyzeDuplicates(currentSerial);
-        if(dom.duplicateInfoOutput) dom.duplicateInfoOutput.textContent = formatDuplicateAnalysis(analysis);
-    }
 
     // --- Initialization ---
-    async function initializeApp() { // Changed to async for await fetch
+    async function initializeApp() {
         currentBaseInputString = '';
+        PAYLOAD = {};
+
         try {
-            console.log("Initializing App...");
+            // --- Fetch parts data with error handling ---
+            try {
+                const response = await fetch('bl4_parts_data.json');
+                if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+                PAYLOAD = await response.json();
+                console.log("Successfully loaded bl4_parts_data.json");
+            } catch (fetchError) {
+                console.warn(`Could not load or parse bl4_parts_data.json: ${fetchError.message}. Builders relying on this data will be empty.`);
+                showMessage(`Warning: Failed to load parts data (bl4_parts_data.json). Some builders will be empty. Error: ${fetchError.message}`, 'error', 8000);
+                PAYLOAD = {}; // Ensure PAYLOAD is empty on failure
+            }
 
-            // Fetch PAYLOAD data first
-            const response = await fetch('bl4_parts_data.json'); // Assuming this file exists alongside the HTML
-            if (!response.ok) throw new Error(`HTTP error ${response.status} fetching bl4_parts_data.json`);
-            try { PAYLOAD = await response.json(); }
-            catch (jsonError) { throw new Error(`Failed to parse bl4_parts_data.json: ${jsonError.message}.`); }
-            // Basic validation of PAYLOAD structure (optional but recommended)
-            const requiredKeys = ['legendaryPerks', 'enhancementStats']; // Add others as needed
-            const missingKeys = requiredKeys.filter(key => !PAYLOAD[key] || !Array.isArray(PAYLOAD[key]));
-            if (missingKeys.length > 0) console.warn(`Payload validation warning: Key(s) ${missingKeys.join(', ')} missing/invalid.`);
-
-            // Now build lookups and part data using the loaded PAYLOAD
-            buildLookupMapsAndPartData();
-
-            // Populate UI elements that depend on PAYLOAD/PARTS_DATA
-            populatePartSelectors(); // Depends on PARTS_DATA which depends on PAYLOAD
-            setupTabs();
-
-             // Setup Generic Selector
-             if (dom.datasetSelector) {
-                 // Clear any placeholder options first
-                 // dom.datasetSelector.innerHTML = '';
-                 Object.keys(PAYLOAD).forEach(key => {
-                     if (Array.isArray(PAYLOAD[key])) {
-                         const option = document.createElement('option');
-                         option.value = key;
-                         option.textContent = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-                         if (!dom.datasetSelector.querySelector(`option[value="${key}"]`)) {
-                              dom.datasetSelector.appendChild(option);
-                         }
-                     }
-                 });
-                 dom.datasetSelector.value = currentSelectorDatasetKey;
-             }
-
-             if (dom.selectorAvailableList) populateSelectorAvailableList();
-             if (dom.selectorSelectedList) updateSelectorSelectedList();
-
-             // Event Listeners (ensure DOM elements exist before adding listeners)
-             if (dom.datasetSelector) dom.datasetSelector.addEventListener('change', (e) => {
-                 currentSelectorDatasetKey = e.target.value; selectorSelectedItems = [];
-                 populateSelectorAvailableList(); updateSelectorSelectedList();
-             });
-             if (dom.selectorAddBtn) dom.selectorAddBtn.addEventListener('click', handleSelectorAdd);
-             if (dom.selectorRemoveBtn) dom.selectorRemoveBtn.addEventListener('click', handleSelectorRemove);
-             if (dom.copySelectorOutputBtn) dom.copySelectorOutputBtn.addEventListener('click', async () => { /* ... copy logic ... */ });
-
-             if (dom.serialOutputCode) dom.serialOutputCode.addEventListener('input', () => { rebuildOutput(); debouncedApiCall(); });
-             if (dom.rebuildAndCallApiBtn) dom.rebuildAndCallApiBtn.addEventListener('click', () => { rebuildOutput(); callReserialize(); });
-             if (dom.copyFull) dom.copyFull.addEventListener('click', async () => { /* ... copy logic ... */ });
-             if (dom.copySerial) dom.copySerial.addEventListener('click', async () => { /* ... copy logic ... */ });
-
-             if (dom.analyzeDuplicatesBtn) dom.analyzeDuplicatesBtn.addEventListener('click', analyzeAndDisplayDuplicates); // Attach listener
-
-             // Manual Edit Handling
-             if (dom.outCode) dom.outCode.addEventListener('input', () => {
-                isManualEditMode = true;
-                if(dom.outCode) dom.outCode.classList.add('manual-edit');
-                if(dom.outWrapper) {
-                    dom.outWrapper.classList.add('manual-edit');
-                    const indicator = dom.outWrapper.querySelector('.manual-edit-indicator');
-                    if(indicator) indicator.style.display = 'inline';
-                }
-                clearTimeout(apiDebounceTimeout); // Use correct timeout var
-             });
-
-             // Undo Edit
-            if (dom.undoEditBtn) dom.undoEditBtn.addEventListener('click', () => {
-                if (lastGeneratedOutput) {
-                    isManualEditMode = false;
-                    currentBaseInputString = lastGeneratedOutput; // Restore plain text
-                    rebuildOutput(); // Rebuild with highlighting
-                    if (dom.outCode) dom.outCode.classList.remove('manual-edit');
-                    if(dom.outWrapper) {
-                         dom.outWrapper.classList.remove('manual-edit');
-                         const indicator = dom.outWrapper.querySelector('.manual-edit-indicator');
-                         if(indicator) indicator.style.display = 'none';
-                    }
-                    debouncedApiCall(); // Resume API calls
-                    showCopyStatus(dom.copyFullStatus, 'Edit Undone');
-                    if (dom.duplicateInfoOutput) dom.duplicateInfoOutput.textContent = '';
-                } else { showCopyStatus(dom.copyFullStatus, 'No history!'); }
+            // --- Initialize Builders ---
+            document.querySelectorAll('.builderSection').forEach(section => {
+                 const key = section.dataset.key;
+                 const nameField = section.dataset.nameField;
+                 const codeField = section.dataset.codeField;
+                 const idPrefix = section.dataset.idPrefix;
+                 if (key && nameField && codeField && idPrefix && PAYLOAD[key]) {
+                     try { builders[key] = createBuilder(key, nameField, codeField, idPrefix); }
+                     catch (builderError) { console.error(`Failed to init builder for ${key}: ${builderError.message}`); showMessage(`Error initializing builder "${key}": ${builderError.message}`, 'error', 6000); }
+                 } else if (key && nameField && codeField && idPrefix) { console.warn(`Skipping builder section "${key}", missing data in PAYLOAD.`); }
+                 else { console.warn("Skipping builder section, missing data-attributes:", section); }
             });
+
+            // --- Setup Event Listeners ---
+            if (dom.itemTypeSel) dom.itemTypeSel.addEventListener('change', triggerDebouncedRebuild);
+            if (dom.raritySel) dom.raritySel.addEventListener('change', triggerDebouncedRebuild);
+            if (dom.applyInputBtn) dom.applyInputBtn.addEventListener('click', applyInput);
+            if (dom.deserializeBtn) dom.deserializeBtn.addEventListener('click', deserializeSerial);
+            if (dom.analyzeDuplicatesBtn) dom.analyzeDuplicatesBtn.addEventListener('click', analyzeAndDisplayDuplicates); // Listener for new button
+
+            if (dom.outCode) dom.outCode.addEventListener('input', () => {
+                isManualEditMode = true; dom.outCode.classList.add('manual-edit');
+                if (dom.outWrapper) {
+                     const indicator = dom.outWrapper.querySelector('.manual-edit-indicator');
+                     dom.outWrapper.classList.add('manual-edit'); if(indicator) indicator.style.display = 'inline';
+                 }
+                clearTimeout(apiCallTimer); clearTimeout(rebuildTimer); // Stop auto updates/calls
+            });
+
+            if (dom.undoEditBtn) dom.undoEditBtn.addEventListener('click', () => {
+                 if (lastGeneratedOutput) {
+                     isManualEditMode = false;
+                     currentBaseInputString = lastGeneratedOutput; // Restore plain text used by rebuild
+                     rebuildOutput(); // Rebuild to regenerate HTML highlighting & clear duplicate info
+                     if (dom.outCode) dom.outCode.classList.remove('manual-edit');
+                     if (dom.outWrapper) {
+                         const indicator = dom.outWrapper.querySelector('.manual-edit-indicator');
+                         dom.outWrapper.classList.remove('manual-edit'); if(indicator) indicator.style.display = 'none';
+                     }
+                     triggerDebouncedApiCall(); // Resume API calls
+                     showCopyStatus(dom.copyFullStatus, 'Edit Undone');
+                 } else { showCopyStatus(dom.copyFullStatus, 'No history!'); }
+             });
 
             if (dom.reserializeManualBtn) dom.reserializeManualBtn.addEventListener('click', callReserialize);
 
+            // Copy Buttons (using execCommand for potential iframe compatibility)
+             if (dom.copyFull) dom.copyFull.addEventListener('click', () => {
+                 const text = (dom.outCode?.textContent || '').trim();
+                 if (!text || text.startsWith('[')) return showMessage('No output to copy!', 'error');
+                 const textArea = document.createElement("textarea");
+                 textArea.value = text;
+                 document.body.appendChild(textArea);
+                 textArea.select();
+                 try { document.execCommand('copy'); showCopyStatus(dom.copyFullStatus, 'Copied!'); }
+                 catch (err) { console.error('Copy Output failed:', err); showMessage('Copy failed!', 'error'); }
+                 document.body.removeChild(textArea);
+             });
+             if (dom.copySerial) dom.copySerial.addEventListener('click', () => {
+                 const text = (dom.serial_b85?.textContent || '').trim();
+                  if (!text || text.startsWith('[')) return showMessage('No API serial to copy!', 'error');
+                  const textArea = document.createElement("textarea");
+                  textArea.value = text;
+                  document.body.appendChild(textArea);
+                  textArea.select();
+                  try { document.execCommand('copy'); showCopyStatus(dom.copyApiStatus, 'Copied!'); }
+                  catch (err) { console.error('Copy API Serial failed:', err); showMessage('Copy failed!', 'error'); }
+                  document.body.removeChild(textArea);
+              });
 
-             rebuildOutput(); // Initial build
-             setTimeout(callReserialize, 150); // Initial API call
+
+             setupCollapsibleSections();
+             setupTabs(); // Initialize tab switching
+             setupGenericSelector(); // Initialize the generic selector tab
+             rebuildOutput();
+             setTimeout(callReserialize, 150);
 
         } catch (error) {
-            console.error("Initialization failed:", error);
-            // Ensure showMessage is defined before calling it in catch
-            showMessage(`Initialization failed: ${error.message}`, 'error', 10000);
-            document.querySelectorAll('input, select, button, [contenteditable]').forEach(el => {
-                if(el) el.disabled = true; // Add null check for safety
-            });
-             if (dom.outCode) dom.outCode.contentEditable = false;
+            showMessage(`Critical Initialization failed: ${error.message}`, 'error', 10000);
+            console.error("Critical Initialization error:", error);
+            document.querySelectorAll('input, select, button, [contenteditable]').forEach(el => { if(el) el.disabled = true; });
+            if (dom.baseSerial) dom.baseSerial.disabled = true;
+            if (dom.outCode) dom.outCode.contentEditable = false;
         }
     }
 
-    // --- Run Initialization ---
+    // --- DOM Ready ---
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initializeApp);
     } else {
-        initializeApp(); // Already loaded
+        initializeApp();
     }
-
-})();
 </script>
 </body>
 </html>
