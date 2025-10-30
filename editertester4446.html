@@ -1,0 +1,3187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borderlands 4 Item Editor v3.9.0 - Item Type Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .step-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-right: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .step-title {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: #fff;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: #fff;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 242, 254, 0.4);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #ffa500 0%, #ff6b6b 100%);
+            color: #fff;
+        }
+
+        .btn-info:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 165, 0, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        .option-item {
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95em;
+            word-break: break-word; /* Added to help wrapping */
+        }
+
+        .option-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateX(5px);
+        }
+
+        .option-item.selected {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #fff;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
+        }
+
+        .selections-display {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .selections-header {
+            padding: 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            transition: background 0.3s ease;
+        }
+
+        .selections-header:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .selections-header .arrow {
+            font-size: 1.2em;
+            transition: transform 0.3s ease;
+        }
+        
+        /* The arrow flip */
+        .selections-content.collapsed + .selections-header .arrow {
+            transform: rotate(0deg);
+        }
+        .selections-header .arrow {
+            transform: rotate(0deg); /* Default state for initial rendering */
+        }
+        .selections-header.collapsed .arrow {
+            transform: rotate(0deg);
+        }
+        .selections-header:not(.collapsed) .arrow {
+            transform: rotate(-180deg);
+        }
+
+        .selections-content {
+            padding: 0 15px 15px 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+
+        .selections-content.collapsed {
+            max-height: 0;
+            padding: 0 15px;
+            overflow: hidden;
+        }
+
+        .selections-summary {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .selection-tag {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 8px 15px;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 0.9em;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            white-space: normal;
+            word-break: break-all;
+        }
+
+        .selection-tag .remove {
+            margin-left: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            opacity: 0.8;
+        }
+
+        .selection-tag .remove:hover {
+            opacity: 1;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .success-message {
+            background: rgba(34, 197, 94, 0.2);
+            border: 2px solid #22c55e;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .output-serial {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 2px solid #22c55e;
+        }
+
+        .output-serial code {
+            display: block;
+            word-wrap: break-word;
+            color: #4ade80;
+            font-family: 'Courier New', monospace;
+            font-size: 1em;
+            line-height: 1.6;
+        }
+
+        .copy-btn {
+            margin-top: 10px;
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        }
+
+        .stats-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .stats-input input[type="number"] {
+            width: 80px;
+            padding: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 1em;
+        }
+
+        /* --- NEW STYLE FOR ITEM TYPE INPUT --- */
+        #itemTypeCodeInput {
+            width: 100px;
+            padding: 8px;
+            font-size: 0.9em;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+        #itemTypeCodeInput:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.15);
+        }
+        /* --- END NEW STYLE --- */
+
+        .stats-input input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .category-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .message.show {
+            display: flex;
+        }
+
+        .message.success {
+            background: rgba(34, 197, 94, 0.95);
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.95);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+
+        /* Live Preview Styles */
+        .live-preview {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(15px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid rgba(102, 126, 234, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.5);
+            position: relative;
+            z-index: 500;
+        }
+
+        .live-preview.hidden {
+            display: none;
+        }
+
+        .item-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .item-icon {
+            font-size: 3em;
+        }
+
+        .item-details h3 {
+            font-size: 1.3em;
+            margin-bottom: 5px;
+            color: #ffd700;
+        }
+
+        .item-details p {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin: 2px 0;
+        }
+
+        .preview-label {
+            font-weight: bold;
+            font-size: 0.9em;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+
+        .preview-serial {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 10px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            word-wrap: break-word;
+            color: #ffffff; /* MODIFIED: Was #4ade80 */
+            line-height: 1.6;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .modifications-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .mod-badge {
+            background: rgba(102, 126, 234, 0.3);
+            padding: 8px 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 501;
+        }
+        
+        .mod-badge.active {
+            z-index: 99999;
+        }
+
+        .mod-badge:hover {
+            background: rgba(102, 126, 234, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .mod-badge strong {
+            display: block;
+            color: #ffd700;
+            font-size: 1.2em;
+        }
+
+        .mod-badge-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 5px;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 100000;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(102, 126, 234, 0.5);
+            display: none;
+        }
+
+        .mod-badge-dropdown.show {
+            display: block;
+        }
+
+        .mod-badge-item {
+            padding: 8px;
+            margin: 4px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
+            transition: background 0.2s ease;
+            /* Allow wrapping for long items in dropdown */
+            white-space: normal;
+            word-break: break-all;
+        }
+
+        .mod-badge-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .mod-badge-item .remove-btn {
+            cursor: pointer;
+            color: #ff6b6b;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 3px;
+            transition: background 0.2s ease;
+             white-space: nowrap; /* Keep X button itself on one line */
+        }
+
+        .mod-badge-item .remove-btn:hover {
+            background: rgba(255, 107, 107, 0.2);
+        }
+        
+        /* Step 6 Styles */
+        .editable-output-card {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .validation-output-card code {
+            display: block;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffd700;
+            padding: 10px;
+            border-radius: 6px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 0.85em;
+            min-height: 40px;
+        }
+
+        .validation-status {
+            margin-top: 10px;
+            padding: 8px 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .validation-status.pending {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .validation-status.valid {
+            background: rgba(34, 197, 94, 0.3);
+            color: #4ade80;
+            border: 1px solid #4ade80;
+        }
+
+        .validation-status.invalid {
+            background: rgba(239, 68, 68, 0.3);
+            color: #f87171;
+            border: 1px solid #f87171;
+        }
+
+        /* --- NEW TAB STYLES --- */
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 0; /* REMOVED negative margin */
+            position: relative;
+            z-index: 10; /* Ensure tabs are above cards */
+            padding-left: 20px; /* CORRECTED: Aligned to card padding */
+        }
+
+        .tab-link {
+            padding: 12px 25px;
+            border: 1px solid rgba(255, 255, 255, 0.18); /* Use card border color */
+            border-bottom: none; /* Remove bottom border */
+            border-radius: 15px 15px 0 0; /* Match card radius */
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(0, 0, 0, 0.2);
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .tab-link:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+
+        .tab-link.active {
+            background: rgba(255, 255, 255, 0.1); /* Match card bg */
+            backdrop-filter: blur(10px); /* Match card filter */
+            color: #fff;
+            font-weight: bold;
+            border-color: rgba(255, 255, 255, 0.18); /* Match card border */
+            /* Overlap the card's top border */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Match card bg */
+            margin-bottom: -1px; 
+        }
+        /* --- END TAB STYLES --- */
+
+        /* Make cards in tabbed view connect to tabs */
+        #step1, #step2, #step3, #step4, #step5 {
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+        }
+        /* Step 6 should have normal radius */
+        #step6 {
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚡ Borderlands 4 Item Editor ⚡</h1>
+            <div class="subtitle">icetracts_ai_editor_v3.9.7 - Patched</div>
+            <div style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">
+                <a href="API_DOCUMENTATION.md" target="_blank" style="color: #4ade80; text-decoration: none;">📚 View API Documentation</a>
+            </div>
+        </header>
+
+        <!-- Live Preview Panel (NOW INCLUDES LIVE BASE85 OUTPUT) -->
+        <div id="livePreview" class="live-preview hidden">
+            <div class="item-info">
+                <div class="item-icon">🔫</div>
+                <div class="item-details">
+                    <h3 id="itemName">Base Item</h3>
+                    <p id="itemType">Unknown Type</p>
+                    <p id="itemManufacturer">Unknown Manufacturer</p>
+                    
+                    <!-- --- NEW ITEM TYPE EDITOR --- -->
+                    <div class="input-group" style="margin: 10px 0 0 0;">
+                        <label for="itemTypeCodeInput" style="font-size: 0.9em; opacity: 0.8; font-weight: 600;">Item Type Code (1-327):</label>
+                        <input type="number" id="itemTypeCodeInput" oninput="handleItemTypeChange()">
+                    </div>
+                    <!-- --- END ITEM TYPE EDITOR --- -->
+
+                </div>
+            </div>
+            <div class="preview-label">📋 Current Serial (Live Preview - Deserialized):</div>
+            <div class="preview-serial" id="liveSerialPreview">No serial loaded yet...</div>
+            
+            <!-- VALIDATED GAME SERIAL (MOVED HERE FOR LIVE VIEW) -->
+             <div class="validation-output-card" style="margin-top: 15px;">
+                 <label style="margin-bottom: 5px; display: block;">✅ Validated Serial (Base85 - Live):</label>
+                 <code id="validatedSerialOutput">Validation pending...</code>
+                 <div id="validationStatus" class="validation-status pending">Validation pending...</div>
+                 <div class="button-group" style="margin-top: 10px;">
+                     <button class="btn copy-btn" onclick="copyValidatedSerial()" style="background: linear-gradient(135deg, #00c853 0%, #00e676 100%);">📋 Copy Validated (Game) Serial</button>
+                 </div>
+            </div>
+            <!-- END VALIDATED GAME SERIAL -->
+            
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+                <div style="font-size: 0.9em; opacity: 0.7; margin-bottom: 8px;">🔍 Identified Parts:</div>
+                <div class="modifications-summary" id="modsSummary"></div>
+            </div>
+        </div>
+
+        <!-- Step 0: Serial Input -->
+        <div id="step0" class="card">
+            <div class="step-header">
+                <div class="step-number">0</div>
+                <div class="step-title">Input Base Serial</div>
+            </div>
+            <div class="input-group">
+                <label>Paste your item serial code:</label>
+                <textarea id="baseSerial" placeholder="Paste game serial (@U...) OR deserialized format (9, 0, 1, 50| 2, 1626|| ...)"></textarea>
+                <p style="margin-top: 10px; opacity: 0.8; font-size: 0.9em;">
+                    <strong>📌 Tip:</strong> Paste any format - the editor will automatically detect and process it!
+                    <br>• <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">@U...</code> format will be deserialized first
+                    <br>• Deserialized format will be parsed and ready to edit
+                </p>
+            </div>
+            <div class="button-group">
+                <!-- ADDED ID AND REMOVED INLINE ONCLICK -->
+                <button class="btn btn-primary" id="startEditingButton" style="font-size: 1.1em; padding: 15px 40px;">🚀 Start Editing</button>
+            </div>
+        </div>
+
+        <!-- --- NEW TAB NAVIGATION --- -->
+        <div id="tabContainer" class="tab-container hidden">
+            <button class="tab-link active" data-step="1" onclick="openStep(1)">1. Perks</button>
+            <button class="tab-link" data-step="2" onclick="openStep(2)">2. Stats</button>
+            <button class="tab-link" data-step="3" onclick="openStep(3)">3. Alt Fire</button>
+            <button class="tab-link" data-step="4" onclick="openStep(4)">4. Element</button>
+            <button class="tab-link" data-step="5" onclick="openStep(5)">5. Skin/Camo</button>
+        </div>
+
+        <!-- Step 1: Perks -->
+        <div id="step1" class="card hidden">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <div class="step-title">Select Perks</div>
+            </div>
+            <div style="background: rgba(255, 165, 0, 0.15); padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #ffa500;" id="existingPerksInfo">
+                <strong style="font-size: 0.9em;">🔍 Base Item Has:</strong>
+                <span id="existingPerksText" style="margin-left: 8px; opacity: 0.9;"></span>
+            </div>
+            <div class="selections-display">
+                <div class="selections-header" onclick="toggleSelectionDropdown('perks')">
+                    <div>
+                        <strong>Your Selections</strong>
+                        <span class="selections-summary" id="perksSummary"> - None selected</span>
+                    </div>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="selections-content collapsed" id="perksDisplay"> <!-- Start collapsed -->
+                <em>No perks selected</em>
+                </div>
+            </div>
+            <div class="button-group" style="margin-bottom: 15px;">
+                <button class="btn btn-secondary" onclick="selectAllPerks()">Select All Perks</button>
+                <button class="btn btn-secondary" onclick="removeAllPerks()">Remove All Perks</button>
+            </div>
+            <div id="perksList"></div> <!-- Changed from options-grid to container for categories -->
+            <button class="btn btn-success" onclick="openStep(2)">Continue to Stats →</button>
+        </div>
+
+        <!-- Step 2: Stats -->
+        <div id="step2" class="card hidden">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <div class="step-title">Select Stats</div>
+            </div>
+            <div style="background: rgba(255, 165, 0, 0.15); padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #ffa500;" id="existingStatsInfo">
+                <strong style="font-size: 0.9em;">🔍 Base Item Has:</strong>
+                <span id="existingStatsText" style="margin-left: 8px; opacity: 0.9;"></span>
+            </div>
+            <div class="selections-display">
+                <div class="selections-header" onclick="toggleSelectionDropdown('stats')">
+                    <div>
+                        <strong>Your Selections</strong>
+                        <span class="selections-summary" id="statsSummary"> - None selected</span>
+                    </div>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="selections-content collapsed" id="statsDisplay"> <!-- Start collapsed -->
+                <em>No stats selected</em>
+                </div>
+            </div>
+            <div class="button-group" style="margin-bottom: 15px;">
+                <button class="btn btn-secondary" onclick="removeAllStats()">Clear All Stats</button>
+            </div>
+            <div class="options-grid" id="statsList"></div>
+            <div class="button-group">
+                <button class="btn btn-success" onclick="openStep(3)">Continue to Alt Fire →</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Alt Fire -->
+        <div id="step3" class="card hidden">
+            <div class="step-header">
+                <div class="step-number">3</div>
+                <div class="step-title">Select Alt Fire (Max 5)</div> <!-- Updated title -->
+            </div>
+            <div style="background: rgba(255, 165, 0, 0.15); padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #ffa500;" id="existingAltFireInfo">
+                <strong style="font-size: 0.9em;">🔍 Base Item Has:</strong>
+                <span id="existingAltFireText" style="margin-left: 8px; opacity: 0.9;"></span>
+            </div>
+            <div class="selections-display">
+                 <div class="selections-header" onclick="toggleSelectionDropdown('altFire')">
+                    <div>
+                        <strong>Your Selections</strong>
+                        <span class="selections-summary" id="altFireSummary"> - None selected</span>
+                    </div>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="selections-content collapsed" id="altFireDisplay">
+                    <em>No alt fire selected</em>
+                </div>
+            </div>
+             <div class="button-group" style="margin-bottom: 15px;"> <!-- Added button group -->
+                <button class="btn btn-secondary" onclick="removeAllAltFires()">Remove All Alt Fires</button>
+            </div>
+            <div class="options-grid" id="altFireList"></div>
+            <div class="button-group">
+                <button class="btn btn-success" onclick="openStep(4)">Continue to Element →</button>
+            </div>
+        </div>
+
+        <!-- Step 4: Element -->
+        <div id="step4" class="card hidden">
+            <div class="step-header">
+                <div class="step-number">4</div>
+                <div class="step-title">Select Element (Max 3)</div> <!-- Updated title -->
+            </div>
+            <div style="background: rgba(255, 165, 0, 0.15); padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #ffa500;" id="existingElementInfo">
+                <strong style="font-size: 0.9em;">🔍 Base Item Has:</strong>
+                <span id="existingElementText" style="margin-left: 8px; opacity: 0.9;"></span>
+            </div>
+             <div class="selections-display">
+                 <div class="selections-header" onclick="toggleSelectionDropdown('element')">
+                    <div>
+                        <strong>Your Selections</strong>
+                        <span class="selections-summary" id="elementSummary"> - None selected</span>
+                    </div>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="selections-content collapsed" id="elementDisplay">
+                    <em>No element selected</em>
+                </div>
+            </div>
+             <div class="button-group" style="margin-bottom: 15px;"> <!-- Added button group -->
+                <button class="btn btn-secondary" onclick="removeAllElements()">Remove All Elements</button>
+            </div>
+            <div id="elementList"></div> <!-- Changed from options-grid to container for categories -->
+            <div class="button-group">
+                <button class="btn btn-success" onclick="openStep(5)">Continue to Skin/Camo →</button>
+            </div>
+        </div>
+
+        <!-- Step 5: Skin/Camo -->
+        <div id="step5" class="card hidden">
+            <div class="step-header">
+                <div class="step-number">5</div>
+                <div class="step-title">Select Skin/Camo</div>
+            </div>
+            <div style="background: rgba(255, 165, 0, 0.15); padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #ffa500;" id="existingSkinInfo">
+                <strong style="font-size: 0.9em;">🔍 Base Item Has:</strong>
+                <span id="existingSkinText" style="margin-left: 8px; opacity: 0.9;"></span>
+            </div>
+             <div class="selections-display">
+                 <div class="selections-header" onclick="toggleSelectionDropdown('skin')">
+                    <div>
+                        <strong>Your Selection</strong>
+                        <span class="selections-summary" id="skinSummary"> - None selected</span>
+                    </div>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="selections-content collapsed" id="skinDisplay">
+                    <em>No skin selected</em>
+                </div>
+            </div>
+            <div id="skinsList"></div> <!-- This will contain grids -->
+            <div class="button-group">
+                <button class="btn btn-success" onclick="finalizeSerial()">🎯 Finalize Serial (Go to Step 6)</button>
+                <button class="btn btn-secondary" onclick="openStep(4)">← Go Back</button>
+            </div>
+        </div>
+
+        <!-- Step 6: Editable Output & Validation (NEW SECTION) -->
+        <div id="step6" class="card hidden">
+             <div class="step-header">
+                <div class="step-number">6</div>
+                <div class="step-title">Editable Deserialized Output</div>
+            </div>
+            
+             <!-- Editable Output -->
+             <div class="editable-output-card">
+                 <label style="margin-bottom: 10px; display: block;">⚙️ Final Deserialized Serial (Edit and Validate):</label>
+                 <textarea id="editableOutputSerial" oninput="handleManualSerialEdit()" placeholder="The current deserialized code is loaded here. Edit manually to fix complex errors."></textarea>
+                 <div class="button-group" style="margin-top: 10px;">
+                     <button class="btn btn-info" onclick="validateManualSerial(true)">🔄 Reserialize & Validate Now</button>
+                     <button class="btn copy-btn" onclick="copyEditableOutputSerial()">📋 Copy Deserialized Output</button>
+                 </div>
+            </div>
+
+             <div class="button-group" style="margin-top: 20px;">
+                 <button class="btn btn-primary" onclick="resetEditor()">✨ Create Another Item</button>
+                 <button class="btn btn-secondary" onclick="openStep(1)">← Go Back to Editor</button>
+             </div>
+        </div>
+
+
+        <!-- Finalization Output (OLD - HIDDEN) -->
+        <div id="stepFinal" class="card hidden" style="display: none !important;"> 
+             <div class="success-message">
+                 <span style="font-size: 2em;">✅</span>
+                 <div>
+                     <strong>Serial Generated Successfully!</strong>
+                     <p>Your custom item serial is ready. Copy it or reserialize to game format.</p>
+                 </div>
+             </div>
+             <div class="output-serial">
+                 <label style="margin-bottom: 10px; display: block;">Final Serial Code (Deserialized):</label>
+                 <code id="finalSerial"></code>
+                 <div class="button-group">
+                     <button class="btn copy-btn" onclick="copySerial()">📋 Copy Deserialized</button>
+                 </div>
+             </div>
+             <div class="output-serial" style="margin-top: 20px;">
+                 <label style="margin-bottom: 10px; display: block;">Game Serial Code (Ready to Paste in Game):</label>
+                 <code id="gameSerial" style="background: rgba(0, 255, 100, 0.1); border-color: rgba(0, 255, 100, 0.3);">Generating...</code>
+                 <div class="button-group">
+                     <button class="btn copy-btn" onclick="copyGameSerial()" style="background: linear-gradient(135deg, #00c853 0%, #00e676 100%);">📋 Copy Game Serial</button>
+                 </div>
+             </div>
+             <button class="btn btn-primary" style="margin-top: 20px;" onclick="resetEditor()">Create Another Item</button>
+        </div>
+
+
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div style="text-align: center;">
+            <div class="spinner"></div>
+            <p style="margin-top: 20px; font-size: 1.2em;">Processing...</p>
+        </div>
+    </div>
+
+    <!-- Message Toast -->
+    <div id="messageToast" class="message">
+        <span id="messageIcon">✓</span>
+        <span id="messageText">Success!</span>
+    </div>
+
+    <script>
+        // --- WRAPPER FOR DATA STRUCTURES AND MAIN LOGIC TO PREVENT GLOBAL SCOPE CLASHES ---
+        (function() {
+            // --- NEW ITEM TYPE DATA (from CSV) ---
+            const ITEM_TYPES = {
+                2: { manufacturer: "daedalus", type: "pistol" },
+                3: { manufacturer: "jakobs", type: "pistol" },
+                4: { manufacturer: "order", type: "pistol" },
+                5: { manufacturer: "tediore", type: "pistol" },
+                6: { manufacturer: "torgue", type: "pistol" },
+                7: { manufacturer: "ripper", type: "shotgun" },
+                8: { manufacturer: "daedalus", type: "shotgun" },
+                9: { manufacturer: "jakobs", type: "shotgun" },
+                10: { manufacturer: "maliwan", type: "shotgun" },
+                11: { manufacturer: "tediore", type: "shotgun" },
+                12: { manufacturer: "torgue", type: "shotgun" },
+                13: { manufacturer: "daedalus", type: "assault_rifle" },
+                14: { manufacturer: "tediore", type: "assault_rifle" },
+                15: { manufacturer: "order", type: "assault_rifle" },
+                16: { manufacturer: "vladof", type: "sniper" },
+                17: { manufacturer: "torgue", type: "assault_rifle" },
+                18: { manufacturer: "vladof", type: "assault_rifle" },
+                19: { manufacturer: "ripper", type: "smg" },
+                20: { manufacturer: "daedalus", type: "smg" },
+                21: { manufacturer: "maliwan", type: "smg" },
+                22: { manufacturer: "vladof", type: "smg" },
+                23: { manufacturer: "ripper", type: "sniper" },
+                24: { manufacturer: "jakobs", type: "sniper" },
+                25: { manufacturer: "maliwan", type: "sniper" },
+                26: { manufacturer: "order", type: "sniper" },
+                27: { manufacturer: "jakobs", type: "assault_rifle" },
+                254: { manufacturer: "siren", type: "class_mod" },
+                255: { manufacturer: "forgeknight", type: "class_mod" },
+                256: { manufacturer: "exo_soldier", type: "class_mod" },
+                259: { manufacturer: "gravitar", type: "class_mod" },
+                261: { manufacturer: "torgue", type: "repair_kit" },
+                263: { manufacturer: "maliwan", type: "gadget" },
+                264: { manufacturer: "hyperion", type: "enhancement" },
+                265: { manufacturer: "jakobs", type: "repair_kit" },
+                266: { manufacturer: "maliwan", type: "repair_kit" },
+                267: { manufacturer: "jakobs", type: "gadget" },
+                268: { manufacturer: "jakobs", type: "enhancement" },
+                269: { manufacturer: "vladof", type: "repair_kit" },
+                270: { manufacturer: "daedalus", type: "gadget" },
+                271: { manufacturer: "maliwan", type: "enhancement" },
+                272: { manufacturer: "order", type: "gadget" },
+                273: { manufacturer: "torgue", type: "heavy" },
+                274: { manufacturer: "ripper", type: "repair_kit" },
+                275: { manufacturer: "ripper", type: "heavy" },
+                277: { manufacturer: "daedalus", type: "repair_kit" },
+                278: { manufacturer: "ripper", type: "gadget" },
+                279: { manufacturer: "maliwan", type: "shield" },
+                281: { manufacturer: "order", type: "enhancement" },
+                282: { manufacturer: "vladof", type: "heavy" },
+                283: { manufacturer: "vladof", type: "shield" },
+                284: { manufacturer: "atlas", type: "enhancement" },
+                285: { manufacturer: "order", type: "repair_kit" },
+                286: { manufacturer: "cov", type: "enhancement" },
+                287: { manufacturer: "cov", type: "shield" },
+                288: { manufacturer: "tediore", type: "gadget" },
+                290: { manufacturer: "tediore", type: "repair_kit" },
+                291: { manufacturer: "vladof", type: "gadget" },
+                292: { manufacturer: "tediore", type: "enhancement" },
+                293: { manufacturer: "order", type: "shield" },
+                296: { manufacturer: "ripper", type: "enhancement" },
+                298: { manufacturer: "torgue", type: "gadget" },
+                299: { manufacturer: "daedalus", type: "enhancement" },
+                300: { manufacturer: "ripper", type: "shield" },
+                303: { manufacturer: "torgue", type: "enhancement" },
+                306: { manufacturer: "jakobs", type: "shield" },
+                307: { manufacturer: "daedalus", type: "class_mod" },
+                309: { manufacturer: "jakobs", type: "class_mod" },
+                310: { manufacturer: "vladof", type: "enhancement" },
+                311: { manufacturer: "tediore", type: "gadget" },
+                312: { manufacturer: "daedalus", type: "shield" },
+                321: { manufacturer: "hyperion", type: "shield" },
+                326: { manufacturer: "order", type: "gadget" },
+                327: { manufacturer: "torgue", type: "class_mod" }
+            };
+            // --- END NEW DATA ---
+
+            // Data structures
+            const perks = {
+                "Legendary Weapon Perks": { // Added Category
+                    // Non-"Color Spray" Perks first
+                    "Adoration Sweet Embrace": "{10:58}",
+                    "All Arounder Bod": "{8:52}",
+                    "Amper Camper Goalkeeper": "{15:56}",
+                    "Astmptotic Convergence": "{7:64}",
+                    "Bilateral Symmetry": "{26:72}",
+                    "Blazing Barrel Hot Slugger": "{9:79}",
+                    "Blood Siphon": "{290:1}",
+                    "Bullet Pollinator Boomslang": "{24:74}",
+                    "Burning Desire Hellfire": "{19:20}",
+                    "Chief Execution Officer Goremaster": "{7:1}",
+                    "Colorful Mess Kaleidosplode": "{10:56}",
+                    "Constellation Star Helix": "{13:77}",
+                    "Crowd Sourced Midnight Defiance": "{16:68}",
+                    "Defense Protocal Bully": "{4:75}",
+                    "Divided Focus \"Conquerer\"": "{14:39}", // Added
+                    "D.O.P.E. Buoys Deity": "{5:59}",
+                    "Dueling Pistol Songbird": "{3:72}",
+                    "Energy Transfer Ohm I Got": "{21:59}",
+                    "Executor Murmur": "{14:76}",
+                    "First Impression \"Firm Handshake\"": "{13:84}", // Added
+                    "Fisheye \"Ultima Ratio Regum\"": "{26:75}", // Added
+                    "Flesh Eaters Roach": "{6:54}",
+                    "Force Bunt Kickballer": "{10:7}",
+                    "Forsaken Chaos \"Wide Net\"": "{11:77}", // Added
+                    "Fragcendiary Grenades Oscar Mike": "{13:67}",
+                    "Full Coverage Linebacker": "{12:58}",
+                    "G.M.R \"Big Name Hunter\"": "{15:2}", // Added
+                    "Granted Kaoson": "{22:66}",
+                    "Grasp Ruby' Grasp": "{5:65}",
+                    "Gungnir Sprezzatura": "{273:34}",
+                    "Heirloom T.K's Wave": "{9:90}",
+                    "Hivemind Birt's Bees": "{22:87}",
+                    "Holy Hell King's Gambit": "{3:75}",
+                    "Husky Auto Turret Husky Friend": "{11:79}",
+                    "Iced Out Cold Shoulder": "{17:55}",
+                    "Inkling Inkling": "{282:2}",
+                    "Juggler Sideshow": "{5:67}",
+                    "Keep It Coming Onslaught": "{22:68}",
+                    "Lightweight Lead Balloon": "{12:56}",
+                    "Loarmaster \"???\"": "{20:4}", // Added
+                    "Luty Madlad \"Homemade Ingenuity\"": "{20:6}", // Added
+                    "LUV Acey May": "{8:54}",
+                    "Matador's Match \"Firework\"": "{21:83}", // Added
+                    "Midday Phantom Flame": "{3:77}",
+                    "Mutualism Anarchy": "{11:75}",
+                    "Parley Darkbeast": "{20:64}",
+                    "Pair of Thieves Bonnie and Clyde": "{27:73}",
+                    "Pamplemousse Prince Harming": "{19:17}",
+                    "Pipin' Hot Barrel Finnity XXXL": "{16:1}",
+                    "Pitcher Chuck": "{14:34}",
+                    "Precision Rangefinder": "{2:78}",
+                    "Prison Rules Zipper": "{2:1}",
+                    "Propagation Ballista": "{24:72}",
+                    "Prophetic Aegons Dream": "{18:70}",
+                    "Proprioception Seventh Sense": "{3:80}",
+                    "Radiation Exposure Gamma Void": "{289:24}",
+                    "Rage Golden God": "{7:18}",
+                    "rainbow reload Kismet Lucky Clover": "{4:1}",
+                    "Reconfigure Stop Gap": "{16:72}",
+                    "Rip Rockets Wombo Combo": "{18:64}",
+                    "Rotary Gun Bugbear": "{17:54}",
+                    "Royal Armory Queen's Rest": "{6:52}",
+                    "Scarce Vamoose": "{23:21}",
+                    "Scrap Cannon Whiskey Foxtrot": "{18:92}",
+                    "Silence Noisy Cricket": "{4:79}",
+                    "Sierpinski Complex Root": "{25:20}",
+                    "Slow Burn Asher's Rise": "{25:79}",
+                    "Soothslayer Hellwalker": "{9:82}",
+                    "Space Laser Oscar Mike": "{13:75}",
+                    "Spud Gun Potato Thrower IV": "{17:77}",
+                    "Stalker Rowan's Charge": "{27:75}",
+                    "Stormcloud Katwaga Revenge": "{25:60}",
+                    "Stray Stray": "{23:20}",
+                    "Strike Twice Bottled Lightning": "{289:26}",
+                    "Superheated Plasma Coil": "{21:62}",
+                    "Tactical Rounds Oscar Mike": "{13:8}",
+                    "Timber Lumberjack": "{13:57}",
+                    "Trample Lucian's Flank": "{18:1}",
+                    "Whistler Atling Gun": "{282:25}",
+                    "621 Ravenfire": "{273:40}",
+                    // "Color Spray" Perks last within this category
+                    "Color Spray Cryo Incen Shock": "{9:1}",
+                    "Color Spray Cryo Incen Rad": "{9:16}",
+                    "Color Spray Corrosive Rad Shock": "{9:71}",
+                    "Color Spray Corrosive Incen Shock": "{9:72}",
+                    "Color Spray Corrosive Incen Rad": "{9:73}",
+                    "Color Spray Corrosive Corrosive Cryo Shock": "{9:74}",
+                    "Color Spray Corrosive Cryo Rad": "{9:75}",
+                    "Color Spray Corrosive Cryo Incen": "{9:76}",
+                    "Color Spray Incen Rad Shock": "{9:77}",
+                    "Color Spray Cryo Rad Shock": "{9:84}"
+                },
+                "Ordnance Legendary Perks": { // Added Category
+                    "Ghost Skull - *Halloween Event* (Grenade)": "{272:11}",
+                    "Blockbuster \"Got You Covered\" (Grenade)": "{291:6}",
+                    "Buoy \"Buoyant\" (Grenade)": "{278:11}",
+                    "Buzzaxe \"Makeshift\" (Grenade)": "{270:6}",
+                    "Chaumurky \"Incessant\" (Grenade)": "{272:9}",
+                    "Destructo Disco \"Groove\" (Grenade)": "{263:10}",
+                    "Disc Jockey \"Bouncing Biscuits\" (Grenade)": "{275:30}",
+                    "Faulty Detonator \"Sticky Trigger\" (Grenade)": "{311:6}",
+                    "Firepot \"Spicy\" (Grenade)": "{298:6}",
+                    "Fuse \"Fortified Position\" (Grenade)": "{270:8}",
+                    "Jelly \"Self Replicating\" (Grenade)": "{278:10}",
+                    "Recursive \"Looping\" (Grenade)": "{263:12}",
+                    "Sho Kunai \"Ninja Speed\" (Grenade)": "{267:11}",
+                    "Slippy \"Swordfish\" (Grenade)": "{298:8}",
+                    "Spinning Blade \"Juggler\" (Grenade)": "{267:9}",
+                    "Streamer \"Delegation\" (Grenade)": "{275:1}",
+                    "Swarm \"Swoosh\" (Grenade)": "{272:7}",
+                    "Transmission \"Pre-order\" (Grenade)": "{278:15}",
+                    "Transmitter \"Transmission\" (pre-order) (Grenade)": "{278:15}", // Duplicate name/code ok here?
+                    "UAV \"Death From Above\" (Grenade)": "{311:8}",
+                    "Waterfall \"Waterfall\" (Grenade)": "{291:8}",
+                    "Atling Gun \"Whistler\" (Ordnance)": "{282:25}", // Already in weapon perks? Keeping here too.
+                    "Bottled Lightning \"Strike Twice\" (Ordnance)": "{289:26}", // Already in weapon perks? Keeping here too.
+                    "Disc Jockey \"Bouncing Biscuits\" (Ordnance)": "{275:30}", // Duplicate code, different name
+                    "Gamma Void \"Radiation Exposure\" (Ordnance)": "{289:24}", // Already in weapon perks? Keeping here too.
+                    "Inkling \"Inkling\" (Ordnance)": "{282:2}", // Already in weapon perks? Keeping here too.
+                    "Ravenfire \"621\" (Ordnance)": "{273:40}", // Already in weapon perks? Keeping here too.
+                    "Sidewinder \"MIA\" (Ordnance)": "{273:38}",
+                    "Sprezzatura \"Gungnir\" (Ordnance)": "{273:34}"
+                },
+                "Shield Legendary Perks": { // NEWLY ADDED CATEGORY
+                    "Nucleosynthesis": "{279:1}",
+                    "Phyosis": "{279:8}",
+                    "Refreshments": "{283:6}",
+                    "Bareknuckle": "{283:8}",
+                    "ShieldBoi": "{287:6}",
+                    "Bininu": "{287:9}",
+                    "Glass": "{293:1}",
+                    "Direct Circuit": "{293:2}",
+                    "Short Circuit": "{300:6}",
+                    "Overshield Eater": "{300:8}",
+                    "Vintage": "{306:7}",
+                    "Shellot Shell": "{306:8}",
+                    "Wings of Grace": "{312:6}",
+                    "Powerplay": "{312:8}",
+                    "Bundled": "{321:6}",
+                    "Sisyphusian": "{321:9}"
+                },
+                "Repkit Legendary Perks": { // NEWLY ADDED CATEGORY
+                    "Heart Pump": "{285:1}",
+                    "Chrome": "{261:6}",
+                    "Time Dialation": "{274:1}",
+                    "Blood Siphon": "{290:1}", // Note: Code also exists in Weapon Perks
+                    "Pulsometer": "{277:1}",
+                    "Cardiac Shot": "{265:6}",
+                    "Immunity Shot": "{266:6}",
+                    "Blood Rush": "{269:6}"
+                }
+            };
+
+            const stats = {
+                "Damage": "{18:15}",
+                "Damage x1 Million": "{9:[78 78 78 78 78 78 78 78 78 78 78 78 78 78 78 78 78 78 78]}",
+                "Accuracy": "{13:12}",
+                "Accuracy v2 (via handguard)": "{8:14}",
+                "Reload Speed": "{18:31}",
+                "Fire Rate": "{14:1}",
+                "Ammo": "{18:14}",
+                "Splash Radius": "{14:3}",
+                "Splash Radius v2": "{6:33}",
+                "Crit Damage": "{3:6}",
+                "Huge Magazine Size": "{27:75}",
+                "Huge Fire Rate": "{27:75}",
+                "Less Recoil + Fire Rate": "{12:[13 13 13 13 13 13 46 46 46 46]} {8:[48 48 48 48 48 48 48 48]}",
+                "Ammo Self-Regeneration": "{18:[4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4]} {299:9}",
+                "All Ammo Regen Perks": "{18:1} {27:75} {22:68} {245:[39 69 71]} {5:[67]}",
+                "All Stats Ramp": "{18:15} {18:15} {18:15} {18:15} {18:15} {18:15} {18:15} {18:15} {18:15} {18:15} {18:15} {18:15} {13:[12 12 12 12 12 12 12 12 12 12 12 12]} {18:31} {18:31} {18:31} {18:31} {18:31} {18:31} {18:31} {18:31} {18:31} {18:31} {18:31} {18:31} {14:1} {18:[14 14 14 14 14 14 14 14 14 14 14 14 14 14 14]} {3:[6 6 6 6 6 6 6 6 6 6]} {27:[75 75 75]} {6:68}",
+                "Stat/Perk Ramp": "{289:1} {1:11} {17:55} {8:52} {27:55} {18:1} {51} {51} {51} {51} {51} {51} {51} {51} {51} {51} {51} {51} {13:[12 12 12 12 12 12 12 12 12 12 12 12]} {3} {3} {3} {3} {3} {3} {3} {3} {3} {3} {3} {3} {18:[14 14 14 14 14 14 14 14 14 14 14 14 14 14 14]} {27:[75 75 75 75]} {6:68}",
+                "Grenade Damage x9999 via Skull Perk": "{272:[11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11]}",
+                "MIRV Grenade Singularity": "{245:[37 29 29 29 29 46 46 46 48 39 69 40 40 40 40 40 40 40 40 60 40 40 56 40 40 40 40 40 40 40 33 33]}",
+                "Hyperion Licensed Grip - Accuracy+ with continuous fire": "{25:42}",
+                "Zoom++": "{25:[26 26 26 26 26 26]}",
+                "Class-Mods Critical Hit Chance": "{234:[13 14 40 13 14 40 5]}",
+                "All Manufacturers Enhancement Perks": "{268:[1 2 3 9]} {303:[1 2 3 9]} {271:[1 2 3 9]} {299:[1 2 3 9]} {296:[1 2 3 9]} {286:[1 2 3 9]} {281:[1 2 3 9]} {264:[1 2 3 9]} {296:[1 2 3 9]} {292:[1 2 3 9]} {310:[1 2 3 9]} {284:[1 2 3 9]}"
+            };
+
+
+            const altFires = {
+				"C.O.M.B.O": "{14:64}",
+                "Energy Blast": "{10:49}",
+                "Turbine Cleaver": "{6:45}",
+                "Beam Toss": "{10:43}",
+                "Energy Burst": "{4:44}",
+                "Energy Disk": "{10:44}",
+                "Flame Blast": "{12:50}",
+                "Flame Thrower": "{22:52}",
+                "Gravity Harpoon": "{9:46}",
+                "Gravity Well": "{4:72}",
+                "Grenade Launcher": "{20:79}",
+                "Hand Crank": "{27:57}",
+                "Kill Drone": "{15:43}",
+                "Knife Launcher": "{9:50}",
+                "Laser Wire": "{21:53}",
+                "Magnum Rockets": "{6:44}",
+				"Magic Bullet (Heavy)": "{282:15}",
+                "Proxy Mines": "{8:50}",
+                "Radiation Fuel Rod Discharge": "{7:80}",
+                "Seeker Darts": "{2:74}",
+                "Seeker Missile": "{15:42}",
+                "Shock Field": "{25:48}",
+                "Shock Lightning Beam": "{7:48}",
+                "Shotgun": "{14:65}",
+                "Singularity Grenade Launcher": "{25:49}",
+                "Spread Launcher": "{9:45}",
+                "Support Drone": "{14:68}",
+                "Vial Launcher": "{3:68}",
+                "Zip Rockets": "{3:46}",
+                "2 Barrel Fire": "{282:19}",
+                "COV Primary Fire": "{20:16}",
+				"Ammo Smg": "{12:52}",
+                "Ammo Shotgun": "{5:62}",
+                "Ammo Sniper": "{20:57}",
+                "Assault Rifle Alt Ammo Rounds": "{20:56}",
+                "Jacobs": "{6:68}",
+                "Ripper Alt Fire Full Auto Perk": "{5:26}",
+                "Ripper Primary Fire": "{6:16}",
+                "Rocket Fire": "{273:26}",
+                "Tediore Throw Gun": "{2:70}",
+                "Torgue": "{6:76}",
+                "Vladov Tracking Grenade": "{48}",
+                "Hyperion Shield Perk": "{61}",
+                // Newly Added Alt Fires
+                "Airstrike": "{17:45}",
+                "Auto Turret (Tediore)": "{11:57}",
+                "Attack Drone": "{5:80}",
+                "Blowback": "{6:75}",
+                "Bounce Grenade (Torgue)": "{17:44}",
+                "Bounce Grenade": "{12:44}",
+                "Bully/Shield Drone": "{4:75}",
+                "Daedalus Semtex/Demo Charge": "{2:75}",
+                "Death Sphere": "{15:68}",
+                "Deployable Barrier": "{11:50}",
+                "Drunkrocket": "{19:47}",
+                "Flintlock": "{27:56}",
+                "Fragcindiary Grenade Perk": "{13:67}",
+                "Gastrap": "{19:46}",
+                "Gauss": "{7:49}",
+                "Gravity Harpoon v2 (8:43)": "{8:43}", // Added differentiator
+                "Gravity Trap (Ripper)": "{23:48}",
+                "Husky Auto Turret Perk": "{11:79}",
+                "Jacobs Ricochet Accessory": "{11:70}",
+                "Jacobs Ricochet": "{4:62}",
+                "Knockback": "{237:11}",
+                "Micro Rockets": "{4:43}",
+                "Micro Shotgun": "{5:50}",
+                "Microrocket": "{13:62}",
+                "Mirvgrenade": "{17:43}",
+                "Missile Swarm": "{237:8}",
+                "Overcharge": "{20:49}",
+                "Overdrive Shield Segment Drop (Vladof?)": "{18:6}",
+                "Railgun": "{26:58}",
+                "Railgun V2": "{21:45}",
+                "Rocketpod": "{25:53}",
+                "Rockets": "{5:79}",
+                "Scrap Cannon (Vladof)": "{22:55}",
+                "Seeker Missile (Ripper)": "{23:47}",
+                "Seeker Missiles v2": "{12:43}",
+                "Shotgun (Alt Fire)": "{13:61}",
+                "Shotgun v3 (Alt Fire)": "{27:55}",
+                "Shrapnel": "{19:52}",
+				"Shrapnel Rockets (Heavy)": "{273:5}",
+                "Space Laser Oscar Mike Perk": "{13:75}",
+                "Spear": "{26:62}",
+                "Spunky": "{237:14}",
+                "Star Helix Underbarrel": "{13:76}",
+                "Sticky Mine (Tediore)": "{11:51}",
+                "Taser Housing (Vladof)": "{22:56}",
+				"Torgue Impact Gyrojets": "{10:77}",
+                "Torgue Sticky Gyrojets": "{2:19}",
+                "Tedior Licenced-Mirv-Spawns 4 Grenades-": "{2:71}",
+                "Tedior Mirv - Splits Into 4 -": "{14:10}",
+                "Tedior Mirv - Thorwn Gun Spawns 4 Grenades": "{11:10}",
+                "Tediore Replicator - Throws Gun On Reload -": "{5:12}",
+                "Tether Snare": "{26:57}",
+                "Tracker Grenades Homing": "{9:43}",
+				"Ammo Pistol Secondary": "{26:68}",
+                "Ammo SMG Secondary": "{12:51}",
+                "Ammo Sniper Secondary": "{9:54}",
+				"Ammo Pistol": "{13:68}",
+				"Hyperion Amp Shield": "{4:12}",
+                "Hyperion Licensed Shield": "{12:9}",
+			    "Marked Darts": "{23:55}",
+			    "Tracker Darts": "{9:44}",
+	 	        "Malswitch": "{17:42}",
+				"Atlas (1)": "{6:74}", // Added differentiator
+                "Atlas (2)": "{12:45}", // Added differentiator
+                "Atlas Ball": "{12:49}",
+                "Atlas Ball (Maliwan Sniper)": "{25:47}",
+				"Malswitch v2": "{7:53}"
+            };
+
+            const elements = {
+                "Single Elements": { // Added Category
+                    "Corrosive": "{1:10}",
+                    "Cryo": "{1:11}",
+                    "Fire": "{1:12}",
+                    "Radiation": "{1:13}",
+                    "Shock": "{1:14}",
+                },
+                "Non-Maliwan Dual Elements": { // Added Category
+                    "Corrosive/Cryo - Non-Maliwan": "{1:40}",
+                    "Corrosive/Fire - Non-Maliwan": "{1:44}",
+                    "Corrosive/Radiation - Non-Maliwan": "{1:32}",
+                    "Corrosive/Shock - Non-Maliwan": "{1:47}",
+                    "Cryo/Corrosive - Non-Maliwan": "{1:36}",
+                    "Cryo/Fire - Non-Maliwan": "{1:42}",
+                    "Cryo/Radiation - Non-Maliwan": "{1:31}",
+                    "Cryo/Shock - Non-Maliwan": "{1:46}",
+                    "Fire/Corrosive - Non-Maliwan": "{1:35}",
+                    "Fire/Cryo - Non-Maliwan": "{1:39}",
+                    "Fire/Radiation - Non-Maliwan": "{1:30}",
+                    "Fire/Shock - Non-Maliwan": "{1:49}",
+                    "Radiation/Corrosive - Non-Maliwan": "{1:33}",
+                    "Radiation/Cryo - Non-Maliwan": "{1:37}",
+                    "Radiation/Fire - Non-Maliwan": "{1:41}",
+                    "Radiation/Shock - Non-Maliwan": "{1:45}",
+                    "Shock/Corrosive - Non-Maliwan": "{1D:34}", // Corrected {1:34}
+                    "Shock/Cryo - Non-Maliwan": "{1:38}",
+                    "Shock/Fire - Non-Maliwan": "{1:43}",
+                    "Shock/Radiation - Non-Maliwan": "{1:29}",
+                },
+                "Maliwan Dual Elements": { // Added Category
+                    "Corrosive/Cryo - Maliwan": "{1:28}",
+                    "Corrosive/Fire - Maliwan": "{1:27}",
+                    "Corrosive/Radiation - Maliwan": "{1:26}",
+                    "Corrosive/Shock - Maliwan": "{1:25}",
+                    "Cryo/Corrosive - Maliwan": "{1:24}",
+                    "Cryo/Fire - Maliwan": "{1:23}",
+                    "Cryo/Radiation - Maliwan": "{1:22}",
+                    "Cryo/Shock - Maliwan": "{1:21}",
+                    "Fire/Corrosive - Maliwan": "{1:20}",
+                    "Fire/Cryo - Maliwan": "{1:19}",
+                    "Fire/Radiation - Maliwan": "{1:18}",
+                    "Fire/Shock - Maliwan": "{1:48}",
+                    "Radiation/Corrosive - Maliwan": "{17}",
+                    "Radiation/Cryo - Maliwan": "{1:16}",
+                    "Radiation/Fire - Maliwan": "{1:15}",
+                    "Radiation/Shock - Maliwan": "{1:9}",
+                    "Shock/Corrosive - Maliwan": "{8}",
+                    "Shock/Cryo - Maliwan": "{7}",
+                    "Shock/Fire - Maliwan": "{6}",
+                    "Shock/Radiation - Maliwan": "{5}"
+                }
+            };
+
+            const skins = {
+                "Assault Rifle": {
+                    "Wombo Combo Skin": "{18:65}",
+                    "Star Helix Skin": "{13:73}",
+                    "Bonnie & Clyde Skin": "{27:1}",
+                    "Oscar Mike Skin": "{13:100}",
+                    "Bloody Lumberjack Skin": "{13:72}",
+                    "Potato Thrower Skin": "{17:78}",
+                    "BugBear Skin": "{17:1}",
+                    "Goalkeeper Skin": "{15:75}",
+                    "Chuck Skin": "{14:35}",
+                    "Whiskey Foxtrot Skin": "{18:93}",
+                    "Aegons Dream Skin": "{18:88}",
+                    "Lucians Flank Skin": "{18:63}",
+                    "Divided Focus Skin": "{14:36}",
+                    "Cold Shoulder Skin": "{17:56}",
+                    "Rowans Charge Skin": "{27:74}",
+                    "Murmur Skin": "{14:77}"
+                },
+                "SMG": {
+                    "Ohm I Got Skin": "{21:60}",
+                    "Birts Bees Skin": "{22:88}",
+                    "Hellfire Skin": "{7:19}",
+                    "Prince Harming Skin": "{19:17}",
+                    "DarkBeast Skin": "{21:63}",
+                    "Loremaster Skin": "{20:59}",
+                    "Onslaught Skin": "{22:1}",
+                    "Plasma Coil Skin": "{21:63}",
+                    "Mad Lad Skin": "{20:65}"
+                },
+                "Shotgun": {
+                    "Kaleidosplode Skin": "{10:1}",
+                    "Golden God Skin": "{7:19}",
+                    "Hot Slugger Skin": "{9:80}",
+                    "Sweet Embrace Skin": "{10:57}",
+                    "Kickballer Skin": "{10:100}",
+                    "Acey May Skin": "{8:55}",
+                    "GoreMaster Skin": "{7:20}",
+                    "Husky Friend Skin": "{11:80}",
+                    "Bod Skin": "{8:53}",
+                    "Lead Balloon Skin": "{12:1}",
+                    "Convergence Skin": "{7:100}",
+                    "LineBacker Skin": "{12:1}",
+                    "T.K's Wave Skin": "{9:91}",
+                    "Rainbow Vomit Skin": "{9:85}",
+                    "Hellwalker Skin": "{9:100}",
+                    "Anarchy Skin": "{11:76}",
+                    "Chaos Skin": "{11:78}"
+                },
+                "Sniper": {
+                    "Stray Skin": "{23:19}",
+                    "Ashers Rise Skin": "{25:80}",
+                    "Complex Root Skin": "{25:59}",
+                    "Katagawas Revenge Skin": "{25:61}",
+                    "Truck Skin": "{24:76}",
+                    "Boomslang Skin": "{24:1G}",
+                    "Fisheye Skin": "{26:98}",
+                    "Ballista Skin": "{24:73}",
+                    "Stop Gap Skin": "{16:67}",
+                    "Symmetry Skin": "{26:76}",
+                    "Finity XXL Skin": "{16:66}",
+                    "Vamoose Skin": "{23:1}",
+                    "Midnight Defiance Skin": "{16:69}"
+                },
+                "Pistol": {
+                    "Phantom Flame Skin": "{3:78}",
+                    "Kings Gambit Skin": "{3:76}",
+                    "Seventh Sense Skin": "{3:81}",
+                    "Queens Rest Skin": "{6:53}",
+                    "Roach Skin": "{6:1}",
+                    "Budget Diety Skin": "{5:60}",
+                    "SideShow Skin": "{5:1}",
+                    "Lucky Clover Skin": "{4:53}",
+                    "Noisy Cricket Skin": "{4:80}",
+                    "Bully Skin": "{4:76}",
+                    "RangeFinder Skin": "{2:59}",
+                    "Zipper Skin": "{2:54}"
+                },
+                "Unknown / Misc": {
+                    "Jelly?": "{278:12}",
+                    "Fish": "{298:[6 8]}",
+                    "Buzz axe": "{270:6}",
+                    "Gold Code for repkits": "{255:9}",
+                    "Gold Code for SMG's": "{16:70}",
+                    "uv fish": "{298:[6 8]}",
+                    "uv buzz axe model": "{270:6}",
+                    "Grenade Code Gold": "{5}",
+                    "Heavy Weapon Code gold": "{4}",
+                    // "Throwing Knife Code gold": "{8}", // <-- REMOVED CONFLICTING PART
+                    "Gold Universal Camo": "{7:19}",
+                    "Pink Camo": "{254:14}",
+                    "Skull": "{272:11}",
+                    "Lightning Skin": "{289:1}",
+                    "Gamma Void Skin": "{289:25}",
+                    "Disk Jockey Skin": "{275:31}",
+                    "Streamer Skin": "{275:32}",
+                    "Ravenfire Skin": "{273:36}",
+                    "Sprezzatura Skin": "{273:34}"
+                }
+            };
+
+            // State
+            let baseSerialData = {
+                original: "",
+                header: "",
+                firstPartCode: "",
+                remainingParts: "",
+                itemInfo: null, // Will store additional_data from API
+                existingParts: {
+                    perks: [],
+                    stats: [],
+                    altFire: [], // Changed to array
+                    element: [], // Changed to array
+                    skin: null
+                }
+            };
+
+            let selections = {
+                perks: [],
+                stats: [],
+                altFire: [], // Changed to array
+                element: [], // Changed to array
+                skin: null
+            };
+
+            // API Configuration
+            const API_URL = 'https://borderlands4-deserializer.nicnl.com/api/v1/';
+            let apiController = null;
+            let validationTimeout; // Timeout for debouncing manual validation
+
+
+            // --- >>> Helper Functions (Moved to top scope for access) <<< ---
+
+            // --- NEW HELPER ---
+            const escapeHTML = (str) => str ? str.replace(/</g, "&lt;").replace(/>/g, "&gt;") : "";
+
+            // --- MOVED HELPER ---
+            // Helper to get the code for a given item name and type
+            function getCode(name, type) {
+                switch (type) {
+                    case 'perks':
+                        return Object.values(perks).reduce((foundCode, category) => { return foundCode || category[name]; }, null);
+                    case 'stats':
+                        return stats[name];
+                    case 'altFire':
+                        return altFires[name];
+                    case 'element':
+                            return Object.values(elements).reduce((foundCode, category) => { return foundCode || category[name]; }, null);
+                    case 'skin':
+                        return Object.values(skins).flatMap(category => Object.entries(category))
+                                .find(([itemName, code]) => itemName === name)?.[1];
+                    default:
+                        return null;
+                }
+            }
+            // --- END MOVED HELPER ---
+
+
+            // Debounce function
+            function debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+            
+             // Helper to get step number from type string
+            function getStepNumber(type) {
+                switch (type) {
+                    case 'perks': return 1;
+                    case 'stats': return 2;
+                    case 'altFire': return 3;
+                    case 'element': return 4;
+                    case 'skin': return 5;
+                    case 'finalize': return 6;
+                    default: return 0; // Or handle error
+                }
+            }
+            
+            // Show loading overlay
+            function showLoading() {
+                document.getElementById('loadingOverlay').classList.add('show');
+            }
+
+            // Hide loading overlay
+            function hideLoading() {
+                document.getElementById('loadingOverlay').classList.remove('show');
+            }
+
+            // Show message toast
+            let messageTimeout;
+            function showMessage(text, type = 'success') {
+                const toast = document.getElementById('messageToast');
+                const icon = document.getElementById('messageIcon');
+                const msgText = document.getElementById('messageText');
+
+                msgText.textContent = text;
+                toast.className = `message ${type}`; // Remove previous type, add new
+                icon.textContent = type === 'success' ? '✓' : '✕';
+
+                toast.classList.add('show');
+
+                clearTimeout(messageTimeout);
+                messageTimeout = setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+
+            // Generic API Call Function
+            async function callApi(endpoint, payload) {
+                if (apiController) {
+                    apiController.abort();
+                }
+                apiController = new AbortController();
+                const signal = apiController.signal;
+
+                try {
+                    const response = await fetch(API_URL + endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                        signal
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        // Attempt to parse the complex error message from the API and clean it up
+                        let apiError = errorText;
+                        try {
+                            const jsonError = JSON.parse(errorText);
+                            if (jsonError.error) {
+                                apiError = jsonError.error;
+                                // Clean up the error message to remove JSON artifact
+                                if (apiError.startsWith('invalid part format:')) {
+                                    apiError = 'Invalid part format detected: ' + apiError.split(': ').slice(1).join(': ');
+                                }
+                            }
+                        } catch (e) {
+                            // Not a JSON error, use original text
+                        }
+                        throw new Error(`API Error (${response.status}): ${apiError}`);
+                    }
+                    const data = await response.json();
+                    apiController = null; // Clear controller on success
+                    return data;
+                } catch (error) {
+                    apiController = null; // Clear controller on error
+                    if (error.name === 'AbortError') {
+                        console.log('API request aborted.');
+                        throw error; // Re-throw abort error
+                    }
+                    console.error(`Error calling API endpoint ${endpoint}:`, error);
+                    throw error; // Re-throw other errors
+                }
+            }
+            
+            // --- >>> END Helper Functions <<< ---
+
+            // Smart Serial Parsing and Initial API Call
+            async function smartParseSerial() {
+                const input = document.getElementById('baseSerial').value.trim();
+                if (!input) {
+                    showMessage('Please paste a serial code.', 'error');
+                    return;
+                }
+
+                showLoading();
+                let deserializedSerial = input;
+                let needsReserialize = false; // Flag to track if we need item info
+
+                if (input.startsWith('@U')) {
+                    // If B85, call deserialize API first
+                    try {
+                        const result = await callApi('deserialize', { serial_b85: input });
+                        deserializedSerial = result.deserialized;
+                        baseSerialData.itemInfo = result.additional_data; // Store additional data
+                        needsReserialize = false; 
+                    } catch (error) {
+                        showMessage(`Failed to deserialize B85: ${error.message}`, 'error');
+                        hideLoading();
+                        return;
+                    }
+                } else if (input.includes('|') && (input.includes('{') || input.includes('"') || input.match(/\b\d+\b/))) { 
+                    // Assume it's already deserialized, but we need item info
+                    needsReserialize = true;
+                } else {
+                    showMessage('Invalid serial format detected.', 'error');
+                    hideLoading();
+                    return;
+                }
+
+                // Store original and parsed base
+                baseSerialData.original = deserializedSerial;
+                parseBaseSerial(deserializedSerial);
+
+                // --- MODIFICATION: Set Item Type Code Input ---
+                const headerParts = baseSerialData.header.split(',');
+                const typeId = headerParts[0].trim();
+                document.getElementById('itemTypeCodeInput').value = typeId;
+                // --- END MODIFICATION ---
+
+                // If we started with deserialized, call reserialize to get initial item info
+                if (needsReserialize) {
+                    try {
+                        // Use generateLiveSerial(..., true) to clean up unwanted naked numbers before API call
+                        // We pass a *copy* of baseSerialData to generate a temporary serial for validation
+                        const validationData = {
+                            ...baseSerialData,
+                            remainingParts: baseSerialData.original.split('||')[1] || "" // Use original parts for validation
+                        };
+                        const currentLiveSerial = generateLiveSerial(validationData, true); // Pass true to clean
+                        
+                        const apiPayload = currentLiveSerial.endsWith('|') ? currentLiveSerial.slice(0, -1) : currentLiveSerial;
+                        
+                        const result = await callApi('reserialize', { deserialized: apiPayload });
+                        baseSerialData.itemInfo = result.additional_data;
+                    } catch (error) {
+                        // Non-fatal, proceed without item info if API fails
+                        console.warn(`Failed to get initial item info via reserialize: ${error.message}`);
+                        baseSerialData.itemInfo = null; // Ensure it's null
+                    }
+                }
+
+
+                // Identify existing parts *after* parsing
+                identifyExistingParts(baseSerialData.original);
+
+                // Populate selections with existing parts
+                populateSelectionsFromExisting();
+
+                // Render options
+                renderPerks();
+                renderStats();
+                renderAltFires();
+                renderElements();
+                renderSkins();
+
+                // Update UI elements
+                 updateItemInfoDisplay(); // Update item info display
+                 updateLivePreview(); // Initial preview
+                 document.getElementById('livePreview').classList.remove('hidden');
+
+
+                // Move to the first editing step
+                openStep(1); // Use openStep to show tab + card
+                hideLoading();
+            }
+
+            // Parse the base serial into header, first part, and remaining
+            function parseBaseSerial(serialString) {
+                // Updated regex to handle optional trailing pipe and firmware lock ("ft")
+                 const match = serialString.match(/^([^|]+?)\s*\|\s*([^|]+?)\s*\|\|(.*?)(\s*\|)?$/s);
+                if (match) {
+                    baseSerialData.header = match[1].trim();
+                    baseSerialData.firstPartCode = match[2].trim(); // Seed or firmware lock (can be "ft", 1, etc.)
+                    baseSerialData.remainingParts = match[3].trim();
+                } else {
+                     console.warn("Could not fully parse serial header structure:", serialString);
+                     // Fallback: Treat everything after the first '||' as remaining parts, if possible
+                     const parts = serialString.split(/\|\|/);
+                     if (parts.length >= 2) {
+                         // Try to split the first part by '|'
+                         const headerParts = parts[0].split('|');
+                         if (headerParts.length >= 2) {
+                             baseSerialData.header = headerParts[0].trim();
+                             baseSerialData.firstPartCode = headerParts[1].trim();
+                         } else {
+                             baseSerialData.header = parts[0].trim(); // Might contain header and first part
+                             baseSerialData.firstPartCode = ""; // Cannot reliably determine
+                         }
+                         baseSerialData.remainingParts = parts[1].replace(/\|$/, '').trim(); // Remove trailing pipe if present
+                     } else {
+                         baseSerialData.header = serialString; // Assume entire thing is header if no '||'
+                         baseSerialData.firstPartCode = "";
+                         baseSerialData.remainingParts = "";
+                     }
+                     baseSerialData.itemInfo = null; // Assume no item info if parsing failed
+                }
+            }
+
+             // Update item info display in the live preview
+             function updateItemInfoDisplay() {
+                 const nameEl = document.getElementById('itemName');
+                 const typeEl = document.getElementById('itemType');
+                 const manuEl = document.getElementById('itemManufacturer');
+                 const iconEl = document.querySelector('.item-icon');
+                 
+                 // --- MODIFIED: Use ITEM_TYPES lookup ---
+                 const headerParts = baseSerialData.header.split(',');
+                 const typeId = headerParts[0].trim();
+                 const itemDef = ITEM_TYPES[typeId];
+
+                 if (itemDef) {
+                     // We found a definition in our local map
+                     const itemTypeName = itemDef.type.replace(/_/g, ' ');
+                     nameEl.textContent = baseSerialData.itemInfo?.item_name || itemTypeName;
+                     typeEl.textContent = `Type: ${itemTypeName}`;
+                     manuEl.textContent = `Manufacturer: ${itemDef.manufacturer}`;
+
+                     // Set icon based on type
+                     const type = itemDef.type.toLowerCase();
+                     if (type.includes('pistol')) iconEl.textContent = '🔫';
+                     else if (type.includes('smg')) iconEl.textContent = '👾';
+                     else if (type.includes('shotgun')) iconEl.textContent = '💥';
+                     else if (type.includes('assault_rifle')) iconEl.textContent = '💣';
+                     else if (type.includes('sniper')) iconEl.textContent = '🎯';
+                     else if (type.includes('heavy')) iconEl.textContent = '🚀';
+                     else if (type.includes('shield')) iconEl.textContent = '🛡️';
+                     else if (type.includes('repair_kit')) iconEl.textContent = '❤️';
+                     else if (type.includes('gadget')) iconEl.textContent = '⚙️';
+                     else if (type.includes('enhancement')) iconEl.textContent = '🔧';
+                     else if (type.includes('class_mod')) iconEl.textContent = '🧑‍🚀';
+                     else iconEl.textContent = '✨';
+                 } else if (baseSerialData.itemInfo) {
+                     // Fallback to API data if it exists
+                     nameEl.textContent = baseSerialData.itemInfo.item_name || 'Unknown Item';
+                     typeEl.textContent = `Type: ${baseSerialData.itemInfo.item_type_name || 'Unknown'}`;
+                     manuEl.textContent = `Manufacturer: ${baseSerialData.itemInfo.manufacturer_name || 'Unknown'}`;
+                     iconEl.textContent = '❓';
+                 } else {
+                     // Absolute fallback
+                     nameEl.textContent = 'Item Info Unavailable';
+                     typeEl.textContent = 'Type: Unknown';
+                     manuEl.textContent = 'Manufacturer: Unknown';
+                     iconEl.textContent = '❓';
+                 }
+                 // --- END MODIFICATION ---
+             }
+
+
+            // Populate selections state from identified existing parts
+            function populateSelectionsFromExisting() {
+                // Copy existing parts to selections
+                selections.perks = [...baseSerialData.existingParts.perks];
+                selections.stats = [...baseSerialData.existingParts.stats];
+                selections.altFire = [...baseSerialData.existingParts.altFire]; // Copy array
+                selections.element = [...baseSerialData.existingParts.element]; // Copy array
+                selections.skin = baseSerialData.existingParts.skin;
+
+                // Update all displays
+                updatePerksDisplay();
+                updateStatsDisplay();
+                updateAltFireDisplay();
+                updateElementDisplay();
+                updateSkinDisplay();
+
+                 // Update "Existing" info sections
+                 document.getElementById('existingPerksText').textContent = baseSerialData.existingParts.perks.length > 0 ? baseSerialData.existingParts.perks.join(', ') : 'None';
+                 document.getElementById('existingStatsText').textContent = baseSerialData.existingParts.stats.length > 0 ? baseSerialData.existingParts.stats.join(', ') : 'None';
+                 document.getElementById('existingAltFireText').textContent = baseSerialData.existingParts.altFire.length > 0 ? baseSerialData.existingParts.altFire.join(', ') : 'None'; // Adjusted for array
+                 document.getElementById('existingElementText').textContent = baseSerialData.existingParts.element.length > 0 ? baseSerialData.existingParts.element.join(', ') : 'None'; // Adjusted for array
+                 document.getElementById('existingSkinText').textContent = baseSerialData.existingParts.skin || 'None';
+
+                 // Show/hide info sections based on content
+                 document.getElementById('existingPerksInfo').style.display = baseSerialData.existingParts.perks.length > 0 ? 'block' : 'none';
+                 document.getElementById('existingStatsInfo').style.display = baseSerialData.existingParts.stats.length > 0 ? 'block' : 'none';
+                 document.getElementById('existingAltFireInfo').style.display = baseSerialData.existingParts.altFire.length > 0 ? 'block' : 'none'; // Adjusted
+                 document.getElementById('existingElementInfo').style.display = baseSerialData.existingParts.element.length > 0 ? 'block' : 'none'; // Adjusted
+                 document.getElementById('existingSkinInfo').style.display = baseSerialData.existingParts.skin ? 'block' : 'none';
+            }
+
+            // Parse existing parts from serial
+            function identifyExistingParts(serialString) {
+                 // Build reverse lookup maps (code -> name)
+                 const perkLookup = {};
+                 Object.values(perks).forEach(category => {
+                     Object.entries(category).forEach(([name, code]) => { if (!perkLookup[code]) perkLookup[code] = name; });
+                 });
+                 const statLookup = {};
+                 for (const [name, code] of Object.entries(stats)) {
+                     if (!statLookup[code]) statLookup[code] = name;
+                 }
+                const altFireLookup = Object.fromEntries(Object.entries(altFires).map(([k, v]) => [v, k]));
+                const elementLookup = {};
+                Object.values(elements).forEach(category => {
+                    Object.entries(category).forEach(([name, code]) => { elementLookup[code] = name; });
+                });
+                const skinLookup = {};
+                Object.values(skins).forEach(category => {
+                    Object.entries(category).forEach(([name, code]) => { skinLookup[code] = name; });
+                });
+
+                const existing = {
+                    perks: [],
+                    stats: [],
+                    altFire: [],
+                    element: [],
+                    skin: null
+                };
+
+                // This regex captures: {X:Y}, {X:[A B C]}, raw numbers (like 10), and raw codes (like {10})
+                const codeRegex = /(\{[^}]+\})|\b\d+\b/g; 
+                 const partsSection = serialString.split('||')[1];
+                 const codes = (partsSection ? partsSection.match(codeRegex) : []) || [];
+                 
+                // List of codes that should NOT be filtered out, even if they aren't part of the editor's selections
+                 const managedCodes = new Set();
+                 Object.values(perks).flatMap(c => Object.values(c)).forEach(code => code.split(' ').forEach(p => managedCodes.add(p)));
+                 Object.values(stats).forEach(code => code.split(' ').forEach(p => managedCodes.add(p)));
+                 Object.values(altFires).forEach(code => code.split(' ').forEach(p => managedCodes.add(p)));
+                 Object.values(elements).flatMap(c => Object.values(c)).forEach(code => code.split(' ').forEach(p => managedCodes.add(p)));
+                 Object.values(skins).flatMap(c => Object.values(c)).forEach(code => code.split(' ').forEach(p => managedCodes.add(p)));
+
+
+                codes.forEach(code => {
+                     // Clean up code for lookup (removes outer braces for single numbers, but preserves array braces)
+                     const cleanCode = code.startsWith('{') && code.endsWith('}') && !code.includes(':') && !code.includes('[') ? code.slice(1, -1) : code;
+                     
+                     // 1. Check full multi-part stat codes (must be checked first)
+                     const multiStatMatch = Object.entries(stats).find(([name, statCode]) => statCode === code);
+                     if (multiStatMatch) {
+                         if (!existing.stats.includes(multiStatMatch[0])) existing.stats.push(multiStatMatch[0]);
+                         return;
+                     }
+                    
+                     // 2. Check individual part codes (perks, altFire, element, skin)
+                     if (perkLookup[code]) {
+                         if (!existing.perks.includes(perkLookup[code])) existing.perks.push(perkLookup[code]);
+                         return;
+                    }
+                    if (altFireLookup[code]) {
+                         if (!existing.altFire.includes(altFireLookup[code])) existing.altFire.push(altFireLookup[code]);
+                         return;
+                    }
+                    if (elementLookup[code]) {
+                         if (!existing.element.includes(elementLookup[code])) existing.element.push(elementLookup[code]);
+                         return;
+                    }
+                    if (skinLookup[code]) {
+                         existing.skin = skinLookup[code];
+                         return;
+                    }
+                    
+                     // 3. Check single part stat codes (less accurate, but for cleanup)
+                      if (statLookup[code]) { 
+                         if (!existing.stats.includes(statLookup[code])) existing.stats.push(statLookup[code]);
+                         return;
+                      }
+                    
+                     // 4. If it's a bare number (like the problematic 10, 11, 12...), treat it as an unknown base part
+                     if (!isNaN(parseInt(cleanCode)) && !code.includes(':') && !code.includes('[')) {
+                         return;
+                     }
+
+                });
+
+                baseSerialData.existingParts = existing;
+            }
+
+
+            // --- LOGIC REWRITE v4.0.0 ---
+            // This logic is now diff-based. It compares the *original* parts
+            // with the *current* selections to determine what to add or remove,
+            // preserving the order of all unknown base parts.
+            function generateLiveSerial(data, cleanNakedNumbers = false) {
+                let currentPartsString = data.remainingParts;
+
+                // --- 1. Get Set of ALL known part codes (for lookups) ---
+                const allPerkCodes = new Set(Object.values(perks).flatMap(category => Object.values(category)));
+                const allStatCodes = new Set(Object.values(stats));
+                const allAltFireCodes = new Set(Object.values(altFires));
+                const allElementCodes = new Set(Object.values(elements).flatMap(category => Object.values(category)));
+                const allSkinCodes = new Set(Object.values(skins).flatMap(category => Object.values(category)));
+
+                // --- REMOVED HELPER (Moved to outer scope) ---
+                // function getCode(name, type) { ... }
+                // --- END REMOVED HELPER ---
+
+                // --- 2. Determine Parts to ADD ---
+                // Parts that are in NEW selections but were NOT in existing parts.
+                const partsToAdd = [];
+                selections.perks.forEach(name => {
+                    if (!data.existingParts.perks.includes(name)) partsToAdd.push(getCode(name, 'perks'));
+                });
+                selections.stats.forEach(name => {
+                    // Stats are multi-add, so we count
+                    const newCount = selections.stats.filter(s => s === name).length;
+                    const oldCount = data.existingParts.stats.filter(s => s === name).length;
+                    if (newCount > oldCount) {
+                        // Add the difference
+                        for (let i = 0; i < (newCount - oldCount); i++) {
+                            partsToAdd.push(getCode(name, 'stats'));
+                        }
+                    }
+                });
+                selections.altFire.forEach(name => {
+                    if (!data.existingParts.altFire.includes(name)) partsToAdd.push(getCode(name, 'altFire'));
+                });
+                 selections.element.forEach(name => {
+                    if (!data.existingParts.element.includes(name)) partsToAdd.push(getCode(name, 'element'));
+                });
+                if (selections.skin && selections.skin !== data.existingParts.skin) {
+                    partsToAdd.push(getCode(selections.skin, 'skin'));
+                }
+
+                // --- 3. Determine Parts to REMOVE ---
+                // Parts that were in existing parts but are NOT in NEW selections.
+                const partsToRemove = [];
+                data.existingParts.perks.forEach(name => {
+                    if (!selections.perks.includes(name)) partsToRemove.push(getCode(name, 'perks'));
+                });
+                data.existingParts.stats.forEach(name => {
+                    const newCount = selections.stats.filter(s => s === name).length;
+                    const oldCount = data.existingParts.stats.filter(s => s === name).length;
+                    if (oldCount > newCount) {
+                        // Remove the difference
+                        for (let i = 0; i < (oldCount - newCount); i++) {
+                            partsToRemove.push(getCode(name, 'stats'));
+                        }
+                    }
+                });
+                 data.existingParts.altFire.forEach(name => {
+                    if (!selections.altFire.includes(name)) partsToRemove.push(getCode(name, 'altFire'));
+                });
+                 data.existingParts.element.forEach(name => {
+                    if (!selections.element.includes(name)) partsToRemove.push(getCode(name, 'element'));
+                });
+                if (data.existingParts.skin && data.existingParts.skin !== selections.skin) {
+                    partsToRemove.push(getCode(data.existingParts.skin, 'skin'));
+                }
+
+                // --- 4. Modify the parts string ---
+                // Remove parts first
+                partsToRemove.forEach(code => {
+                    if (code) currentPartsString = removeCodeFromSerial_internal(currentPartsString, code);
+                });
+                
+                // Add new parts
+                partsToAdd.forEach(code => {
+                    if (code) currentPartsString += ` ${code}`;
+                });
+                
+                // --- 5. Handle "cleanNakedNumbers" for initial validation ---
+                // This is a special case for the *first* API call in smartParseSerial
+                if (cleanNakedNumbers) {
+                    const codeRegex = /(\{[^}]+\})|(\b\d+\b)/g; 
+                    const allParts = (currentPartsString.match(codeRegex) || []).filter(p => p.trim());
+                    currentPartsString = allParts.filter(part => {
+                        // Keep if it's a complex part
+                        if (part.startsWith('{')) return true; 
+                        // Keep if it's a naked number that is *also* a known part (like '48')
+                        if (allAltFireCodes.has(part)) return true;
+                        // Discard if it's any other naked number
+                        return false; 
+                    }).join(' ');
+                }
+
+                // 6. Reconstruct final serial
+                let previewSerial = `${data.header}| ${data.firstPartCode}|| ${currentPartsString.replace(/\s+/g, ' ').trim()}`;
+                
+                // Add trailing pipe
+                previewSerial += '|';
+                return previewSerial;
+            }
+            // --- END LOGIC REWRITE ---
+
+
+            // Update Live Preview Serial and Summary
+            const updateLivePreview = debounce(() => {
+                if (!baseSerialData.header) return; // Don't update if no base loaded
+
+                 const finalDeserializedString = generateLiveSerial(baseSerialData);
+
+                // --- START VISUAL CHANGE (Request 1 & 2) ---
+                
+                // Re-calculate *only* the added parts for visual highlighting.
+                // This logic is duplicated from generateLiveSerial to avoid breaking API validation.
+                const partsToAdd = [];
+                selections.perks.forEach(name => {
+                    if (!baseSerialData.existingParts.perks.includes(name)) partsToAdd.push(getCode(name, 'perks'));
+                });
+                selections.stats.forEach(name => {
+                    // Stats are multi-add, so we count
+                    const newCount = selections.stats.filter(s => s === name).length;
+                    const oldCount = baseSerialData.existingParts.stats.filter(s => s === name).length;
+                    if (newCount > oldCount) {
+                        // Add the difference
+                        for (let i = 0; i < (newCount - oldCount); i++) {
+                            partsToAdd.push(getCode(name, 'stats'));
+                        }
+                    }
+                });
+                selections.altFire.forEach(name => {
+                    if (!baseSerialData.existingParts.altFire.includes(name)) partsToAdd.push(getCode(name, 'altFire'));
+                });
+                 selections.element.forEach(name => {
+                    if (!baseSerialData.existingParts.element.includes(name)) partsToAdd.push(getCode(name, 'element'));
+                });
+                if (selections.skin && selections.skin !== baseSerialData.existingParts.skin) {
+                    partsToAdd.push(getCode(selections.skin, 'skin'));
+                }
+
+                let addedPartsString = "";
+                partsToAdd.forEach(code => {
+                    if (code) addedPartsString += ` ${code}`;
+                });
+                addedPartsString = addedPartsString.trim();
+
+                const previewEl = document.getElementById('liveSerialPreview');
+
+                if (addedPartsString) {
+                    // If we have added parts, we need to find the base string
+                    // We must escape the addedPartsString for use in the regex replacement
+                    const escapedAddedParts = addedPartsString.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                    
+                    // Find the added parts at the end, handling the optional trailing pipe
+                    const regex = new RegExp(`\\s*${escapedAddedParts}\\s*(\\|?)$`);
+                    const baseString = finalDeserializedString.replace(regex, "$1");
+
+                    previewEl.innerHTML = `${escapeHTML(baseString.replace(/\|$/, ''))} <span style="color: #FFA500; font-weight: bold;">${escapeHTML(addedPartsString)}</span>`;
+                    
+                    // Add trailing pipe back if it was there
+                    if (finalDeserializedString.endsWith('|')) {
+                        previewEl.innerHTML += '|';
+                    }
+                } else {
+                    // No added parts, just display the string (as text, not HTML)
+                    previewEl.textContent = finalDeserializedString;
+                }
+                // --- END VISUAL CHANGE ---
+
+
+                // --- >>> LIVE VALIDATION TRIGGER <<< ---
+                const editableOutputEl = document.getElementById('editableOutputSerial');
+                if (editableOutputEl) {
+                    // Update editable box for consistency, but only if user isn't actively typing in it
+                     if (document.activeElement !== editableOutputEl) {
+                         editableOutputEl.value = finalDeserializedString;
+                     }
+                     // Always trigger live validation regardless of focus state on the box
+                     handleLiveValidation(finalDeserializedString); 
+                }
+                // --- END LIVE VALIDATION TRIGGER ---
+
+
+                // Update combined parts summary (identified parts)
+                let summaryHTML = '';
+
+                if (selections.perks.length > 0) {
+                     // Function to get perk code from name across categories
+                     const getPerkCode = (perkName) => {
+                         for (const category in perks) {
+                             if (perks[category][perkName]) {
+                                 return perks[category][perkName];
+                             }
+                         }
+                         return ''; // Should not happen if name is valid
+                     };
+                    summaryHTML += `
+                        <div class="mod-badge" style="background: rgba(0, 150, 255, 0.3); cursor: pointer;" onclick="toggleModBadge(event, 'perks')">
+                            <strong>${selections.perks.length}</strong> Perk${selections.perks.length !== 1 ? 's' : ''}
+                            <div class="mod-badge-dropdown" id="perksDropdown" style="background: rgba(0, 30, 50, 0.95);">
+                                <div style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                                    <button class="btn btn-secondary" style="width: 100%; padding: 6px; font-size: 0.85em; margin-bottom: 5px;" onclick="event.stopPropagation(); removeAllPerks()">🗑️ Remove All Perks</button>
+                                    <button class="btn btn-primary" style="width: 100%; padding: 6px; font-size: 0.85em;" onclick="event.stopPropagation(); goToSection(1)">✏️ Edit Perks</button>
+                                </div>
+                                ${selections.perks.map(perk =>
+                                    `<div class="mod-badge-item" title="${getPerkCode(perk)}">
+                                        <span>${perk}</span>
+                                        <span class="remove-btn" onclick="event.stopPropagation(); removePerk('${perk.replace(/'/g, "\\'")}')">✕</span>
+                                    </div>`
+                                ).join('')}
+                            </div>
+                        </div>`;
+                }
+                if (selections.stats.length > 0) {
+                    summaryHTML += `
+                        <div class="mod-badge" style="background: rgba(0, 200, 150, 0.3); cursor: pointer;" onclick="toggleModBadge(event, 'stats')">
+                            <strong>${selections.stats.length}</strong> Stat${selections.stats.length !== 1 ? 's' : ''}
+                            <div class="mod-badge-dropdown" id="statsDropdown" style="background: rgba(0, 40, 30, 0.95);">
+                                <div style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                                    <button class="btn btn-secondary" style="width: 100%; padding: 6px; font-size: 0.85em; margin-bottom: 5px;" onclick="event.stopPropagation(); removeAllStats()">🗑️ Remove All Stats</button>
+                                    <button class="btn btn-primary" style="width: 100%; padding: 6px; font-size: 0.85em;" onclick="event.stopPropagation(); goToSection(2)">✏️ Edit Stats</button>
+                                </div>
+                                 ${selections.stats.map((stat, index) => // Need index for unique removal
+                                     `<div class="mod-badge-item" title="${stats[stat]}"> <!-- Display full stat name, code in title -->
+                                         <span>${stat}</span> <!-- Display full stat name -->
+                                         <span class="remove-btn" onclick="event.stopPropagation(); removeStatByIndex(${index})">✕</span>
+                                     </div>`
+                                 ).join('')}
+                            </div>
+                        </div>`;
+                }
+                 // Update Alt Fire summary display
+                if (selections.altFire.length > 0) {
+                    summaryHTML += `
+                        <div class="mod-badge" style="background: rgba(255, 165, 0, 0.3); cursor: pointer;" onclick="toggleModBadge(event, 'altFire')">
+                            <strong>${selections.altFire.length}</strong> Alt Fire${selections.altFire.length !== 1 ? 's' : ''}
+                            <div class="mod-badge-dropdown" id="altFireDropdown" style="background: rgba(50, 30, 0, 0.95);">
+                                 <div style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                                     <button class="btn btn-secondary" style="width: 100%; padding: 6px; font-size: 0.85em; margin-bottom: 5px;" onclick="event.stopPropagation(); removeAllAltFires()">🗑️ Remove All Alt Fires</button>
+                                     <button class="btn btn-primary" style="width: 100%; padding: 6px; font-size: 0.85em;" onclick="event.stopPropagation(); goToSection(3)">✏️ Edit Alt Fires</button>
+                                 </div>
+                                 ${selections.altFire.map(alt =>
+                                     `<div class="mod-badge-item" title="${altFires[alt]}">
+                                         <span>${alt}</span>
+                                         <span class="remove-btn" onclick="event.stopPropagation(); removeAltFireByName('${alt.replace(/'/g, "\\'")}')">✕</span>
+                                     </div>`
+                                 ).join('')}
+                            </div>
+                        </div>`;
+                }
+                 // Update Element summary display
+                if (selections.element.length > 0) {
+                      // Function to get element code from name across categories
+                      const getElementCode = (elementName) => {
+                         for (const category in elements) {
+                             if (elements[category][elementName]) {
+                                 return elements[category][elementName];
+                             }
+                         }
+                         return ''; // Should not happen if name is valid
+                     };
+                    summaryHTML += `
+                        <div class="mod-badge" style="background: rgba(255, 165, 0, 0.3); cursor: pointer;" onclick="toggleModBadge(event, 'element')">
+                             <strong>${selections.element.length}</strong> Element${selections.element.length !== 1 ? 's' : ''}
+                             <div class="mod-badge-dropdown" id="elementDropdown" style="background: rgba(50, 30, 0, 0.95);">
+                                 <div style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                                     <button class="btn btn-secondary" style="width: 100%; padding: 6px; font-size: 0.85em; margin-bottom: 5px;" onclick="event.stopPropagation(); removeAllElements()">🗑️ Remove All Elements</button>
+                                     <button class="btn btn-primary" style="width: 100%; padding: 6px; font-size: 0.85em;" onclick="event.stopPropagation(); goToSection(4)">✏️ Edit Elements</button>
+                                 </div>
+                                 ${selections.element.map(el =>
+                                     `<div class="mod-badge-item" title="${getElementCode(el)}"> <!-- Use helper to get code -->
+                                         <span>${el}</span>
+                                         <span class="remove-btn" onclick="event.stopPropagation(); removeElementByName('${el.replace(/'/g, "\\'")}')">✕</span>
+                                     </div>`
+                                 ).join('')}
+                            </div>
+                        </div>`;
+                }
+                if (selections.skin) {
+                     const skinCode = Object.entries(skins).flatMap(([_, items]) => Object.entries(items)).find(([name]) => name === selections.skin)?.[1] || '';
+                    summaryHTML += `
+                        <div class="mod-badge" style="background: rgba(255, 165, 0, 0.3); cursor: pointer;" onclick="toggleModBadge(event, 'skin')">
+                            <strong>✓</strong> Skin
+                            <div class="mod-badge-dropdown" id="skinDropdown" style="background: rgba(50, 30, 0, 0.95);">
+                                 <div style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                                     <button class="btn btn-secondary" style="width: 100%; padding: 6px; font-size: 0.85em; margin-bottom: 5px;" onclick="event.stopPropagation(); removeSkin()">🗑️ Remove Skin</button>
+                                     <button class="btn btn-primary" style="width: 100%; padding: 6px; font-size: 0.85em;" onclick="event.stopPropagation(); goToSection(5)">✏️ Edit Skin</button>
+                                 </div>
+                                <div class="mod-badge-item" title="${skinCode}">
+                                    <span>${selections.skin}</span>
+                                    <span class="remove-btn" onclick="event.stopPropagation(); removeSkin()">✕</span>
+                                </div>
+                            </div>
+                        </div>`;
+                }
+
+                document.getElementById('modsSummary').innerHTML = summaryHTML || '<p style="font-style: italic; opacity: 0.7;">No modifications applied yet.</p>';
+
+            }, 50); // Debounce preview update slightly
+
+
+            // --- Logic to handle existing parts ---
+             // When an existing part is identified, we need UI to show it and allow removal
+
+            function removeExistingPerk(perk) {
+                const index = baseSerialData.existingParts.perks.indexOf(perk);
+                if (index > -1) {
+                    // Find the code across all perk categories
+                    const perkCode = Object.values(perks).reduce((foundCode, category) => {
+                        return foundCode || category[perk];
+                    }, null);
+                    if (perkCode) baseSerialData.remainingParts = removeCodeFromSerial_internal(baseSerialData.remainingParts, perkCode); // Remove code from base serial
+                    baseSerialData.existingParts.perks.splice(index, 1); // Remove from existing list
+                }
+                // Also remove from current selections if present
+                const selIndex = selections.perks.indexOf(perk);
+                if (selIndex > -1) {
+                    selections.perks.splice(selIndex, 1);
+                }
+                updatePerksDisplay(); // Update display
+                updateLivePreview();
+            }
+
+            function removeExistingStat(stat) {
+                 const index = baseSerialData.existingParts.stats.indexOf(stat);
+                 if (index > -1) {
+                     // Handle multi-code stats
+                     const codesToRemove = stats[stat];
+                     if (codesToRemove) baseSerialData.remainingParts = removeCodeFromSerial_internal(baseSerialData.remainingParts, codesToRemove);
+                     baseSerialData.existingParts.stats.splice(index, 1);
+                }
+                // Also remove from selections - IMPORTANT: Remove only ONE instance if removing existing
+                const selIndex = selections.stats.indexOf(stat);
+                if (selIndex > -1) {
+                    selections.stats.splice(selIndex, 1);
+                }
+                updateStatsDisplay();
+                updateLivePreview();
+            }
+
+            // Add functions to remove *all* existing perks/stats
+            function removeAllExistingPerks() {
+                [...baseSerialData.existingParts.perks].forEach(perk => { // Iterate over a copy
+                    removeExistingPerk(perk);
+                });
+                updatePerksDisplay(); // Ensure display updates after loop
+                updateLivePreview();
+            }
+
+            function removeAllExistingStats() {
+                 [...baseSerialData.existingParts.stats].forEach(stat => { // Iterate over a copy
+                    removeExistingStat(stat);
+                });
+                updateStatsDisplay(); // Ensure display updates after loop
+                updateLivePreview();
+            }
+
+
+            function removeExistingAltFire(altFire) {
+                const index = baseSerialData.existingParts.altFire.indexOf(altFire);
+                if (index > -1) {
+                    const altCode = altFires[altFire];
+                    if (altCode) baseSerialData.remainingParts = removeCodeFromSerial_internal(baseSerialData.remainingParts, altCode);
+                    baseSerialData.existingParts.altFire.splice(index, 1);
+                }
+                // Also remove from selections if it exists
+                const selIndex = selections.altFire.indexOf(altFire);
+                if (selIndex > -1) {
+                     selections.altFire.splice(selIndex, 1);
+                }
+                updateAltFireDisplay();
+                updateLivePreview();
+            }
+
+            function removeExistingElement(element) {
+                 const index = baseSerialData.existingParts.element.indexOf(element);
+                 if (index > -1) {
+                     // Find the code across all element categories
+                      const elementCode = Object.values(elements).reduce((foundCode, category) => {
+                         return foundCode || category[element];
+                     }, null);
+                      if (elementCode) baseSerialData.remainingParts = removeCodeFromSerial_internal(baseSerialData.remainingParts, elementCode);
+                      baseSerialData.existingParts.element.splice(index, 1);
+                 }
+                 // Also remove from selections if it exists
+                 const selIndex = selections.element.indexOf(element);
+                 if (selIndex > -1) {
+                      selections.element.splice(selIndex, 1);
+                 }
+                updateElementDisplay();
+                updateLivePreview();
+            }
+
+            function removeExistingSkin() {
+                if (baseSerialData.existingParts.skin) {
+                     const skinToRemove = baseSerialData.existingParts.skin; // Store before clearing
+                     const skinCode = Object.entries(skins)
+                         .flatMap(([category, items]) => Object.entries(items))
+                         .find(([name, code]) => name === skinToRemove)?.[1];
+                    if (skinCode) {
+                        baseSerialData.remainingParts = removeCodeFromSerial_internal(baseSerialData.remainingParts, skinCode);
+                    }
+                    baseSerialData.existingParts.skin = null;
+                     // Also remove from selections if it matches
+                    if (selections.skin === skinToRemove) {
+                         selections.skin = null;
+                    }
+                }
+                updateSkinDisplay();
+                updateLivePreview();
+            }
+
+            // Perk Selection
+            function renderPerks() {
+                const container = document.getElementById('perksList');
+                container.innerHTML = ''; // Clear previous content
+
+                // Iterate through categories defined in the perks object
+                Object.keys(perks).forEach(categoryName => { // Use Object.keys to maintain definition order
+                    const items = perks[categoryName];
+
+                    // Create category title
+                    const categoryTitle = document.createElement('div');
+                    categoryTitle.classList.add('category-title');
+                    categoryTitle.textContent = categoryName;
+                    container.appendChild(categoryTitle);
+
+                    // Create grid for this category
+                    const grid = document.createElement('div');
+                    grid.classList.add('options-grid');
+                    container.appendChild(grid);
+
+                    // Add items for this category (using definition order)
+                    Object.keys(items).forEach(perk => {
+                        const item = document.createElement('div');
+                        item.classList.add('option-item');
+                        item.textContent = perk;
+                        item.title = `${perk} (${items[perk]})`; // Add tooltip with code
+                        item.onclick = () => selectPerk(perk, item);
+                        if (selections.perks.includes(perk)) {
+                            item.classList.add('selected');
+                        }
+                        grid.appendChild(item);
+                    });
+                });
+            }
+
+
+            function selectPerk(perk, element) {
+                const index = selections.perks.indexOf(perk);
+                if (index > -1) {
+                    selections.perks.splice(index, 1);
+                    element.classList.remove('selected');
+                } else {
+                    selections.perks.push(perk);
+                    element.classList.add('selected');
+                }
+                updatePerksDisplay();
+            }
+
+            function updatePerksDisplay() {
+                const display = document.getElementById('perksDisplay');
+                const summary = document.getElementById('perksSummary');
+                if (selections.perks.length === 0) {
+                    display.innerHTML = '<em>No perks selected</em>';
+                    summary.textContent = ' - None selected';
+                } else {
+                     // Helper to get perk code from name across categories
+                     const getPerkCode = (perkName) => {
+                         for (const category in perks) {
+                             if (perks[category][perkName]) {
+                                 return perks[category][perkName];
+                             }
+                         }
+                         return ''; // Should not happen if name is valid
+                     };
+                    display.innerHTML = selections.perks.map(perk =>
+                         `<span class="selection-tag" title="${getPerkCode(perk)}">${perk}<span class="remove" onclick="removePerk('${perk.replace(/'/g, "\\'")}')">✕</span></span>`
+                    ).join('');
+                    summary.textContent = ` - ${selections.perks.length} selected`;
+                }
+                // Update selected state in the grid (needs to check across categories)
+                 document.querySelectorAll('#perksList .option-item').forEach(el => {
+                     if (selections.perks.includes(el.textContent)) {
+                         el.classList.add('selected');
+                     } else {
+                         el.classList.remove('selected');
+                     }
+                 });
+                 updateLivePreview();
+            }
+
+            function removePerk(perk) {
+                const index = selections.perks.indexOf(perk);
+                if (index > -1) {
+                    selections.perks.splice(index, 1);
+                     // Check if it was an *existing* perk and remove from base if so
+                      const existingIndex = baseSerialData.existingParts.perks.indexOf(perk);
+                      if (existingIndex > -1) {
+                         // Don't actually remove from base here, let finalizeSerial handle reconstruction
+                         console.log("Removing an existing perk reference:", perk); // Log removal
+                      }
+                     updatePerksDisplay();
+                     updateLivePreview();
+                }
+            }
+
+            function selectAllPerks() {
+                // Flatten all perk names from all categories
+                 selections.perks = Object.values(perks).flatMap(category => Object.keys(category));
+                updatePerksDisplay();
+            }
+
+            function removeAllPerks() {
+                selections.perks = [];
+                // We don't modify baseSerialData.existingParts here directly
+                updatePerksDisplay();
+                updateLivePreview();
+            }
+
+            // Stat Selection - RESTORED MULTI-ADD LOGIC
+            function renderStats() {
+                const container = document.getElementById('statsList');
+                container.innerHTML = '';
+                 Object.keys(stats).forEach(stat => { // Removed .sort()
+                    const item = document.createElement('div');
+                    item.classList.add('option-item'); // Use option-item for styling consistency
+
+                    // Wrapper for flex layout
+                    const wrapper = document.createElement('div');
+                    wrapper.style.display = 'flex';
+                    wrapper.style.justifyContent = 'space-between';
+                    wrapper.style.alignItems = 'center';
+
+                    // Stat name
+                    const nameSpan = document.createElement('span');
+                     nameSpan.textContent = stat;
+                      // Add tooltip for long stat names/codes
+                      nameSpan.title = `${stat} (${stats[stat]})`;
+                    wrapper.appendChild(nameSpan);
+
+                    // Controls (Input + Button)
+                    const controlsDiv = document.createElement('div');
+                    controlsDiv.style.display = 'flex';
+                    controlsDiv.style.gap = '8px';
+                    controlsDiv.style.alignItems = 'center';
+                     controlsDiv.style.flexShrink = '0'; // Prevent controls from shrinking
+
+                    // Input for count
+                    const countInput = document.createElement('input');
+                    countInput.type = 'number';
+                    countInput.min = '1';
+                    countInput.value = '1';
+                    countInput.style.width = '60px'; // Adjust width as needed
+                    countInput.style.padding = '5px';
+                    countInput.style.fontSize = '0.9em';
+                    countInput.onclick = (e) => e.stopPropagation(); // Prevent item selection on input click
+                    controlsDiv.appendChild(countInput);
+
+                    // Add button
+                    const addButton = document.createElement('button');
+                    addButton.textContent = 'Add';
+                    addButton.className = 'btn btn-primary'; // Style as needed
+                    addButton.style.padding = '5px 10px';
+                    addButton.style.fontSize = '0.85em';
+                    addButton.onclick = (e) => {
+                        e.stopPropagation(); // Prevent item selection on button click
+                        addStat(stat, parseInt(countInput.value) || 1); // Add specified count
+                    };
+                    controlsDiv.appendChild(addButton);
+
+                    wrapper.appendChild(controlsDiv);
+                    item.appendChild(wrapper);
+                    container.appendChild(item);
+                });
+            }
+
+            function addStat(stat, count) {
+                for (let i = 0; i < count; i++) {
+                    selections.stats.push(stat); // Add multiple times
+                }
+                updateStatsDisplay(); // Update display immediately
+                updateLivePreview(); // Update preview
+            }
+
+            // Function to remove stat by index (needed for duplicates)
+            function removeStatByIndex(index) {
+                if (index >= 0 && index < selections.stats.length) {
+                    const removedStat = selections.stats[index];
+                    selections.stats.splice(index, 1);
+                      // Check if it was an *existing* stat - this part is tricky with duplicates
+                      // For now, removing existing only removes the reference, finalize handles reconstruction
+                      const existingIndex = baseSerialData.existingParts.stats.indexOf(removedStat);
+                      if (existingIndex > -1) {
+                         // Don't modify baseSerialData.existingParts here
+                         console.log("Removing reference to an existing stat:", removedStat);
+                      }
+                     updateStatsDisplay();
+                     updateLivePreview();
+                }
+            }
+
+
+            function updateStatsDisplay() {
+                const display = document.getElementById('statsDisplay');
+                const summary = document.getElementById('statsSummary');
+                if (selections.stats.length === 0) {
+                    display.innerHTML = '<em>No stats selected</em>';
+                    summary.textContent = ' - None selected';
+                } else {
+                    // Display each instance with a remove button using its index
+                    display.innerHTML = selections.stats.map((stat, index) =>
+                         // Display full stat name in the tag, add title with code for clarity
+                          `<span class="selection-tag" title="${stats[stat]}">${stat}<span class="remove" onclick="removeStatByIndex(${index})">✕</span></span>`
+                    ).join('');
+                    summary.textContent = ` - ${selections.stats.length} selected`;
+                }
+                // Cannot reliably update 'selected' class for multi-add items
+                updateLivePreview();
+            }
+
+            function removeAllStats() {
+                selections.stats = [];
+                // Don't modify baseSerialData.existingParts here
+                updateStatsDisplay();
+                updateLivePreview();
+            }
+
+            // Alt Fire Selection (Multi-Select)
+            function renderAltFires() {
+                const container = document.getElementById('altFireList');
+                container.innerHTML = '';
+                 Object.keys(altFires).forEach(alt => { // Removed .sort()
+                    const item = document.createElement('div');
+                    item.classList.add('option-item');
+                    item.textContent = alt;
+                     item.title = `${alt} (${altFires[alt]})`; // Add tooltip with code
+                    item.onclick = () => selectAltFire(alt, item);
+                    if (selections.altFire.includes(alt)) { // Check includes for array
+                        item.classList.add('selected');
+                    }
+                    container.appendChild(item);
+                });
+            }
+
+            function selectAltFire(altFire, element) {
+                const index = selections.altFire.indexOf(altFire);
+                const MAX_ALT_FIRES = 5;
+
+                if (index > -1) {
+                    // Already selected, remove it
+                    selections.altFire.splice(index, 1);
+                    element.classList.remove('selected');
+                } else {
+                    // Not selected, add if limit not reached
+                    if (selections.altFire.length < MAX_ALT_FIRES) {
+                        selections.altFire.push(altFire);
+                        element.classList.add('selected');
+                    } else {
+                        showMessage(`You can only select up to ${MAX_ALT_FIRES} alt fire modes.`, 'error');
+                    }
+                }
+                updateAltFireDisplay();
+            }
+
+            function updateAltFireDisplay() {
+                const display = document.getElementById('altFireDisplay');
+                const summaryElement = document.getElementById('altFireSummary');
+
+                if (selections.altFire.length === 0) {
+                    display.innerHTML = '<em>No alt fire selected</em>';
+                    if (summaryElement) summaryElement.textContent = ' - None selected';
+                } else {
+                    display.innerHTML = selections.altFire.map(alt =>
+                         `<span class="selection-tag" title="${altFires[alt]}">${alt}<span class="remove" onclick="removeAltFireByName('${alt.replace(/'/g, "\\'")}')">✕</span></span>`
+                    ).join('');
+                     if (summaryElement) summaryElement.textContent = ` - ${selections.altFire.length} selected`;
+                }
+
+                // Update selected state in the grid
+                 document.querySelectorAll('#altFireList .option-item').forEach(el => {
+                     if (selections.altFire.includes(el.textContent)) {
+                         el.classList.add('selected');
+                     } else {
+                         el.classList.remove('selected');
+                     }
+                 });
+                 updateLivePreview();
+            }
+
+            // Remove a specific alt fire by name (used by tags)
+            function removeAltFireByName(altFire) {
+                const index = selections.altFire.indexOf(altFire);
+                if (index > -1) {
+                    selections.altFire.splice(index, 1);
+                    updateAltFireDisplay(); // Update display and grid selection state
+                    updateLivePreview();
+                }
+            }
+
+            // Remove all selected alt fires
+            function removeAllAltFires() {
+                selections.altFire = [];
+                updateAltFireDisplay();
+                updateLivePreview();
+            }
+
+
+            // Element Selection (Multi-Select)
+            function renderElements() {
+                const container = document.getElementById('elementList');
+                container.innerHTML = ''; // Clear previous content
+
+                // Iterate through categories defined in the elements object
+                Object.keys(elements).forEach(categoryName => { // Use Object.keys to maintain definition order
+                    const items = elements[categoryName];
+
+                    // Create category title
+                    const categoryTitle = document.createElement('div');
+                    categoryTitle.classList.add('category-title');
+                    categoryTitle.textContent = categoryName;
+                    container.appendChild(categoryTitle);
+
+                    // Create grid for this category
+                    const grid = document.createElement('div');
+                    grid.classList.add('options-grid');
+                    container.appendChild(grid);
+
+                    // Add items for this category (using definition order)
+                    Object.keys(items).forEach(elName => {
+                        const item = document.createElement('div');
+                        item.classList.add('option-item');
+                        item.textContent = elName;
+                        item.title = `${elName} (${items[elName]})`; // Add tooltip with code
+                        item.onclick = () => selectElement(elName, item);
+                        if (selections.element.includes(elName)) { // Check includes for array
+                            item.classList.add('selected');
+                        }
+                        grid.appendChild(item);
+                    });
+                });
+            }
+
+            function selectElement(element, elementDiv) {
+                 const index = selections.element.indexOf(element);
+                 const MAX_ELEMENTS = 3;
+
+                if (index > -1) {
+                     // Already selected, remove it
+                    selections.element.splice(index, 1);
+                    elementDiv.classList.remove('selected');
+                } else {
+                     // Not selected, add if limit not reached
+                    if (selections.element.length < MAX_ELEMENTS) {
+                        selections.element.push(element);
+                        elementDiv.classList.add('selected');
+                    } else {
+                         showMessage(`You can only select up to ${MAX_ELEMENTS} elements.`, 'error');
+                    }
+                }
+                updateElementDisplay();
+            }
+
+            function updateElementDisplay() {
+                const display = document.getElementById('elementDisplay');
+                const summaryElement = document.getElementById('elementSummary');
+
+                if (selections.element.length === 0) {
+                    display.innerHTML = '<em>No element selected</em>';
+                     if (summaryElement) summaryElement.textContent = ' - None selected';
+                } else {
+                     // Helper to get element code from name across categories
+                     const getElementCode = (elementName) => {
+                         for (const category in elements) {
+                             if (elements[category][elementName]) {
+                                 return elements[category][elementName];
+                             }
+                         }
+                         return ''; // Should not happen if name is valid
+                     };
+                    display.innerHTML = selections.element.map(el =>
+                         `<span class="selection-tag" title="${getElementCode(el)}">${el}<span class="remove" onclick="removeElementByName('${el.replace(/'/g, "\\'")}')">✕</span></span>`
+                    ).join('');
+                     if (summaryElement) summaryElement.textContent = ` - ${selections.element.length} selected`;
+                }
+
+                 // Update selected state in the grid (needs to check across categories)
+                 document.querySelectorAll('#elementList .option-item').forEach(el => {
+                     if (selections.element.includes(el.textContent)) {
+                         el.classList.add('selected');
+                     } else {
+                         el.classList.remove('selected');
+                     }
+                 });
+                 updateLivePreview();
+            }
+
+            // Remove a specific element by name (used by tags)
+            function removeElementByName(element) {
+                const index = selections.element.indexOf(element);
+                if (index > -1) {
+                    selections.element.splice(index, 1);
+                    updateElementDisplay(); // Update display and grid selection state
+                    updateLivePreview();
+                }
+            }
+
+            // Remove all selected elements
+            function removeAllElements() {
+                selections.element = [];
+                updateElementDisplay();
+                updateLivePreview();
+            }
+
+            // Skin Selection (Remains Single Select, Alphabetical Order)
+            function renderSkins() {
+                const container = document.getElementById('skinsList');
+                container.innerHTML = '';
+                 // Keep alphabetical sorting for categories
+                Object.entries(skins).sort(([catA], [catB]) => catA.localeCompare(catB)).forEach(([category, items]) => {
+                    const categoryTitle = document.createElement('div');
+                    categoryTitle.classList.add('category-title');
+                    categoryTitle.textContent = category;
+                    container.appendChild(categoryTitle);
+
+                    const grid = document.createElement('div');
+                    grid.classList.add('options-grid');
+                    container.appendChild(grid);
+
+                     // Keep alphabetical sorting for items within category
+                    Object.keys(items).sort().forEach(skin => {
+                        const item = document.createElement('div');
+                        item.classList.add('option-item');
+                        item.textContent = skin;
+                         item.title = `${skin} (${items[skin]})`; // Add tooltip with code
+                        item.onclick = () => selectSkin(skin, item);
+                        if (selections.skin === skin) {
+                            item.classList.add('selected');
+                        }
+                        grid.appendChild(item);
+                    });
+                });
+            }
+
+            function selectSkin(skin, element) {
+                if (selections.skin === skin) {
+                    selections.skin = null;
+                    element.classList.remove('selected');
+                } else {
+                    if (selections.skin) {
+                        const prevSelected = document.querySelector('#skinsList .option-item.selected');
+                        if (prevSelected) prevSelected.classList.remove('selected');
+                    }
+                    selections.skin = skin;
+                    element.classList.add('selected');
+                }
+                updateSkinDisplay();
+            }
+
+            function updateSkinDisplay() {
+                const display = document.getElementById('skinDisplay');
+                const summary = document.getElementById('skinSummary'); // Use specific ID
+                if (!selections.skin) {
+                    display.innerHTML = '<em>No skin selected</em>';
+                    if (summary) summary.textContent = ' - None selected';
+                } else {
+                     const skinCode = Object.entries(skins).flatMap(([_, items]) => Object.entries(items)).find(([name]) => name === selections.skin)?.[1] || '';
+                     display.innerHTML = `<span class="selection-tag" title="${skinCode}">${selections.skin}<span class="remove" onclick="removeSkin()">✕</span></span>`;
+                    if (summary) summary.textContent = ' - 1 selected';
+                }
+                // Update selected state in the grid
+                 document.querySelectorAll('#skinsList .option-item').forEach(el => {
+                     if (selections.skin === el.textContent) {
+                         el.classList.add('selected');
+                     } else {
+                         el.classList.remove('selected');
+                     }
+                 });
+                 updateLivePreview();
+            }
+
+            function removeSkin() {
+                 if (selections.skin) {
+                     // We don't modify baseSerialData.existingParts here
+                    selections.skin = null;
+                    updateSkinDisplay();
+                    updateLivePreview();
+                 }
+            }
+
+
+            // Finalize and Generate Serial (Updated to go to Step 6)
+            async function finalizeSerial() {
+                // The final serial is already present in the live output
+                const finalSerial = generateLiveSerial(baseSerialData);
+
+                if (!finalSerial) {
+                    showMessage('Cannot finalize an empty serial.', 'error');
+                    return;
+                }
+                
+                // Set final serial for step 6 view
+                const editableOutputEl = document.getElementById('editableOutputSerial');
+                if (editableOutputEl) {
+                    // Use the cleaned string from the live preview (which is already done by updateLivePreview)
+                    editableOutputEl.value = finalSerial;
+                }
+
+                // Force validation on the current content before moving
+                await validateManualSerial(true); 
+                
+                // Move to the final display step (Step 6)
+                openStep(6);
+            }
+            
+            // --- >>> NEW: Validation Logic for Live Output <<< ---
+
+            // Debounced handler for manual edits
+            const handleManualSerialEdit = debounce(() => {
+                validateManualSerial(false);
+            }, 500); // Validate 500ms after user stops typing
+
+            // Debounced handler for live editor changes (Called by updateLivePreview)
+            const handleLiveValidation = debounce((liveSerial) => {
+                // Use the string passed from updateLivePreview (the true generated string)
+                validateManualSerial(false, liveSerial);
+            }, 500); // Validate 500ms after live update
+
+            // Function to call reserialize API and update validation output
+            async function validateManualSerial(force = false, serialOverride = null) {
+                 // If manual entry, use it. Otherwise, use the live preview from the DOM.
+                 const inputSerial = serialOverride || document.getElementById('editableOutputSerial').value.trim();
+                 const validatedOutputEl = document.getElementById('validatedSerialOutput');
+                 
+                 // Check if input is usable
+                 if (!inputSerial || inputSerial.includes('No serial loaded')) {
+                     validatedOutputEl.textContent = 'Enter serial to validate.';
+                     setValidationStatus('pending', 'Enter serial to validate.');
+                     return;
+                 }
+                 
+                 // Check if we need to proceed (only show loading if force is true)
+                 if (!force) {
+                     // Set status immediately to show something is happening
+                     setValidationStatus('pending', 'Validating...');
+                     validatedOutputEl.textContent = 'Validating...';
+                 }
+
+                 if (force) showLoading(); 
+
+                 try {
+                     // Remove trailing pipe for API call if it exists
+                     const apiPayload = inputSerial.endsWith('|') ? inputSerial.slice(0, -1) : inputSerial;
+                     const result = await callApi('reserialize', { deserialized: apiPayload });
+
+                     if (result.serial_b85) {
+                         validatedOutputEl.textContent = result.serial_b85;
+                         setValidationStatus('valid', '✅ Validated successfully! (Base85)');
+                         
+                         // --- MODIFICATION: Update item info AND new input field ---
+                          if (result.additional_data) {
+                              baseSerialData.itemInfo = result.additional_data;
+                              
+                              // Check header again in case it was manually edited
+                              const headerParts = (inputSerial.split('||')[0] || "").split('|');
+                              if (headerParts[0]) {
+                                const typeId = headerParts[0].split(',')[0].trim();
+                                document.getElementById('itemTypeCodeInput').value = typeId;
+                              }
+                              updateItemInfoDisplay();
+                          }
+                          // --- END MODIFICATION ---
+                     } else {
+                         throw new Error("API did not return B85 serial.");
+                     }
+                 } catch (error) {
+                     const errorMessage = error.message.includes('API Error') ? error.message.split(': ').slice(1).join(': ') : error.message;
+                     validatedOutputEl.textContent = `Error: ${errorMessage}`;
+                     setValidationStatus('invalid', `❌ ${errorMessage}`);
+                 } finally {
+                     if (force) hideLoading(); 
+                 }
+             }
+
+             function setValidationStatus(statusClass, text) {
+                 const validationStatusEl = document.getElementById('validationStatus');
+                 validationStatusEl.className = `validation-status ${statusClass}`;
+                 validationStatusEl.textContent = text;
+             }
+
+             // --- >>> END NEW VALIDATION LOGIC <<< ---
+
+
+            // Navigation
+            function openStep(step) {
+                // Hide all step cards
+                document.querySelectorAll('.card[id^="step"]').forEach(card => card.classList.add('hidden'));
+                
+                // Deactivate all tabs
+                const tabs = document.querySelectorAll('.tab-link');
+                tabs.forEach(tab => tab.classList.remove('active'));
+
+                if (step === 0 || step === 6) {
+                    // Hide tab container for step 0 and 6
+                    document.getElementById('tabContainer').classList.add('hidden');
+                    if (step === 6) {
+                        document.getElementById('step6').classList.remove('hidden');
+                    } else {
+                        document.getElementById('step0').classList.remove('hidden');
+                    }
+                } else {
+                    // Show tab container and the correct card for steps 1-5
+                    document.getElementById('tabContainer').classList.remove('hidden');
+                    document.getElementById(`step${step}`).classList.remove('hidden');
+                    
+                    // Activate the correct tab
+                    const activeTab = document.querySelector(`.tab-link[data-step="${step}"]`);
+                    if (activeTab) {
+                        activeTab.classList.add('active');
+                    }
+                }
+                
+                if (step !== 0) {
+                     window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top for all steps except 0
+                }
+            }
+
+            // This function is now redundant, but we keep it for the dropdowns
+            function goToSection(step) {
+                openStep(step); // Use existing openStep logic
+            }
+            
+            // --- FUNCTION: Re-implement removeCodeFromSerial for generateLiveSerial ---
+            // This new implementation *returns* a modified string instead of mutating the state.
+            function removeCodeFromSerial_internal(originalString, codeToRemove) {
+                let newString = ` ${originalString} `; // Pad with spaces for reliable regex
+                const codeParts = codeToRemove.split(' ');
+                
+                codeParts.forEach(part => {
+                    // Escape special characters for regex
+                    const escapedPart = part.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                    
+                    let regex;
+                    if (part.startsWith('{')) {
+                        // It's a braced part like {8} or {17:55}. Match it exactly, with surrounding spaces.
+                        regex = new RegExp(`\\s+${escapedPart}\\s+`, 'g');
+                    } else {
+                        // It's a naked number part like 48. Match it with word boundaries, with surrounding spaces.
+                        regex = new RegExp(`\\s+\\b${escapedPart}\\b\\s+`, 'g');
+                    }
+                    
+                    newString = newString.replace(regex, ' ');
+                });
+                
+                // Final cleanup of multiple spaces and trim padding
+                return newString.replace(/\s+/g, ' ').trim();
+            }
+
+
+            // Close dropdowns if clicking outside
+            document.addEventListener('click', (event) => {
+                if (activeDropdown && !activeDropdown.contains(event.target) && !activeDropdown.closest('.mod-badge').contains(event.target)) {
+                    activeDropdown.classList.remove('show');
+                    const badge = activeDropdown.closest('.mod-badge');
+                    if(badge) badge.classList.remove('active');
+                    activeDropdown = null;
+                }
+            });
+
+            // --- NEW FUNCTION: Handle Item Type Code Change ---
+            function handleItemTypeChange() {
+                const newTypeId = document.getElementById('itemTypeCodeInput').value;
+                if (!newTypeId) return; // Don't do anything if empty
+
+                // Update header
+                baseSerialData.header = baseSerialData.header.replace(/^[^,]+/, newTypeId);
+                
+                // Update display
+                updateItemInfoDisplay(); // It will read the new header
+                
+                // Regenerate and re-validate
+                updateLivePreview(); 
+            }
+            // --- END NEW FUNCTION ---
+
+            // Initialize on load
+             function init() {
+                // FIX: Manually wire the button to resolve ReferenceError
+                const startBtn = document.getElementById('startEditingButton');
+                if (startBtn) {
+                     startBtn.addEventListener('click', smartParseSerial);
+                }
+                
+                 console.log("Editor Initialized. Ready for serial input.");
+                  // Set initial state for dropdown arrows and collapsed content
+                 ['perks', 'stats', 'altFire', 'element', 'skin'].forEach(type => {
+                     const stepNum = getStepNumber(type);
+                     if (stepNum > 0) {
+                         const container = document.getElementById(`step${stepNum}`);
+                         if (container) {
+                             const content = container.querySelector('.selections-content');
+                              if (content) {
+                                  content.classList.add('collapsed'); // Ensure content hidden by default
+                                  const arrow = container.querySelector('.arrow');
+                                   if(arrow) arrow.textContent = '▼'; // Set default arrow
+                              }
+                         }
+                     }
+                 });
+
+                 // --- EXPOSE FUNCTIONS TO GLOBAL SCOPE ---
+                 // This is necessary for the inline onclick attributes
+                 window.openStep = openStep;
+                 window.toggleSelectionDropdown = toggleSelectionDropdown;
+                 window.selectAllPerks = selectAllPerks;
+                 window.removeAllPerks = removeAllPerks;
+                 window.removePerk = removePerk;
+                 window.removeAllStats = removeAllStats;
+                 window.removeStatByIndex = removeStatByIndex;
+                 window.removeAllAltFires = removeAllAltFires;
+                 window.removeAltFireByName = removeAltFireByName;
+                 window.removeAllElements = removeAllElements;
+                 window.removeElementByName = removeElementByName;
+                 window.removeSkin = removeSkin;
+                 window.finalizeSerial = finalizeSerial;
+                 window.goToSection = goToSection;
+                 window.toggleModBadge = toggleModBadge;
+                 window.handleManualSerialEdit = handleManualSerialEdit;
+                 window.validateManualSerial = validateManualSerial;
+                 window.copyEditableOutputSerial = copyEditableOutputSerial;
+                 window.copyValidatedSerial = copyValidatedSerial;
+                 window.copyGameSerial = copyGameSerial; // For old button
+                 window.copySerial = copySerial; // For old button
+                 window.resetEditor = resetEditor;
+                 window.handleItemTypeChange = handleItemTypeChange; // <-- EXPOSE NEW FUNCTION
+             }
+
+            // Ensure init runs after the DOM is fully loaded
+            document.addEventListener('DOMContentLoaded', init);
+        })(); 
+
+    </script>
+</body>
+</html>
+
+
+
+
+
+

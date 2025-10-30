@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1" name="viewport"/>
+    <title>BL4 Weapon Part Editor (Hosted)</title>
+    <style>
+        /* Base styles adapted from Enhancement_Editor.html */
+        :root { --bg:#0b0f14; --card:#0e1520; --ink:#e6f0ff; --muted:#a6b4c8; --line:#1f2a3a; --accent-orange: #e59400; --danger-red: #e74c3c; --success-green: #28a745; --edit-yellow: #ffc107; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--ink); padding: 18px; font-size: 16px; line-height: 1.5; }
+        h2 { margin: 0 0 14px; border-bottom: 1px solid var(--line); padding-bottom: 8px; font-weight: 700; }
+        .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+        .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; margin-bottom: 14px; }
+        label { color: var(--muted); font-size: 12px; display: block; margin-bottom: 6px; font-weight: 400; }
+        select, input, button { background: #0f1720; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 16px; font-family: inherit; }
+        input::placeholder { color: var(--muted); opacity: 0.7; }
+        select[multiple] { padding: 4px; /* Adjust padding for multi-select */ }
+        select:focus, input:focus, button:focus { outline: 2px solid var(--accent-orange); outline-offset: 1px; border-color: var(--accent-orange); }
+        code { background: #0c121b; border: 1px solid var(--line); padding: 4px 8px; display: inline-block; border-radius: 6px; font-size: 0.9em; font-family: monospace; }
+        button { cursor: pointer; background-color: #2c2c4d; transition: background-color 0.2s ease; }
+        button:hover { background-color: #4b4b7d; }
+        button:disabled { background-color: #2c2c4d; opacity: 0.5; cursor: not-allowed; }
+        button.small { padding: 6px 10px; border-radius: 8px; font-size: 14px; min-height: 38px; min-width: 38px; }
+        .wrap { white-space: normal; word-break: break-word; }
+
+        /* Generic Builder Style */
+        .builderSection .row.titleRow { justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: nowrap; }
+        .builderSection .row.titleRow > div:first-child { font-weight: 700; color: var(--muted); font-size: 14px; white-space: nowrap; }
+        .builderSection .row.filterRow { justify-content: flex-end; gap: 8px; flex-grow: 1; }
+        .builderSection .row.filterRow input[type="text"] { flex-grow: 1; min-width: 150px; }
+        .builderSection .row.filterRow input.delimiter { width: 100px; flex-grow: 0; display: none; }
+        .builderSection .row.selects { margin-top: 8px; display: flex; gap: 10px; align-items: stretch; }
+        .builderSection select { flex: 1; min-height: 220px; width: 100%; border-radius: 8px;}
+        .builderSection .buttons { display: flex; flex-direction: column; gap: 8px; justify-content: center; width: 56px; align-items: center; }
+        .builderSection .tip { margin-top: 10px; font-size: 12px; color: var(--muted); }
+
+        /* Output Box Styling */
+        .outCard code {
+            display: block; overflow: auto; width: 100%; white-space: pre-wrap; word-break: break-all;
+            max-height: 100px; /* Reduced max height */
+            min-height: 50px;
+            background: #0c121b; padding: 10px; border-radius: 8px; border: 2px solid var(--line); transition: border-color 0.3s ease;
+        }
+        .outCard code[contenteditable="true"]:focus { outline: none; border-color: var(--edit-yellow); }
+        .outCard code.manual-edit { border-color: var(--edit-yellow); }
+
+        #apiCard code { max-height: 100px; }
+        .sticky { position: sticky; top: 10px; z-index: 20; }
+        
+         /* Input Serial Box Styling */
+        #inputSerialCode {
+            width: 100%; min-height: 40px; margin-top: 6px; padding: 8px 10px;
+            background: #141c27; /* Slightly lighter background */
+            color: var(--ink); border: 1px solid var(--line); border-radius: 8px;
+            font-family: monospace; font-size: 0.9em;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .outCard code { max-height: 120px; }
+            .outCard .row { flex-wrap: wrap; }
+            .outCard .row button.small { min-height: 30px; } /* Smaller button size */
+            #dice { padding: 4px 8px !important; font-size: 12px !important; } /* Smaller dice button text */
+        }
+    </style>
+</head>
+<body class="loading"> <!-- Start with loading class -->
+<div class="container">
+    <div id="message-area"></div> <!-- Universal Message/Error display area -->
+    <h2>BL4 Weapon Part Editor (Hosted)</h2>
+
+    <!-- Input Serial Section -->
+    <div class="card" id="inputCard">
+        <label>Input Base Serial String (Editable)</label>
+        <code id="inputSerialCode" contenteditable="plaintext-only" title="Enter a base serial string here. Selected parts will be appended to this string."></code>
+    </div>
+    
+    <!-- Output + API (Sticky) -->
+    <div class="card outCard sticky">
+        <div class="row" style="justify-content: space-between; align-items: center;">
+            <div style="color:var(--muted)">Output Serial String <span class="manual-edit-indicator">(Manual Edit Mode)</span></div>
+            <div class="row">
+                 <button class="small" id="reserializeManual" title="Reserialize Manual Edit">🔄 API</button>
+                 <button class="small" id="undoEdit" title="Undo Manual Edit & Rebuild">↩️ Undo</button>
+                 <button class="small" id="copyFull" title="Copy Output String">📋</button>
+                 <span id="copyFullStatus" class="copy-status"></span>
+            </div>
+        </div>
+        <div id="out" style="margin-top:6px"><code contenteditable="plaintext-only"><!-- Output code will appear here --></code></div>
+         <button class="small" id="dice" title="New random seed" style="margin-top: 10px; width: fit-content;">🎲 New Seed</button>
+    </div>
+
+    <div class="card" id="apiCard" style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+            <div>
+                <div style="color:var(--muted)">Validated Serial (API Result)</div>
+                <div id="serialWrap" style="margin-top:6px"><code id="serial_b85"><!-- API Serial B85 --></code></div>
+                <div id="addDataWrap" style="margin-top:6px;color:var(--muted); font-size: 12px;">
+                    <span style="opacity:.8">Details:</span> <code id="additionalData" style="font-size: 12px;"><!-- API Additional Data --></code>
+                </div>
+            </div>
+            <div class="row" style="gap:8px">
+                <button class="small" id="copySerial" title="Copy API Serial" disabled>📋</button>
+                <span id="copyApiStatus" class="copy-status"></span>
+            </div>
+        </div>
+    </div>
+
+    <div id="mainContent">
+        <!-- Base Item Info (Simplified Placeholders) -->
+        <div class="card">
+             <div class="row">
+                <div style="flex: 1;">
+                    <label>Base Item Type (Placeholder)</label>
+                    <select id="itemTypeSel">
+                        <option value="gun">Generic Gun</option>
+                        <option value="shield">Shield</option>
+                        <option value="grenade">Grenade Mod</option>
+                        <option value="classmod">Class Mod</option>
+                        <option value="enhancement">Enhancement</option>
+                    </select>
+                </div>
+                 <div style="flex: 1;">
+                    <label>Rarity (Placeholder)</label>
+                    <select id="raritySel">
+                        <option value="common">Common</option>
+                        <option value="uncommon">Uncommon</option>
+                        <option value="rare">Rare</option>
+                        <option value="epic">Epic</option>
+                        <option value="legendary">Legendary</option>
+                    </select>
+                </div>
+             </div>
+        </div>
+
+        <!-- Builder Sections (Removed delimiter inputs in HTML for simplicity) -->
+        <div class="card builderSection" data-key="altFireModes" data-name-field="name" data-code-field="code" data-id-prefix="AltFire">
+            <div class="row titleRow">
+                <div>Alt Fire Mode Variations</div>
+                <div class="row filterRow">
+                    <input id="filterAltFire" placeholder="Filter..." type="text"/>
+                    <button class="small" id="clearAltFire" title="Clear Selected">❌</button>
+                </div>
+            </div>
+            <div class="row selects">
+                <select id="availAltFire" multiple size="8" aria-label="Available Alt Fire Modes"></select>
+                <div class="buttons">
+                    <button id="addAltFire" title="Add Selected">»</button>
+                    <button id="remAltFire" title="Remove Selected">«</button>
+                </div>
+                <select id="selAltFire" multiple size="8" aria-label="Selected Alt Fire Modes"></select>
+            </div>
+             <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
+        </div>
+
+        <div class="card builderSection" data-key="magazineModes" data-name-field="name" data-code-field="code" data-id-prefix="MagMode">
+             <div class="row titleRow">
+                <div>Magazine / Ammo Mode Variations</div>
+                 <div class="row filterRow">
+                    <input id="filterMagMode" placeholder="Filter..." type="text"/>
+                    <button class="small" id="clearMagMode" title="Clear Selected">❌</button>
+                </div>
+            </div>
+            <div class="row selects">
+                <select id="availMagMode" multiple size="8" aria-label="Available Magazine/Ammo Modes"></select>
+                <div class="buttons">
+                    <button id="addMagMode" title="Add Selected">»</button>
+                    <button id="remMagMode" title="Remove Selected">«</button>
+                </div>
+                <select id="selMagMode" multiple size="8" aria-label="Selected Magazine/Ammo Modes"></select>
+            </div>
+             <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
+        </div>
+
+        <div class="card builderSection" data-key="legendaryPerks" data-name-field="name" data-code-field="code" data-id-prefix="LegPerk">
+             <div class="row titleRow">
+                 <div>Legendary Perk Part Variations</div>
+                 <div class="row filterRow">
+                    <input id="filterLegPerk" placeholder="Filter..." type="text"/>
+                    <button class="small" id="clearLegPerk" title="Clear Selected">❌</button>
+                </div>
+            </div>
+            <div class="row selects">
+                <select id="availLegPerk" multiple size="8" aria-label="Available Legendary Perks"></select>
+                <div class="buttons">
+                    <button id="addLegPerk" title="Add Selected">»</button>
+                    <button id="remLegPerk" title="Remove Selected">«</button>
+                </div>
+                <select id="selLegPerk" multiple size="8" aria-label="Selected Legendary Perks"></select>
+            </div>
+             <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
+        </div>
+
+        <div class="card builderSection" data-key="ordnancePerks" data-name-field="name" data-code-field="code" data-id-prefix="OrdPerk">
+             <div class="row titleRow">
+                <div>Ordnance Legendary Perks (Heavy/Grenade)</div>
+                 <div class="row filterRow">
+                    <input id="filterOrdPerk" placeholder="Filter..." type="text"/>
+                    <button class="small" id="clearOrdPerk" title="Clear Selected">❌</button>
+                </div>
+            </div>
+            <div class="row selects">
+                <select id="availOrdPerk" multiple size="8" aria-label="Available Ordnance Perks"></select>
+                <div class="buttons">
+                    <button id="addOrdPerk" title="Add Selected">»</button>
+                    <button id="remOrdPerk" title="Remove Selected">«</button>
+                </div>
+                <select id="selOrdPerk" multiple size="8" aria-label="Selected Ordnance Perks"></select>
+            </div>
+             <div class="tip">Double-click to add/remove. Condenses multiple identical IDs.</div>
+        </div>
+
+    </div> <!-- End mainContent -->
+</div> <!-- End container -->
+
+<script>
+    // Global variables
+    let PAYLOAD = {};
+    const builders = {};
+    let rndSeed = Math.floor(1000 + Math.random() * 9000);
+    let apiCallTimer;
+    let rebuildTimer;
+    let lastGeneratedOutput = '';
+    let isManualEditMode = false;
+
+    // --- DOM Elements Cache ---
+    const dom = {
+        body: document.body,
+        messageArea: document.getElementById('message-area'),
+        itemTypeSel: document.getElementById('itemTypeSel'),
+        raritySel: document.getElementById('raritySel'),
+        outWrapper: document.getElementById('out'),
+        outCode: document.querySelector('#out code'),
+        inputSerialCode: document.getElementById('inputSerialCode'), // New: Input Base Code
+        serial_b85: document.getElementById('serial_b85'),
+        additionalData: document.getElementById('additionalData'),
+        copyFull: document.getElementById('copyFull'),
+        copySerial: document.getElementById('copySerial'),
+        dice: document.getElementById('dice'),
+        copyFullStatus: document.getElementById('copyFullStatus'),
+        copyApiStatus: document.getElementById('copyApiStatus'),
+        undoEditBtn: document.getElementById('undoEdit'),
+        reserializeManualBtn: document.getElementById('reserializeManual'),
+    };
+
+    // --- Utility Functions ---
+    function showMessage(message, isError = true) {
+        console.log(isError ? "Error:" : "Status:", message.replace(/<code>(.*?)<\/code>/g, '$1'));
+        dom.messageArea.innerHTML = message;
+        dom.messageArea.className = `message-area visible ${isError ? 'error' : 'success'}`;
+        dom.messageArea.style.display = 'block';
+
+        if (!isError) {
+            clearTimeout(dom.messageArea.timer);
+            dom.messageArea.timer = setTimeout(() => {
+                dom.messageArea.style.display = 'none';
+                dom.messageArea.classList.remove('visible');
+            }, 3000);
+        }
+    }
+
+    function showCopyStatus(statusElement, message) {
+        if (!statusElement) return;
+        statusElement.textContent = message;
+        statusElement.classList.add('visible');
+        clearTimeout(statusElement.timer);
+        statusElement.timer = setTimeout(() => {
+            statusElement.classList.remove('visible');
+        }, 1500);
+    }
+
+    // --- Generic Builder UI Logic (unchanged from previous working version) ---
+    function createBuilder(key, nameField, codeField, idPrefix) {
+        const dataList = PAYLOAD[key] || [];
+        const filterInput = document.getElementById(`filter${idPrefix}`);
+        const availList = document.getElementById(`avail${idPrefix}`);
+        const selList = document.getElementById(`sel${idPrefix}`);
+        const addBtn = document.getElementById(`add${idPrefix}`);
+        const remBtn = document.getElementById(`rem${idPrefix}`);
+        const clearBtn = document.getElementById(`clear${idPrefix}`);
+
+        if (!filterInput || !availList || !selList || !addBtn || !remBtn || !clearBtn) {
+            const missing = ['filter', 'avail', 'sel', 'add', 'rem', 'clear']
+                            .filter(suffix => !document.getElementById(`${suffix}${idPrefix}`))
+                            .map(suffix => `<code>${suffix}${idPrefix}</code>`)
+                            .join(', ');
+            throw new Error(`Initialization Error: Missing DOM elements for builder prefix <code>${idPrefix}</code>: ${missing}. Check HTML IDs.`);
+        }
+
+        let selectedItems = [];
+        const codeToNameMap = {};
+
+        if (!Array.isArray(dataList)) {
+            throw new Error(`Data Validation Error: Expected an array for key <code>${key}</code> in JSON data, but got <code>${typeof dataList}</code>.`);
+        }
+
+        dataList.forEach(item => {
+            const code = item[codeField];
+            if (code === undefined || code === null) return;
+            const name = item[nameField] || 'Unnamed Item';
+            const variant = item.variant ? ` "${item.variant}"` : '';
+            const group = item.group ? ` (${item.group})` : '';
+            codeToNameMap[code] = `${name}${variant}${group}`;
+        });
+
+        function populateAvailable() {
+            const fragment = document.createDocumentFragment();
+            const query = (filterInput.value || '').toLowerCase();
+            availList.innerHTML = '';
+            (dataList || [])
+                .filter(item => {
+                    const code = item[codeField];
+                    if (code === undefined || code === null) return false;
+                    const name = codeToNameMap[code] || '';
+                    const searchText = `${name} ${code}`.toLowerCase();
+                    return !query || searchText.includes(query);
+                })
+                .forEach(item => {
+                    const code = item[codeField];
+                    const displayName = codeToNameMap[code];
+                    const o = document.createElement('option');
+                    o.value = code;
+                    o.textContent = `${displayName} ${code}`;
+                    fragment.appendChild(o);
+                });
+            availList.appendChild(fragment);
+        }
+
+        function renderSelected() {
+            const scrollState = { top: selList.scrollTop, left: selList.scrollLeft };
+            selList.innerHTML = '';
+            selectedItems.forEach((code, index) => {
+                const name = codeToNameMap[code] || 'Unknown Code';
+                const o = document.createElement('option');
+                o.value = code;
+                o.textContent = `${name} ${code}`;
+                o.dataset.index = index;
+                selList.appendChild(o);
+            });
+             selList.scrollTop = scrollState.top;
+             selList.scrollLeft = scrollState.left;
+             if (!isManualEditMode) {
+                 triggerDebouncedRebuild();
+             }
+        }
+
+
+        function addSelected() {
+            Array.from(availList.selectedOptions).forEach(opt => selectedItems.push(opt.value));
+            renderSelected();
+        }
+
+        function removeSelected() {
+            const indicesToRemove = Array.from(selList.selectedOptions)
+                                        .map(opt => parseInt(opt.dataset.index, 10))
+                                        .filter(index => !isNaN(index))
+                                        .sort((a, b) => b - a);
+            indicesToRemove.forEach(index => {
+                if (index >= 0 && index < selectedItems.length) selectedItems.splice(index, 1);
+            });
+            renderSelected();
+        }
+
+        function clearSelected() {
+            selectedItems = [];
+            renderSelected();
+        }
+
+        populateAvailable();
+
+        filterInput.addEventListener('input', populateAvailable);
+        addBtn.addEventListener('click', addSelected);
+        remBtn.addEventListener('click', removeSelected);
+        clearBtn.addEventListener('click', clearSelected);
+        selList.addEventListener('keydown', e => {
+            if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); removeSelected(); }
+        });
+        selList.addEventListener('dblclick', removeSelected);
+        availList.addEventListener('dblclick', addSelected);
+
+
+        return { getSelectedItems: () => selectedItems, clear: clearSelected };
+    }
+    
+    // --- Condensing Logic ---
+    function getPartId(code) {
+        // Matches the ID in {ID:VALUE} or {ID}
+        const match = code.match(/\{(\d+)/);
+        return match ? match[1] : null;
+    }
+
+    function condenseParts(parts) {
+        if (!parts || parts.length === 0) return [];
+
+        // Group parts by their primary ID
+        const grouped = {};
+        const individualParts = [];
+
+        parts.forEach(code => {
+            const id = getPartId(code);
+            if (id) {
+                if (!grouped[id]) {
+                    grouped[id] = [];
+                }
+                grouped[id].push(code);
+            } else {
+                // If it doesn't match the {ID:VALUE} format (e.g., plain {999} or malformed)
+                individualParts.push(code);
+            }
+        });
+
+        const condensedParts = [];
+
+        for (const id in grouped) {
+            const codes = grouped[id];
+            if (codes.length === 1) {
+                // If only one, keep as simple code: {ID:VALUE}
+                condensedParts.push(codes[0]);
+            } else {
+                // If multiple, condense: {ID:[VALUE1 VALUE2 ...]}
+                const values = codes.map(code => {
+                    // Extract value: "{ID:VALUE}" -> "VALUE"
+                    const match = code.match(/:\s*([^}]+)/);
+                    if (match) {
+                        return match[1].trim(); // Get the part after the colon
+                    }
+                    // If it's a simple {ID} block (shouldn't happen for condensing, but safe fallback)
+                    return ''; 
+                }).filter(v => v !== ''); 
+
+                if (values.length > 0) {
+                    // Join values with space as the delimiter inside the array brackets
+                    condensedParts.push(`{${id}:[${values.join(' ')}]}`);
+                }
+            }
+        }
+        
+        // Add back any parts that weren't condensed
+        condensedParts.push(...individualParts);
+        return condensedParts;
+    }
+
+
+    function rebuildOutput() {
+        try {
+            const allSelectedParts = [];
+            const baseInput = dom.inputSerialCode.textContent.trim();
+
+            let baseParts = [];
+            let header = '';
+            let rarityPart = '';
+            let dynamicParts = [];
+
+            if (baseInput) {
+                // Use the user's input as the base
+                baseParts = baseInput.split(/\s+/).filter(p => p.length > 0);
+                
+                // Identify the main header and potentially the rarity part for separation
+                // This is a simplification; a full parser would be required for robust base parsing.
+                if (baseParts.length > 0) {
+                    // Assume the base is everything up to the first block {X...} or the last pipe |
+                    const splitIndex = baseParts.findIndex(p => p.startsWith('{'));
+
+                    if (splitIndex !== -1) {
+                         header = baseParts.slice(0, splitIndex).join(' ');
+                         dynamicParts = baseParts.slice(splitIndex);
+                    } else {
+                        header = baseParts.join(' ').replace(/\|$/, ''); // Keep pipe logic separate
+                    }
+                    
+                    // Clear the output of any existing pipes or spaces before appending
+                    header = header.replace(/\|$/, '').trim(); 
+                    
+                } else {
+                     header = '';
+                }
+
+                allSelectedParts.push(header);
+                allSelectedParts.push(...dynamicParts);
+
+            } else {
+                // --- Generated Base Serial (Placeholder) ---
+                const typeMap = { gun: 1, shield: 2, grenade: 3, classmod: 4, enhancement: 5 };
+                const itemTypeId = typeMap[dom.itemTypeSel.value] || 0;
+                const rarityCodeMap = { common: 217, uncommon: 218, rare: 219, epic: 220, legendary: 999 };
+                rarityPart = `{${rarityCodeMap[dom.raritySel.value] || 0}}`;
+                
+                // Base Header Structure (HIGHLY SPECULATIVE)
+                header = `0, ${itemTypeId}, 1, 50| 2, ${rndSeed}||`;
+
+                allSelectedParts.push(header);
+                allSelectedParts.push(rarityPart);
+            }
+
+            // 2. Collect all selected parts from builders (always appended)
+            document.querySelectorAll('.builderSection').forEach(section => {
+                 const key = section.dataset.key;
+                 if (builders[key] && typeof builders[key].getSelectedItems === 'function') {
+                     allSelectedParts.push(...builders[key].getSelectedItems());
+                 }
+            });
+            
+            // 3. Separate header/base from dynamic parts for condensation
+            const basePart = allSelectedParts[0].trim();
+            const dynamicList = allSelectedParts.slice(1);
+            
+            // 4. Condense the dynamic parts
+            const condensedDynamicParts = condenseParts(dynamicList);
+            
+            // 5. Recombine, join with space, and add the final pipe
+            const parts = [basePart, ...condensedDynamicParts];
+            const newOutput = parts.join(' ').trim() + '|';
+            
+            lastGeneratedOutput = newOutput;
+
+            // Update textContent only if the user is not currently editing it
+            if (document.activeElement !== dom.outCode) {
+                 dom.outCode.textContent = newOutput;
+                 if (isManualEditMode) {
+                     isManualEditMode = false;
+                     dom.outCode.classList.remove('manual-edit');
+                     dom.outWrapper.classList.remove('manual-edit');
+                 }
+            }
+            dom.messageArea.style.display = 'none';
+
+        } catch (err) {
+            showMessage(`Error during output generation: <code>${err.message}</code>. Check builder setup and data.`, true);
+            console.error("Output Generation Error:", err);
+            dom.outCode.textContent = '[Error generating output]';
+            lastGeneratedOutput = '';
+        }
+    }
+
+
+     // --- Debounced Triggers and API Logic (Unchanged) ---
+     function triggerDebouncedRebuild() {
+         clearTimeout(rebuildTimer);
+         rebuildTimer = setTimeout(rebuildOutputAndCallApi, 50);
+     }
+     function triggerDebouncedApiCall() {
+         clearTimeout(apiCallTimer);
+         if (!isManualEditMode) {
+             apiCallTimer = setTimeout(callReserialize, 400);
+         }
+     }
+    function rebuildOutputAndCallApi() {
+        rebuildOutput();
+        triggerDebouncedApiCall();
+    }
+    
+    async function callReserialize() {
+      if (dom.serial_b85) dom.serial_b85.textContent = 'Fetching...';
+      if (dom.additionalData) dom.additionalData.textContent = '';
+      dom.copySerial.disabled = true;
+
+      try {
+        const outText = (dom.outCode?.textContent || '').trim();
+
+        if (!outText || outText === '[Error generating output]' || !outText.endsWith('|')) {
+          if (dom.serial_b85) dom.serial_b85.textContent = '[No valid serial to send]';
+          return;
+        }
+
+        const resp = await fetch('https://borderlands4-deserializer.nicnl.com/api/v1/reserialize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deserialized: outText })
+        });
+
+        if (!resp.ok) {
+            let errorText = `HTTP ${resp.status} - ${resp.statusText}`;
+            try { const errorData = await resp.json(); errorText += `: ${errorData.error || errorData.message || 'Unknown API error'}`; }
+            catch (_) {}
+            throw new Error(errorText);
+        }
+
+        const data = await resp.json();
+        if (dom.serial_b85) dom.serial_b85.textContent = data.serial_b85 || '[No serial returned]';
+        if (dom.additionalData) dom.additionalData.textContent = data.additional_data || '[No details]';
+        dom.copySerial.disabled = !data.serial_b85;
+
+      } catch (err) {
+        console.error('Reserialize API error:', err);
+        if (dom.serial_b85) dom.serial_b85.textContent = `[API error: ${err.message}]`;
+        if (dom.additionalData) dom.additionalData.textContent = '';
+        dom.copySerial.disabled = true;
+        showMessage(`API Error: ${err.message}`, true);
+      }
+    }
+
+    // --- Initialization ---
+    async function initializeApp() {
+        dom.body.classList.add('loading');
+        try {
+            // Check for required JSON file
+            const response = await fetch('bl4_parts_data.json');
+            if (!response.ok) throw new Error(`HTTP error ${response.status} fetching <code>bl4_parts_data.json</code>. You must host this file on GitHub Pages alongside index.html.`);
+
+            try { PAYLOAD = await response.json(); }
+            catch (jsonError) { throw new Error(`Failed to parse <code>bl4_parts_data.json</code>: ${jsonError.message}. Check JSON syntax.`); }
+
+            const requiredKeys = ['altFireModes', 'magazineModes', 'legendaryPerks', 'ordnancePerks'];
+            const missingKeys = requiredKeys.filter(key => !PAYLOAD[key] || !Array.isArray(PAYLOAD[key]));
+            if (missingKeys.length > 0) throw new Error(`Data Validation Error: Key(s) <code>${missingKeys.join(', ')}</code> missing/invalid in JSON.`);
+
+            // Initialize builders
+            document.querySelectorAll('.builderSection').forEach(section => {
+                 const key = section.dataset.key;
+                 const nameField = section.dataset.nameField;
+                 const codeField = section.dataset.codeField;
+                 const idPrefix = section.dataset.idPrefix;
+                 if (key && nameField && codeField && idPrefix) {
+                     try { builders[key] = createBuilder(key, nameField, codeField, idPrefix); }
+                     catch (builderError) { throw new Error(`Failed to init builder for ${key}: ${builderError.message}`); }
+                 } else { console.warn("Skipping builder section, missing data attributes:", section); }
+            });
+
+            // --- Setup Event Listeners ---
+            dom.itemTypeSel.addEventListener('change', triggerDebouncedRebuild);
+            dom.raritySel.addEventListener('change', triggerDebouncedRebuild);
+            dom.dice.onclick = () => { rndSeed = Math.floor(1000 + Math.random()*9000); triggerDebouncedRebuild(); };
+            dom.inputSerialCode.addEventListener('input', triggerDebouncedRebuild); // New: Listen to base input
+
+            // Manual Edit Handling
+            dom.outCode.addEventListener('input', () => {
+                isManualEditMode = true;
+                dom.outCode.classList.add('manual-edit');
+                dom.outWrapper.classList.add('manual-edit');
+                clearTimeout(apiCallTimer);
+            });
+
+            dom.undoEditBtn.addEventListener('click', () => {
+                if (lastGeneratedOutput) {
+                    dom.outCode.textContent = lastGeneratedOutput;
+                    isManualEditMode = false;
+                    dom.outCode.classList.remove('manual-edit');
+                    dom.outWrapper.classList.remove('manual-edit');
+                    triggerDebouncedApiCall();
+                    showCopyStatus(dom.copyFullStatus, 'Edit Undone');
+                } else {
+                    showCopyStatus(dom.copyFullStatus, 'No history!');
+                }
+            });
+
+            dom.reserializeManualBtn.addEventListener('click', callReserialize);
+
+            dom.copyFull.addEventListener('click', async () => {
+                try {
+                    const text = (dom.outCode?.textContent || '').trim();
+                    if (!text || text.startsWith('[')) return showCopyStatus(dom.copyFullStatus, 'No output!');
+                    await navigator.clipboard.writeText(text);
+                    showCopyStatus(dom.copyFullStatus, 'Copied!');
+                } catch(e) { console.error('Copy Output failed:', e); showCopyStatus(dom.copyFullStatus, 'Error!'); }
+             });
+             dom.copySerial.addEventListener('click', async () => {
+                try {
+                    const text = (dom.serial_b85?.textContent || '').trim();
+                     if (!text || text.startsWith('[')) return showCopyStatus(dom.copyApiStatus, 'No serial!');
+                    await navigator.clipboard.writeText(text);
+                     showCopyStatus(dom.copyApiStatus, 'Copied!');
+                } catch(e) { console.error('Copy API Serial failed:', e); showCopyStatus(dom.copyApiStatus, 'Error!'); }
+             });
+
+            // Initial build and API call
+            rebuildOutput();
+            setTimeout(callReserialize, 150);
+            dom.messageArea.style.display = 'none';
+
+        } catch (error) {
+            showMessage(error.message, true);
+            document.querySelectorAll('input, select, button').forEach(el => el.disabled = true);
+        } finally {
+             dom.body.classList.remove('loading');
+        }
+    }
+
+    // Start the app
+    document.addEventListener('DOMContentLoaded', initializeApp);
+
+</script>
+</body>
+</html>

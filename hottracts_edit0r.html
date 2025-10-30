@@ -1,0 +1,3013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borderlands 4 Item Editor v3.5</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0c1821 0%, #1a3a52 50%, #2e5f85 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(45deg, #e6f7ff, #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: rgba(230, 247, 255, 0.1);
+            backdrop-filter: blur(20px) brightness(1.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 12px 48px rgba(41, 182, 246, 0.5);
+            border: 3px solid rgba(176, 224, 230, 0.6);
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .step-number {
+            background: linear-gradient(135deg, #29b6f6 0%, #4fc3f7 100%);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-right: 15px;
+            box-shadow: 0 4px 15px rgba(41, 182, 246, 0.6);
+        }
+
+        .step-title {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4fc3f7 0%, #81d4fa 100%);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 195, 247, 0.6);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: #fff;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: #fff;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 242, 254, 0.4);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #ffa500 0%, #ff6b6b 100%);
+            color: #fff;
+        }
+
+        .btn-info:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 165, 0, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        .option-item {
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95em;
+        }
+
+        .option-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateX(5px);
+        }
+
+        .option-item.selected {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #fff;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
+        }
+
+        .selections-display {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .selections-header {
+            padding: 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            transition: background 0.3s ease;
+        }
+
+        .selections-header:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .selections-header .arrow {
+            font-size: 1.2em;
+            transition: transform 0.3s ease;
+        }
+
+        .selections-header.collapsed .arrow {
+            transform: rotate(-90deg);
+        }
+
+        .selections-content {
+            padding: 0 15px 15px 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            transition: max-height 0.3s ease;
+        }
+
+        .selections-content.collapsed {
+            max-height: 0;
+            padding: 0 15px;
+            overflow: hidden;
+        }
+
+        .selections-summary {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .selection-tag {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 8px 15px;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 0.9em;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .selection-tag .remove {
+            margin-left: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            opacity: 0.8;
+        }
+
+        .selection-tag .remove:hover {
+            opacity: 1;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .success-message {
+            background: rgba(34, 197, 94, 0.2);
+            border: 2px solid #22c55e;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .output-serial {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 2px solid #22c55e;
+        }
+
+        .output-serial code {
+            display: block;
+            word-wrap: break-word;
+            color: #4ade80;
+            font-family: 'Courier New', monospace;
+            font-size: 1em;
+            line-height: 1.6;
+        }
+
+        .copy-btn {
+            margin-top: 10px;
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        }
+
+        .stats-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .stats-input input[type="number"] {
+            width: 80px;
+            padding: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 1em;
+        }
+
+        .stats-input input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .category-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .message.show {
+            display: flex;
+        }
+
+        .message.success {
+            background: rgba(34, 197, 94, 0.95);
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.95);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+
+        /* Live Preview Styles */
+        .live-preview {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(15px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid rgba(102, 126, 234, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.5);
+            position: relative;
+            z-index: 500;
+        }
+
+        .live-preview.hidden {
+            display: none;
+        }
+
+        .item-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .item-icon {
+            font-size: 3em;
+        }
+
+        .item-details h3 {
+            font-size: 1.3em;
+            margin-bottom: 5px;
+            color: #ffd700;
+        }
+
+        .item-details p {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin: 2px 0;
+        }
+
+        .preview-label {
+            font-weight: bold;
+            font-size: 0.9em;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+
+        .preview-serial {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 10px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            word-wrap: break-word;
+            color: #4ade80;
+            line-height: 1.6;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .modifications-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .mod-badge {
+            background: rgba(102, 126, 234, 0.3);
+            padding: 8px 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 501;
+        }
+        
+        .mod-badge.active {
+            z-index: 99999;
+        }
+
+        .mod-badge:hover {
+            background: rgba(102, 126, 234, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .mod-badge strong {
+            display: block;
+            color: #ffd700;
+            font-size: 1.2em;
+        }
+
+        .mod-badge-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 5px;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 100000;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(102, 126, 234, 0.5);
+            display: none;
+        }
+
+        .mod-badge-dropdown.show {
+            display: block;
+        }
+
+        .mod-badge-item {
+            padding: 8px;
+            margin: 4px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
+            transition: background 0.2s ease;
+        }
+
+        .mod-badge-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .mod-badge-item .remove-btn {
+            cursor: pointer;
+            color: #ff6b6b;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 3px;
+            transition: background 0.2s ease;
+        }
+
+        .mod-badge-item .remove-btn:hover {
+            background: rgba(255, 107, 107, 0.2);
+        }
+
+        /* Realistic Icicle Decorations with Irregular Jagged Shapes */
+        
+        /* Main card icicles - using clip-path for realistic ice */
+        .card::after {
+            content: '';
+            position: absolute;
+            bottom: -32px;
+            left: 18%;
+            width: 48px;
+            height: 40px;
+            background: linear-gradient(to bottom, 
+                rgba(255, 255, 255, 0.98) 0%,
+                rgba(240, 248, 255, 0.92) 15%,
+                rgba(173, 216, 230, 0.85) 40%,
+                rgba(135, 206, 250, 0.7) 70%,
+                rgba(100, 149, 237, 0.3) 95%,
+                transparent 100%);
+            clip-path: polygon(
+                50% 0%,
+                42% 12%,
+                48% 20%,
+                45% 35%,
+                52% 48%,
+                48% 62%,
+                54% 75%,
+                50% 100%,
+                46% 75%,
+                52% 62%,
+                48% 48%,
+                55% 35%,
+                52% 20%,
+                58% 12%
+            );
+            filter: drop-shadow(0 4px 12px rgba(135, 206, 250, 0.8))
+                    drop-shadow(0 0 8px rgba(255, 255, 255, 1))
+                    drop-shadow(-2px 0 6px rgba(173, 216, 230, 0.6));
+            opacity: 0.9;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            bottom: -24px;
+            right: 22%;
+            width: 36px;
+            height: 30px;
+            background: linear-gradient(to bottom, 
+                rgba(255, 255, 255, 0.95) 0%,
+                rgba(240, 248, 255, 0.9) 18%,
+                rgba(176, 224, 230, 0.82) 45%,
+                rgba(135, 206, 250, 0.65) 75%,
+                rgba(100, 149, 237, 0.25) 100%);
+            clip-path: polygon(
+                50% 0%,
+                44% 18%,
+                50% 32%,
+                46% 50%,
+                52% 68%,
+                50% 100%,
+                48% 68%,
+                54% 50%,
+                50% 32%,
+                56% 18%
+            );
+            filter: drop-shadow(0 3px 9px rgba(135, 206, 250, 0.7))
+                    drop-shadow(0 0 6px rgba(255, 255, 255, 0.9));
+            opacity: 0.85;
+        }
+
+        .card {
+            overflow: visible !important;
+            position: relative;
+        }
+
+        /* Step header icicles - medium size with jagged edges */
+        .step-header::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 35%;
+            width: 30px;
+            height: 25px;
+            background: linear-gradient(to bottom, 
+                rgba(255, 255, 255, 0.92) 0%,
+                rgba(224, 255, 255, 0.88) 20%,
+                rgba(173, 216, 230, 0.75) 50%,
+                rgba(135, 206, 250, 0.5) 85%,
+                transparent 100%);
+            clip-path: polygon(
+                50% 0%,
+                43% 20%,
+                50% 40%,
+                46% 65%,
+                50% 100%,
+                54% 65%,
+                50% 40%,
+                57% 20%
+            );
+            filter: drop-shadow(0 2px 6px rgba(135, 206, 250, 0.6))
+                    drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));
+        }
+
+        .step-header::before {
+            content: '';
+            position: absolute;
+            bottom: -16px;
+            right: 28%;
+            width: 24px;
+            height: 20px;
+            background: linear-gradient(to bottom, 
+                rgba(255, 255, 255, 0.94) 0%,
+                rgba(240, 248, 255, 0.87) 22%,
+                rgba(176, 224, 230, 0.78) 55%,
+                rgba(135, 206, 250, 0.55) 90%,
+                transparent 100%);
+            clip-path: polygon(
+                50% 0%,
+                45% 25%,
+                50% 50%,
+                48% 75%,
+                50% 100%,
+                52% 75%,
+                50% 50%,
+                55% 25%
+            );
+            filter: drop-shadow(0 2px 5px rgba(135, 206, 250, 0.5))
+                    drop-shadow(0 0 3px rgba(255, 255, 255, 0.75));
+        }
+
+        .step-header {
+            position: relative;
+            overflow: visible;
+        }
+
+        /* Live preview icicles - larger with more detail */
+        .live-preview::after {
+            content: '';
+            position: absolute;
+            bottom: -36px;
+            left: 25%;
+            width: 52px;
+            height: 45px;
+            background: linear-gradient(to bottom, 
+                rgba(255, 255, 255, 1) 0%,
+                rgba(240, 255, 255, 0.95) 12%,
+                rgba(224, 255, 255, 0.9) 25%,
+                rgba(173, 216, 230, 0.82) 45%,
+                rgba(135, 206, 250, 0.65) 70%,
+                rgba(100, 149, 237, 0.35) 92%,
+                transparent 100%);
+            clip-path: polygon(
+                50% 0%,
+                40% 10%,
+                46% 18%,
+                44% 30%,
+                50% 42%,
+                47% 55%,
+                52% 68%,
+                49% 82%,
+                50% 100%,
+                51% 82%,
+                48% 68%,
+                53% 55%,
+                50% 42%,
+                56% 30%,
+                54% 18%,
+                60% 10%
+            );
+            filter: drop-shadow(0 5px 14px rgba(135, 206, 250, 0.85))
+                    drop-shadow(0 0 10px rgba(255, 255, 255, 1))
+                    drop-shadow(-3px 0 8px rgba(173, 216, 230, 0.7));
+        }
+
+        .live-preview::before {
+            content: '';
+            position: absolute;
+            bottom: -26px;
+            right: 30%;
+            width: 40px;
+            height: 32px;
+            background: linear-gradient(to bottom, 
+                rgba(255, 255, 255, 0.96) 0%,
+                rgba(230, 247, 255, 0.92) 18%,
+                rgba(176, 224, 230, 0.84) 42%,
+                rgba(135, 206, 250, 0.68) 72%,
+                rgba(100, 149, 237, 0.3) 100%);
+            clip-path: polygon(
+                50% 0%,
+                43% 15%,
+                49% 30%,
+                46% 50%,
+                51% 70%,
+                50% 100%,
+                49% 70%,
+                54% 50%,
+                51% 30%,
+                57% 15%
+            );
+            filter: drop-shadow(0 3px 10px rgba(135, 206, 250, 0.75))
+                    drop-shadow(0 0 7px rgba(255, 255, 255, 0.95));
+        }
+
+        .live-preview {
+            position: relative;
+            overflow: visible !important;
+        }
+
+        /* Subtle shimmer animation */
+        @keyframes icicle-shimmer {
+            0%, 100% {
+                filter: drop-shadow(0 4px 12px rgba(135, 206, 250, 0.8))
+                        drop-shadow(0 0 8px rgba(255, 255, 255, 1))
+                        drop-shadow(-2px 0 6px rgba(173, 216, 230, 0.6));
+                opacity: 0.9;
+            }
+            50% {
+                filter: drop-shadow(0 5px 16px rgba(135, 206, 250, 1))
+                        drop-shadow(0 0 12px rgba(255, 255, 255, 1))
+                        drop-shadow(-2px 0 8px rgba(173, 216, 230, 0.8));
+                opacity: 1;
+            }
+        }
+
+        .card::after {
+            animation: icicle-shimmer 12s ease-in-out infinite;
+        }
+
+        /* Add frost overlay to cards */
+        .card {
+            background-image: 
+                radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 75%, rgba(173, 216, 230, 0.06) 0%, transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(135, 206, 250, 0.04) 0%, transparent 60%);
+        }
+
+        /* Tiny snowflake decorations */
+        .step-number::after {
+            content: '❄';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            font-size: 14px;
+            color: rgba(173, 216, 230, 0.7);
+            text-shadow: 0 0 6px rgba(255, 255, 255, 0.9);
+            animation: sparkle 6s ease-in-out infinite;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { opacity: 0.4; transform: rotate(0deg); }
+            50% { opacity: 1; transform: rotate(180deg); }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧊 Frozen Forge v4.0 🧊</h1>
+            <div class="subtitle">Borderlands 4 Unified Item Editor</div>
+            <div style="font-size: 0.85em; opacity: 0.7; margin-top: 5px; font-style: italic;">From Protocol to Production - The Complete Arsenal</div>
+            <div style="font-size: 0.9em; margin-top: 8px;">By <strong style="color: #4fc3f7; text-shadow: 0 0 10px rgba(79, 195, 247, 0.5);">@icetracts</strong> × <strong style="color: #a78bfa; text-shadow: 0 0 10px rgba(167, 139, 250, 0.5);">@Mattmab</strong></div>
+            <div style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">
+                <a href="API_DOCUMENTATION.md" target="_blank" style="color: #4ade80; text-decoration: none;">📚 View API Documentation</a>
+            </div>
+        </header>
+
+        <!-- Live Preview Panel -->
+        <div id="livePreview" class="live-preview hidden">
+            <div class="item-info">
+                <div class="item-icon">🔫</div>
+                <div class="item-details">
+                    <h3 id="itemName">Base Item</h3>
+                    <p id="itemType">Unknown Type</p>
+                    <p id="itemManufacturer">Unknown Manufacturer</p>
+                </div>
+            </div>
+            <div class="preview-label">📋 Current Serial (Live Preview):</div>
+            <div class="preview-serial" id="liveSerialPreview">No serial loaded yet...</div>
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+                <div style="font-size: 0.9em; opacity: 0.7; margin-bottom: 8px;">🔍 Identified Parts:</div>
+                <div class="modifications-summary" id="modsSummary"></div>
+            </div>
+        </div>
+
+        <!-- Step 0: Serial Input -->
+        <div id="step0" class="card">
+            <div class="step-header">
+                <div class="step-number">0</div>
+                <div class="step-title">Input Base Serial</div>
+            </div>
+            <div class="input-group">
+                <label>Paste your item serial code:</label>
+                <textarea id="baseSerial" placeholder="Paste game serial (@U...) OR deserialized format (9, 0, 1, 50| 2, 1626|| ...)"></textarea>
+                <p style="margin-top: 10px; opacity: 0.8; font-size: 0.9em;">
+                    <strong>📌 Tip:</strong> Paste any format - the editor will automatically detect and process it!
+                    <br>• <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">@U...</code> format will be deserialized first
+                    <br>• Deserialized format will be parsed and ready to edit
+                </p>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="smartParseSerial()" style="font-size: 1.1em; padding: 15px 40px;">🚀 Start Editing</button>
+            </div>
+            
+            <!-- Credits Section -->
+            <div style="margin-top: 30px; padding: 20px; background: rgba(100, 181, 246, 0.08); border-radius: 12px; border: 1px solid rgba(100, 181, 246, 0.2);">
+                <h3 style="margin: 0 0 15px 0; font-size: 1.2em; color: #64b5f6; text-align: center;">🏆 Credits</h3>
+                
+                <div style="display: grid; gap: 12px; font-size: 0.9em;">
+                    <div style="padding: 10px 14px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(100, 181, 246, 0.2)); border-radius: 6px; border: 1px solid rgba(139, 92, 246, 0.4);">
+                        <strong style="color: #a78bfa; font-size: 1.05em;">@Mattmab</strong> - Website development and integration of all features into this unified HTML editor
+                    </div>
+                    
+                    <div style="margin-top: 4px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);"></div>
+                    
+                    <div style="padding: 10px 14px; background: linear-gradient(135deg, rgba(135, 206, 250, 0.25), rgba(173, 216, 230, 0.25), rgba(224, 255, 255, 0.15)); border-radius: 6px; border: 1px solid rgba(135, 206, 250, 0.5); box-shadow: 0 0 15px rgba(135, 206, 250, 0.3);">
+                        <strong style="color: #4fc3f7; font-size: 1.05em;">@icetracts</strong> - Original "AI Startup" and item code mapping
+                    </div>
+                    
+                    <div style="padding: 8px 12px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+                        <strong style="color: #81c784;">@skippy5859</strong> - Item code mapping
+                    </div>
+                    
+                    <div style="padding: 8px 12px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+                        <strong style="color: #81c784;">@Frozen2312</strong> - Moral support
+                    </div>
+                    
+                    <div style="padding: 8px 12px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+                        <strong style="color: #81c784;">@narwhal4</strong> - Item code mapping
+                    </div>
+                    
+                    <div style="padding: 8px 12px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+                        <strong style="color: #81c784;">@RaGGeDy DeMoN</strong> - Skin mapping
+                    </div>
+                    
+                    <div style="margin-top: 8px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);"></div>
+                    
+                    <div style="padding: 8px 12px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+                        <strong style="color: #ffa726;">@whiteshark2020</strong> - Hosting the websites
+                    </div>
+                    
+                    <div style="margin-top: 8px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);"></div>
+                    
+                    <div style="padding: 8px 12px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+                        <strong style="color: #64b5f6;">@nicnl</strong> - Serialization and deserialization API, and work on deserialization
+                    </div>
+                    
+                    <div style="padding: 8px 12px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+                        <strong style="color: #64b5f6;">@inflamedsebi</strong> - Work on deserialization
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 1: Perks -->
+        <div id="step1" class="card hidden">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <div class="step-title">Select Perks</div>
+            </div>
+            <div style="background: rgba(255, 165, 0, 0.15); padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #ffa500;" id="existingPerksInfo">
+                <strong style="font-size: 0.9em;">🔍 Base Item Has:</strong>
+                <span id="existingPerksText" style="margin-left: 8px; opacity: 0.9;"></span>
+            </div>
+            <div class="selections-display">
+                <div class="selections-header" onclick="toggleSelectionDropdown('perks')">
+                    <div>
+                        <strong>Your Selections</strong>
+                        <span class="selections-summary" id="perksSummary"> - None selected</span>
+                    </div>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="selections-content" id="perksDisplay">
+                <em>No perks selected</em>
+                </div>
+            </div>
+            <div class="button-group" style="margin-bottom: 15px;">
+                <button class="btn btn-secondary" onclick="selectAllPerks()">Select All Perks</button>
+                <button class="btn btn-secondary" onclick="removeAllPerks()">Remove All Perks</button>
+            </div>
+            <div class="options-grid" id="perksList"></div>
+            <button class="btn btn-success" onclick="nextStep(2)">Continue to Stats →</button>
+        </div>
+
+        <!-- Step 2: Stats -->
+        <div id="step2" class="card hidden">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <div class="step-title">Select Stats</div>
+            </div>
+            <div style="background: rgba(255, 165, 0, 0.15); padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #ffa500;" id="existingStatsInfo">
+                <strong style="font-size: 0.9em;">🔍 Base Item Has:</strong>
+                <span id="existingStatsText" style="margin-left: 8px; opacity: 0.9;"></span>
+            </div>
+            <div class="selections-display">
+                <div class="selections-header" onclick="toggleSelectionDropdown('stats')">
+                    <div>
+                        <strong>Your Selections</strong>
+                        <span class="selections-summary" id="statsSummary"> - None selected</span>
+                    </div>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="selections-content" id="statsDisplay">
+                <em>No stats selected</em>
+                </div>
+            </div>
+            <div class="button-group" style="margin-bottom: 15px;">
+                <button class="btn btn-secondary" onclick="removeAllStats()">Clear All Stats</button>
+            </div>
+            <div class="options-grid" id="statsList"></div>
+            <div class="button-group">
+                <button class="btn btn-success" onclick="nextStep(3)">Continue to Alt Fire →</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Alt Fire -->
+        <div id="step3" class="card hidden">
+            <div class="step-header">
+                <div class="step-number">3</div>
+                <div class="step-title">Select Alt Fire</div>
+            </div>
+            <div style="background: rgba(255, 165, 0, 0.15); padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #ffa500;" id="existingAltFireInfo">
+                <strong style="font-size: 0.9em;">🔍 Base Item Has:</strong>
+                <span id="existingAltFireText" style="margin-left: 8px; opacity: 0.9;"></span>
+            </div>
+            <div class="selections-display" id="altFireDisplay">
+                <em>No alt fire selected</em>
+            </div>
+            <div class="options-grid" id="altFireList"></div>
+            <div class="button-group">
+                <button class="btn btn-success" onclick="nextStep(4)">Continue to Element →</button>
+            </div>
+        </div>
+
+        <!-- Step 4: Element -->
+        <div id="step4" class="card hidden">
+            <div class="step-header">
+                <div class="step-number">4</div>
+                <div class="step-title">Select Element</div>
+            </div>
+            <div style="background: rgba(255, 165, 0, 0.15); padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #ffa500;" id="existingElementInfo">
+                <strong style="font-size: 0.9em;">🔍 Base Item Has:</strong>
+                <span id="existingElementText" style="margin-left: 8px; opacity: 0.9;"></span>
+            </div>
+            <div class="selections-display" id="elementDisplay">
+                <em>No element selected</em>
+            </div>
+            <div class="options-grid" id="elementList"></div>
+            <div class="button-group">
+                <button class="btn btn-success" onclick="nextStep(5)">Continue to Skin/Camo →</button>
+            </div>
+        </div>
+
+        <!-- Step 5: Skin/Camo -->
+        <div id="step5" class="card hidden">
+            <div class="step-header">
+                <div class="step-number">5</div>
+                <div class="step-title">Select Skin/Camo</div>
+            </div>
+            <div style="background: rgba(255, 165, 0, 0.15); padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #ffa500;" id="existingSkinInfo">
+                <strong style="font-size: 0.9em;">🔍 Base Item Has:</strong>
+                <span id="existingSkinText" style="margin-left: 8px; opacity: 0.9;"></span>
+            </div>
+            <div class="selections-display" id="skinDisplay">
+                <em>No skin selected</em>
+            </div>
+            <div id="skinsList"></div>
+            <div class="button-group">
+                <button class="btn btn-success" onclick="finalizeSerial()">🎯 Finalize Serial</button>
+                <button class="btn btn-secondary" onclick="goBackToStep(1)">← Go Back & Reselect</button>
+            </div>
+        </div>
+
+        <!-- Finalization Output -->
+        <div id="stepFinal" class="card hidden">
+            <div class="success-message">
+                <span style="font-size: 2em;">✅</span>
+                <div>
+                    <strong>Serial Generated Successfully!</strong>
+                    <p>Your custom item serial is ready. Copy it or reserialize to game format.</p>
+                </div>
+            </div>
+            <div class="output-serial">
+                <label style="margin-bottom: 10px; display: block;">Final Serial Code (Deserialized):</label>
+                <code id="finalSerial"></code>
+                <div class="button-group">
+                    <button class="btn copy-btn" onclick="copySerial()">📋 Copy Deserialized</button>
+                </div>
+            </div>
+            <div class="output-serial" style="margin-top: 20px;">
+                <label style="margin-bottom: 10px; display: block;">Game Serial Code (Ready to Paste in Game):</label>
+                <code id="gameSerial" style="background: rgba(0, 255, 100, 0.1); border-color: rgba(0, 255, 100, 0.3);">Generating...</code>
+                <div class="button-group">
+                    <button class="btn copy-btn" onclick="copyGameSerial()" style="background: linear-gradient(135deg, #00c853 0%, #00e676 100%);">📋 Copy Game Serial</button>
+                </div>
+            </div>
+            <button class="btn btn-primary" style="margin-top: 20px;" onclick="resetEditor()">Create Another Item</button>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div style="text-align: center;">
+            <div class="spinner"></div>
+            <p style="margin-top: 20px; font-size: 1.2em;">Processing...</p>
+        </div>
+    </div>
+
+    <!-- Message Toast -->
+    <div id="messageToast" class="message">
+        <span id="messageIcon">✓</span>
+        <span id="messageText">Success!</span>
+    </div>
+
+    <script>
+        // Data structures (same as before)
+        const perks = {
+            "Adoration Sweet Embrace": "{10:58}",
+            "All Arounder Bod": "{8:52}",
+            "Amper Camper Goalkeeper": "{15:56}",
+            "Astmptotic Convergence": "{7:64}",
+            "Bilateral Symmetry": "{26:72}",
+            "Blazing Barrel Hot Slugger": "{9:79}",
+            "Blood Siphon": "{290:1}",
+            "Bullet Pollinator Boomslang": "{24:74}",
+            "Burning Desire Hellfire": "{19:20}",
+            "Chief Execution Officer Goremaster": "{7:1}",
+            "Colorful Mess Kaleidosplode": "{10:56}",
+            "Constellation Star Helix": "{13:77}",
+            "Crowd Sourced Midnight Defiance": "{16:68}",
+            "Defense Protocal Bully": "{4:75}",
+            "D.O.P.E. Buoys Deity": "{5:59}",
+            "Dueling Pistol Songbird": "{3:72}",
+            "Energy Transfer Ohm I Got": "{21:59}",
+            "Executor Murmur": "{14:76}",
+            "Flesh Eaters Roach": "{6:54}",
+            "Force Bunt Kickballer": "{10:7}",
+            "Fragcendiary Grenades Oscar Mike": "{13:67}",
+            "Full Coverage Linebacker": "{12:58}",
+            "Granted Kaoson": "{22:66}",
+            "Grasp Ruby' Grasp": "{5:65}",
+            "Gungnir Sprezzatura": "{273:34}",
+            "Heirloom T.K's Wave": "{9:90}",
+            "Hivemind Birt's Bees": "{22:87}",
+            "Holy Hell King's Gambit": "{3:75}",
+            "Husky Auto Turret Husky Friend": "{11:79}",
+            "Iced Out Cold Shoulder": "{17:55}",
+            "Inkling Inkling": "{282:2}",
+            "Juggler Sideshow": "{5:67}",
+            "Keep It Coming Onslaught": "{22:68}",
+            "Lightweight Lead Balloon": "{12:56}",
+            "LUV Acey May": "{8:54}",
+            "Midday Phantom Flame": "{3:77}",
+            "Mutualism Anarchy": "{11:75}",
+            "Parley Darkbeast": "{20:64}",
+            "Pair of Thieves Bonnie and Clyde": "{27:73}",
+            "Pamplemousse Prince Harming": "{19:17}",
+            "Pipin' Hot Barrel Finnity XXXL": "{16:1}",
+            "Pitcher Chuck": "{14:34}",
+            "Precision Rangefinder": "{2:78}",
+            "Prison Rules Zipper": "{2:1}",
+            "Propagation Ballista": "{24:72}",
+            "Prophetic Aegons Dream": "{18:70}",
+            "Proprioception Seventh Sense": "{3:80}",
+            "Radiation Exposure Gamma Void": "{289:24}",
+            "Rage Golden God": "{7:18}",
+            "rainbow reload Kismet Lucky Clover": "{4:1}",
+            "Reconfigure Stop Gap": "{16:72}",
+            "Rip Rockets Wombo Combo": "{18:64}",
+            "Rotary Gun Bugbear": "{17:54}",
+            "Royal Armory Queen's Rest": "{6:52}",
+            "Scarce Vamoose": "{23:21}",
+            "Scrap Cannon Whiskey Foxtrot": "{18:92}",
+            "Silence Noisy Cricket": "{4:79}",
+            "Sierpinski Complex Root": "{25:20}",
+            "Slow Burn Asher's Rise": "{25:79}",
+            "Soothslayer Hellwalker": "{9:82}",
+            "Space Laser Oscar Mike": "{13:75}",
+            "Spud Gun Potato Thrower IV": "{17:77}",
+            "Stalker Rowan's Charge": "{27:75}",
+            "Stormcloud Katwaga Revenge": "{25:60}",
+            "Stray Stray": "{23:20}",
+            "Strike Twice Bottled Lightning": "{289:26}",
+            "Superheated Plasma Coil": "{21:62}",
+            "Tactical Rounds Oscar Mike": "{13:8}",
+            "Timber Lumberjack": "{13:57}",
+            "Trample Lucian's Flank": "{18:1}",
+            "Ultima Ratio Regum Fisheye": "{26:75}",
+            "Whistler Atling Gun": "{282:25}",
+            "Wide Net Forsaken Chaos": "{11:77}",
+            "621 Ravenfire": "{273:40}",
+            "Color Spray Cryo Incen Shock": "{9:1}",
+            "Color Spray Cryo Incen Rad": "{9:16}",
+            "Color Spray Corrosive Rad Shock": "{9:71}",
+            "Color Spray Corrosive Incen Shock": "{9:72}",
+            "Color Spray Corrosive Incen Rad": "{9:73}",
+            "Color Spray Corrosive Corrosive Cryo Shock": "{9:74}",
+            "Color Spray Corrosive Cryo Rad": "{9:75}",
+            "Color Spray Corrosive Cryo Incen": "{9:76}",
+            "Color Spray Incen Rad Shock": "{9:77}",
+            "Color Spray Cryo Rad Shock": "{9:84}"
+        };
+
+        const stats = {
+            "Damage": "{22:72}",
+            "Accuracy": "{13:12}",
+            "Reload Speed": "{18:31}",
+            "Fire Rate": "{27:15}",
+            "Ammo": "{18:14}",
+            "Splash Radius": "{14:3}",
+            "Crit Damage": "{3:6}",
+            "Huge Magazine Size": "{27:75}",
+            "All Stats Ramp": "{22:72} {22:72} {22:72} {22:72} {22:72} {22:72} {22:72} {22:72} {22:72} {22:72} {22:72} {22:72} {13:[12 12 12 12 12 12 12 12 12 12 12 12]} {18:31} {18:31} {18:31} {18:31} {18:31} {18:31} {18:31} {18:31} {18:31} {18:31} {18:31} {18:31} {27:15} {18:[14 14 14 14 14 14 14 14 14 14 14 14 14 14 14]} {3:[6 6 6 6 6 6 6 6 6 6]} {27:[75 75 75]} {6:68}"
+        };
+
+        const altFires = {
+            "C.O.M.B.O": "{14:64}",
+            "Energy Blast": "{10:49}",
+            "Turbine Cleaver": "{6:45}",
+            "Ammo Smg": "{12:52}",
+            "Ammo Shotgun": "{5:62}",
+            "Ammo Sniper": "{20:57}",
+            "Beam Toss": "{10:43}",
+            "Energy Burst": "{4:44}",
+            "Energy Disk": "{10:44}",
+            "Flame Blast": "{12:50}",
+            "Flame Thrower": "{22:52}",
+            "Gravity Harpoon": "{9:46}",
+            "Gravity Well": "{4:72}",
+            "Grenade Launcher": "{20:79}",
+            "Hand Crank": "{27:57}",
+            "Kill Drone": "{15:43}",
+            "Knife Launcher": "{9:50}",
+            "Laser Wire": "{21:53}",
+            "Magnum Rockets": "{6:44}",
+            "Proxy Mines": "{8:50}",
+            "Radiation Fuel Rod": "{7:80}",
+            "Seeker Darts": "{2:74}",
+            "Seeker Missile": "{15:42}",
+            "Shock Field": "{25:48}",
+            "Shock Lightning Beam": "{7:48}",
+            "Shotgun": "{14:65}",
+            "Singularity Grenade Launcher": "{25:49}",
+            "Spread Launcher": "{9:45}",
+            "Support Drone": "{14:68}",
+            "Tracker Darts": "{9:44}",
+            "Vial Launcher": "{3:68}",
+            "Zip Rockets": "{3:46}",
+            "2 Barrel Fire": "{282:19}",
+            "Assault Rifle Alt Ammo Rounds": "{20:56}",
+            "COV Primary Fire": "{20:16}",
+            "Jacobs": "{6:68}",
+            "Ripper Alt Fire Full Auto Perk": "{5:26}",
+            "Ripper Primary Fire": "{6:16}",
+            "Rocket Fire": "{273:26}",
+            "Tediore Throw Gun": "{2:70}",
+            "Torgue": "{6:76}",
+            "Vladov Tracking Grenade": "{48}",
+            "Hyperion Shield Perk": "{61}",
+            "Ammo Pistol": "{13:68}",
+            "Hyperion Amp Shield": "{4:12}",
+            "Hyperion Licensed Shield": "{12:9}",
+            "Tracker Grenades Homing": "{9:43}",
+            "Deployable Barrier": "{11:50}",
+            "Magic Bullet": "{282:15}",
+            "Missile Swarm": "{237:8}",
+            "Ammo Pistol Secondary": "{26:68}",
+            "Ammo SMG Secondary": "{12:51}",
+            "Ammo Sniper Secondary": "{9:54}",
+            "Shrapnel Rockets": "{273:5}",
+            "Torgue Impact Gyrojets": "{10:77}",
+            "Torgue Sticky Gyrojets": "{2:19}"
+        };
+
+        const elements = {
+            "Corrosive": "{1:10}",
+            "Cryo": "{1:11}",
+            "Fire": "{1:12}",
+            "Radiation": "{1:13}",
+            "Shock": "{1:14}"
+        };
+
+        const skins = {
+            "Assault Rifle": {
+                "Wombo Combo Skin": "{18:65}",
+                "Star Helix Skin": "{13:73}",
+                "Bonnie & Clyde Skin": "{27:1}",
+                "Oscar Mike Skin": "{13:100}",
+                "Bloody Lumberjack Skin": "{13:72}",
+                "Potato Thrower Skin": "{17:78}",
+                "BugBear Skin": "{17:1}",
+                "Goalkeeper Skin": "{15:75}",
+                "Chuck Skin": "{14:35}",
+                "Whiskey Foxtrot Skin": "{18:93}",
+                "Aegons Dream Skin": "{18:88}",
+                "Lucians Flank Skin": "{18:63}",
+                "Divided Focus Skin": "{14:36}",
+                "Cold Shoulder Skin": "{17:56}",
+                "Rowans Charge Skin": "{27:74}",
+                "Murmur Skin": "{14:77}"
+            },
+            "SMG": {
+                "Ohm I Got Skin": "{21:60}",
+                "Birts Bees Skin": "{22:88}",
+                "Hellfire Skin": "{7:19}",
+                "Prince Harming Skin": "{19:1}",
+                "DarkBeast Skin": "{21:63}",
+                "Loremaster Skin": "{20:59}",
+                "Onslaught Skin": "{22:1}",
+                "Plasma Coil Skin": "{21:63}",
+                "Mad Lad Skin": "{20:65}"
+            },
+            "Shotgun": {
+                "Kaleidosplode Skin": "{10:1}",
+                "Golden God Skin": "{7:19}",
+                "Hot Slugger Skin": "{9:80}",
+                "Sweet Embrace Skin": "{10:57}",
+                "Kickballer Skin": "{10:100}",
+                "Acey May Skin": "{8:55}",
+                "GoreMaster Skin": "{7:20}",
+                "Husky Friend Skin": "{11:80}",
+                "Bod Skin": "{8:53}",
+                "Lead Balloon Skin": "{12:1}",
+                "Convergence Skin": "{7:100}",
+                "LineBacker Skin": "{12:1}",
+                "T.K's Wave Skin": "{9:91}",
+                "Rainbow Vomit Skin": "{9:85}",
+                "Hellwalker Skin": "{9:100}",
+                "Anarchy Skin": "{11:76}",
+                "Chaos Skin": "{11:78}"
+            },
+            "Sniper": {
+                "Stray Skin": "{23:19}",
+                "Ashers Rise Skin": "{25:80}",
+                "Complex Root Skin": "{25:59}",
+                "Katagawas Revenge Skin": "{25:61}",
+                "Truck Skin": "{24:76}",
+                "Boomslang Skin": "{24:1}",
+                "Fisheye Skin": "{26:98}",
+                "Ballista Skin": "{24:73}",
+                "Stop Gap Skin": "{16:67}",
+                "Symmetry Skin": "{26:76}",
+                "Finity XXL Skin": "{16:66}",
+                "Vamoose Skin": "{23:1}",
+                "Midnight Defiance Skin": "{16:69}"
+            },
+            "Pistol": {
+                "Phantom Flame Skin": "{3:78}",
+                "Kings Gambit Skin": "{3:76}",
+                "Seventh Sense Skin": "{3:81}",
+                "Queens Rest Skin": "{6:53}",
+                "Roach Skin": "{6:1}",
+                "Budget Diety Skin": "{5:60}",
+                "SideShow Skin": "{5:1}",
+                "Lucky Clover Skin": "{4:53}",
+                "Noisy Cricket Skin": "{4:80}",
+                "Bully Skin": "{4:76}",
+                "RangeFinder Skin": "{2:59}",
+                "Zipper Skin": "{2:54}"
+            },
+            "Unknown / Misc": {
+                "Jelly?": "{278:12}",
+                "Fish": "{298:[6 8]}",
+                "Buzz axe": "{270:6}",
+                "Gold Code for repkits": "{255:9}",
+                "Gold Code for SMG's": "{16:70}",
+                "uv fish": "{298:[6 8]}",
+                "uv buzz axe model": "{270:6}",
+                "Grenade Code Gold": "{5}",
+                "Heavy Weapon Code gold": "{4}",
+                "Throwing Knife Code gold": "{8}",
+                "Gold Universal Camo": "{7:19}",
+                "Pink Camo": "{254:14}",
+                "Skull": "{272:11}",
+                "Lightning Skin": "{289:1}",
+                "Gamma Void Skin": "{289:25}",
+                "Disk Jockey Skin": "{275:31}",
+                "Streamer Skin": "{275:32}",
+                "Ravenfire Skin": "{273:36}",
+                "Sprezzatura Skin": "{273:34}"
+            }
+        };
+
+        // State
+        let baseSerialData = {
+            original: "",
+            header: "",
+            firstPartCode: "",
+            remainingParts: "",
+            itemInfo: null, // Will store additional_data from API
+            existingParts: {
+                perks: [],
+                stats: [],
+                altFire: null,
+                element: null,
+                skin: null
+            }
+        };
+
+        let selections = {
+            perks: [],
+            stats: [],
+            altFire: null,
+            element: null,
+            skin: null
+        };
+
+        // API Configuration
+        const API_BASE_URL = 'https://borderlands4-deserializer.nicnl.com/api/v1';
+
+        // Initialize
+        function init() {
+            renderPerks();
+            renderStats();
+            renderAltFires();
+            renderElements();
+            renderSkins();
+        }
+
+        // Toggle selection dropdown
+        function toggleSelectionDropdown(type) {
+            const content = document.getElementById(`${type}Display`);
+            const header = content.previousElementSibling;
+            
+            content.classList.toggle('collapsed');
+            header.classList.toggle('collapsed');
+        }
+
+        // Smart Parse Function - Auto-detects format
+        async function smartParseSerial() {
+            const input = document.getElementById('baseSerial').value.trim();
+            if (!input) {
+                showMessage('Please enter a serial code', 'error');
+                return;
+            }
+
+            // Check if it's a game serial (@U format)
+            if (input.startsWith('@')) {
+                // Deserialize first, then continue to edit
+                showLoading(true);
+                try {
+                    const response = await fetch(`${API_BASE_URL}/deserialize_bulk`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify([input])
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Deserialize request failed');
+                    }
+
+                    const result = await response.json();
+                    console.log('Deserialize API Response:', result);
+                    
+                    const firstKey = Object.keys(result)[0];
+                    if (result[firstKey] && result[firstKey].success) {
+                        const deserialized = result[firstKey].deserialized;
+                        const itemData = result[firstKey];
+                        
+                        // Extract item info
+                        baseSerialData.itemInfo = {
+                            level: itemData.deserialized_level || 'Unknown',
+                            type: itemData.deserialized_type || 'Unknown',
+                            manufacturer: itemData.deserialized_manufacturer || 'Unknown',
+                            rarity: itemData.deserialized_rarity || '',
+                            name: itemData.deserialized_base_name || ''
+                        };
+                        
+                        console.log('Item Info:', baseSerialData.itemInfo);
+                        
+                        document.getElementById('baseSerial').value = deserialized;
+                        baseSerialData.original = deserialized;
+                        
+                        // Parse the header for preview
+                        const doublePipeIndex = deserialized.indexOf('||');
+                        if (doublePipeIndex !== -1) {
+                            baseSerialData.header = deserialized.substring(0, doublePipeIndex + 2).trim();
+                            const afterDoublePipe = deserialized.substring(doublePipeIndex + 2).trim();
+                            const codes = afterDoublePipe.replace(/\|+$/, '').trim().split(/\s+/);
+                            if (codes.length > 0 && codes[0]) {
+                                baseSerialData.firstPartCode = codes[0];
+                                baseSerialData.remainingParts = codes.slice(1).join(' ');
+                            }
+                        }
+                        
+                        // Identify existing parts
+                        baseSerialData.existingParts = identifyExistingParts(deserialized);
+                        console.log('Identified existing parts:', baseSerialData.existingParts);
+                        
+                        // Auto-populate selections from existing parts
+                        populateSelectionsFromExisting();
+                        
+                        updateLivePreview();
+                        showMessage('✅ Serial deserialized! Ready to edit.', 'success');
+                        
+                        // Continue to editing
+                        setTimeout(() => nextStep(1), 500);
+                    } else {
+                        throw new Error(result[firstKey].error || 'Deserialization failed');
+                    }
+
+                } catch (error) {
+                    showMessage('Deserialization failed: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+                return;
+            }
+
+            // Otherwise, validate and parse deserialized format
+            const deserializedPattern = /^\d+,\s*\d+,\s*\d+,\s*\d+\|.*\|\|/;
+            if (!deserializedPattern.test(input)) {
+                showMessage('⚠️ Invalid format! Expected:\n• Game serial (@U...)\n• Deserialized format (9, 0, 1, 50| 2, 1626|| ...)', 'error');
+                return;
+            }
+
+            // If we don't have item info yet, fetch it by reserializing and deserializing
+            if (!baseSerialData.itemInfo) {
+                showLoading(true);
+                try {
+                    let cleanedSerial = input.trim();
+                    if (!cleanedSerial.endsWith('|')) {
+                        cleanedSerial += '|';
+                    }
+                    
+                    const reserializeResponse = await fetch(`${API_BASE_URL}/reserialize`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            deserialized: cleanedSerial
+                        })
+                    });
+                    
+                    if (reserializeResponse.ok) {
+                        const reserializeResult = await reserializeResponse.json();
+                        const gameSerial = reserializeResult.serial_b85;
+                        
+                        const deserializeResponse = await fetch(`${API_BASE_URL}/deserialize_bulk`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify([gameSerial])
+                        });
+                        
+                        if (deserializeResponse.ok) {
+                            const deserializeResult = await deserializeResponse.json();
+                            const firstKey = Object.keys(deserializeResult)[0];
+                            if (deserializeResult[firstKey] && deserializeResult[firstKey].success) {
+                                const itemData = deserializeResult[firstKey];
+                                baseSerialData.itemInfo = {
+                                    level: itemData.deserialized_level || 'Unknown',
+                                    type: itemData.deserialized_type || 'Unknown',
+                                    manufacturer: itemData.deserialized_manufacturer || 'Unknown',
+                                    rarity: itemData.deserialized_rarity || '',
+                                    name: itemData.deserialized_base_name || ''
+                                };
+                                console.log('Fetched item info:', baseSerialData.itemInfo);
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Could not fetch item metadata:', error);
+                } finally {
+                    showLoading(false);
+                }
+            }
+            
+            baseSerialData.original = input;
+            
+            const doublePipeIndex = input.indexOf('||');
+            
+            if (doublePipeIndex !== -1) {
+                baseSerialData.header = input.substring(0, doublePipeIndex + 2).trim();
+                const afterDoublePipe = input.substring(doublePipeIndex + 2).trim();
+                const codes = afterDoublePipe.replace(/\|+$/, '').trim().split(/\s+/);
+                
+                if (codes.length > 0 && codes[0]) {
+                    baseSerialData.firstPartCode = codes[0];
+                    baseSerialData.remainingParts = codes.slice(1).join(' ');
+                } else {
+                    baseSerialData.firstPartCode = '';
+                    baseSerialData.remainingParts = '';
+                }
+            } else {
+                baseSerialData.header = input.substring(0, input.indexOf('|') + 1);
+                baseSerialData.firstPartCode = '';
+                baseSerialData.remainingParts = '';
+            }
+            
+            // Identify existing parts from the base serial
+            baseSerialData.existingParts = identifyExistingParts(input);
+            console.log('Identified existing parts:', baseSerialData.existingParts);
+            
+            // Auto-populate selections from existing parts
+            populateSelectionsFromExisting();
+            
+            updateLivePreview();
+            
+            // Continue to editing
+            nextStep(1);
+        }
+
+        // API Functions
+        async function deserializeSerial() {
+            const input = document.getElementById('baseSerial').value.trim();
+            if (!input) {
+                showMessage('Please enter a serial code', 'error');
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                // Clean the input - remove @ if present
+                let serial = input.startsWith('@') ? input : '@' + input;
+
+                const response = await fetch(`${API_BASE_URL}/deserialize_bulk`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify([serial])
+                });
+
+                if (!response.ok) {
+                    throw new Error('Deserialize request failed');
+                }
+
+                const result = await response.json();
+                console.log('Deserialize API Response:', result);
+                
+                // Extract deserialized data
+                const firstKey = Object.keys(result)[0];
+                if (result[firstKey] && result[firstKey].success) {
+                    const deserialized = result[firstKey].deserialized;
+                    const itemData = result[firstKey];
+                    
+                    // Extract item info from API response fields
+                    baseSerialData.itemInfo = {
+                        level: itemData.deserialized_level || 'Unknown',
+                        type: itemData.deserialized_type || 'shotgun', // Default to shotgun if not provided
+                        manufacturer: itemData.deserialized_manufacturer || 'Unknown',
+                        rarity: itemData.deserialized_rarity || 'Legendary',
+                        name: itemData.deserialized_base_name || ''
+                    };
+                    
+                    console.log('Item Info:', baseSerialData.itemInfo);
+                    
+                    document.getElementById('baseSerial').value = deserialized;
+                    baseSerialData.original = deserialized; // Set this so preview shows
+                    
+                    // Parse the header for preview
+                    const doublePipeIndex = deserialized.indexOf('||');
+                    if (doublePipeIndex !== -1) {
+                        baseSerialData.header = deserialized.substring(0, doublePipeIndex + 2).trim();
+                        const afterDoublePipe = deserialized.substring(doublePipeIndex + 2).trim();
+                        const codes = afterDoublePipe.replace(/\|+$/, '').trim().split(/\s+/);
+                        if (codes.length > 0 && codes[0]) {
+                            baseSerialData.firstPartCode = codes[0];
+                            baseSerialData.remainingParts = codes.slice(1).join(' ');
+                        }
+                    }
+                    
+                    updateLivePreview(); // Show the preview immediately
+                    showMessage('✅ Deserialization successful! Item info loaded. Click "Parse Serial & Begin" to start editing.', 'success');
+                } else {
+                    throw new Error(result[firstKey].error || 'Deserialization failed');
+                }
+
+            } catch (error) {
+                showMessage('Deserialization failed: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function reserializeSerial() {
+            const serialText = document.getElementById('finalSerial').textContent;
+            const gameSerialElement = document.getElementById('gameSerial');
+            
+            if (!serialText) {
+                gameSerialElement.textContent = 'Error: No serial to reserialize';
+                gameSerialElement.style.color = '#ff4444';
+                return;
+            }
+
+            gameSerialElement.textContent = 'Generating...';
+            gameSerialElement.style.color = '';
+
+            try {
+                // Clean up the serial text - ensure proper format
+                let cleanedSerial = serialText.trim();
+                
+                // Ensure it ends with a single pipe
+                if (!cleanedSerial.endsWith('|')) {
+                    cleanedSerial += '|';
+                }
+
+                console.log('Sending to reserialize:', cleanedSerial);
+
+                const response = await fetch(`${API_BASE_URL}/reserialize`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        deserialized: cleanedSerial
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Response error:', errorText);
+                    throw new Error(`Reserialize request failed: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('Reserialize result:', result);
+                
+                if (result.serial_b85) {
+                    gameSerialElement.textContent = result.serial_b85;
+                    console.log('✅ Game serial generated:', result.serial_b85);
+                } else {
+                    throw new Error('No serial returned from API');
+                }
+
+            } catch (error) {
+                console.error('Reserialize error:', error);
+                gameSerialElement.textContent = 'Error: ' + error.message;
+                gameSerialElement.style.color = '#ff4444';
+            }
+        }
+
+        // Utility Functions
+        function showLoading(show) {
+            const overlay = document.getElementById('loadingOverlay');
+            if (show) {
+                overlay.classList.add('show');
+            } else {
+                overlay.classList.remove('show');
+            }
+        }
+
+        function showMessage(text, type = 'success') {
+            const toast = document.getElementById('messageToast');
+            const icon = document.getElementById('messageIcon');
+            const messageText = document.getElementById('messageText');
+
+            icon.textContent = type === 'success' ? '✓' : '✕';
+            messageText.textContent = text;
+            
+            toast.className = `message ${type} show`;
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function parseItemInfo(additionalData) {
+            // Parse "L50 sniper:jakobs legendary jakobs "Ambushing Truck""
+            const info = {
+                level: 'Unknown',
+                type: 'Unknown',
+                manufacturer: 'Unknown',
+                rarity: '',
+                name: ''
+            };
+
+            if (!additionalData) return info;
+
+            // Extract level
+            const levelMatch = additionalData.match(/L(\d+)/i);
+            if (levelMatch) info.level = levelMatch[1];
+
+            // Extract type
+            const typeMatch = additionalData.match(/L\d+\s+(\w+):/i);
+            if (typeMatch) info.type = typeMatch[1];
+
+            // Extract manufacturer
+            const mfgMatch = additionalData.match(/:(\w+)/);
+            if (mfgMatch) info.manufacturer = mfgMatch[1];
+
+            // Extract rarity
+            if (additionalData.includes('legendary')) info.rarity = 'Legendary';
+            else if (additionalData.includes('epic')) info.rarity = 'Epic';
+            else if (additionalData.includes('rare')) info.rarity = 'Rare';
+
+            // Extract item name
+            const nameMatch = additionalData.match(/"([^"]+)"/);
+            if (nameMatch) info.name = nameMatch[1];
+
+            return info;
+        }
+
+        function getItemIcon(type) {
+            const icons = {
+                'sniper': '🎯',
+                'shotgun': '💥',
+                'pistol': '🔫',
+                'smg': '⚡',
+                'assault': '🔫',
+                'rifle': '🔫'
+            };
+            return icons[type.toLowerCase()] || '🔫';
+        }
+
+        // Track which dropdown is currently open
+        let currentOpenDropdown = null;
+
+        // Populate selections state from identified existing parts
+        function populateSelectionsFromExisting() {
+            // Copy existing parts to selections
+            selections.perks = [...baseSerialData.existingParts.perks];
+            selections.stats = [...baseSerialData.existingParts.stats];
+            selections.altFire = baseSerialData.existingParts.altFire;
+            selections.element = baseSerialData.existingParts.element;
+            selections.skin = baseSerialData.existingParts.skin;
+            
+            // Update all displays
+            updatePerksDisplay();
+            updateStatsDisplay();
+            updateAltFireDisplay();
+            updateElementDisplay();
+            updateSkinDisplay();
+        }
+
+        // Parse existing parts from serial
+        function identifyExistingParts(serialString) {
+            const existing = {
+                perks: [],
+                stats: [],
+                altFire: null,
+                element: null,
+                skin: null
+            };
+
+            // Build reverse lookup maps (code -> name)
+            const perkLookup = {};
+            Object.entries(perks).forEach(([name, code]) => {
+                perkLookup[code] = name;
+            });
+
+            const statLookup = {};
+            Object.entries(stats).forEach(([name, code]) => {
+                statLookup[code] = name;
+            });
+
+            const altFireLookup = {};
+            Object.entries(altFires).forEach(([name, code]) => {
+                altFireLookup[code] = name;
+            });
+
+            const elementLookup = {};
+            Object.entries(elements).forEach(([name, code]) => {
+                elementLookup[code] = name;
+            });
+
+            const skinLookup = {};
+            Object.entries(skins).forEach(([category, skinList]) => {
+                Object.entries(skinList).forEach(([name, code]) => {
+                    skinLookup[code] = name;
+                });
+            });
+
+            // Extract all codes from serial (match {X} or {X:Y} patterns)
+            const codePattern = /\{[^\}]+\}/g;
+            const codes = serialString.match(codePattern) || [];
+
+            codes.forEach(code => {
+                // Check each category
+                if (perkLookup[code]) {
+                    existing.perks.push(perkLookup[code]);
+                } else if (statLookup[code]) {
+                    existing.stats.push(statLookup[code]);
+                } else if (altFireLookup[code]) {
+                    existing.altFire = altFireLookup[code];
+                } else if (elementLookup[code]) {
+                    existing.element = elementLookup[code];
+                } else if (skinLookup[code]) {
+                    existing.skin = skinLookup[code];
+                }
+            });
+
+            return existing;
+        }
+
+        function updateLivePreview() {
+            const preview = document.getElementById('livePreview');
+            const liveSerial = document.getElementById('liveSerialPreview');
+            const itemName = document.getElementById('itemName');
+            const itemType = document.getElementById('itemType');
+            const itemManufacturer = document.getElementById('itemManufacturer');
+            const itemIcon = document.querySelector('.item-icon');
+            const modsSummary = document.getElementById('modsSummary');
+
+            if (!baseSerialData.original) {
+                preview.classList.add('hidden');
+                return;
+            }
+
+            // Show preview
+            preview.classList.remove('hidden');
+
+            // Update item info
+            if (baseSerialData.itemInfo) {
+                const info = baseSerialData.itemInfo;
+                itemIcon.textContent = getItemIcon(info.type);
+                itemName.textContent = info.name || `Level ${info.level} ${info.type}`;
+                itemType.textContent = `${info.rarity} ${info.type}`.trim();
+                itemManufacturer.textContent = `Manufacturer: ${info.manufacturer.charAt(0).toUpperCase() + info.manufacturer.slice(1)}`;
+                
+                // Add item type editor below manufacturer
+                const headerParts = baseSerialData.header.split(',');
+                const itemTypeCode = headerParts.length >= 1 ? parseInt(headerParts[0].trim()) : 9;
+                
+                const editorHTML = `
+                    <div style="margin-top: 12px; padding: 10px; background: rgba(100, 181, 246, 0.15); border-radius: 6px; border: 1px solid rgba(100, 181, 246, 0.3);">
+                        <div style="display: flex; align-items: center; gap: 10px; justify-content: space-between;">
+                            <label style="font-size: 0.9em; color: #64b5f6; font-weight: 500;">Item Type Code:</label>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <input type="number" id="itemTypeCodeInput" value="${itemTypeCode}" min="1" max="27" 
+                                       style="width: 60px; padding: 6px 10px; border-radius: 6px; border: 2px solid rgba(100, 181, 246, 0.5); 
+                                              background: rgba(0,0,0,0.4); color: #64b5f6; text-align: center; font-size: 1.1em; font-weight: bold;"
+                                       onchange="updateItemTypeCode(this.value)"
+                                       title="Change item type (1-27)">
+                                <span style="font-size: 0.75em; opacity: 0.7;">(1-27)</span>
+                            </div>
+                        </div>
+                    </div>`;
+                
+                itemManufacturer.innerHTML = itemManufacturer.textContent + editorHTML;
+            } else {
+                itemIcon.textContent = '🔫';
+                itemName.textContent = 'Base Item';
+                itemType.textContent = 'Unknown Type';
+                itemManufacturer.textContent = 'Unknown Manufacturer';
+            }
+
+            // Build current serial
+            let currentSerial = baseSerialData.header;
+            
+            if (selections.skin) {
+                const skinCode = findSkinCode(selections.skin);
+                currentSerial += ' ' + skinCode;
+            } else if (baseSerialData.firstPartCode) {
+                currentSerial += ' ' + baseSerialData.firstPartCode;
+            }
+            
+            if (selections.perks.length > 0) {
+                selections.perks.forEach(perk => {
+                    currentSerial += ' ' + perks[perk];
+                });
+            }
+            
+            if (selections.altFire) {
+                currentSerial += ' ' + altFires[selections.altFire];
+            }
+            
+            if (selections.element) {
+                currentSerial += ' ' + elements[selections.element];
+            }
+            
+            if (baseSerialData.remainingParts) {
+                currentSerial += ' ' + baseSerialData.remainingParts;
+            }
+            
+            if (selections.stats.length > 0) {
+                selections.stats.forEach(stat => {
+                    currentSerial += ' ' + stats[stat];
+                });
+            }
+            
+            currentSerial = currentSerial.trim();
+            if (!currentSerial.endsWith('|')) {
+                currentSerial += '|';
+            }
+
+            liveSerial.textContent = currentSerial;
+
+            // Update combined parts summary (identified parts)
+            let summaryHTML = '';
+            
+            if (selections.perks.length > 0) {
+                summaryHTML += `
+                    <div class="mod-badge" style="background: rgba(255, 165, 0, 0.3); cursor: pointer;" onclick="toggleModBadge(event, 'perks')">
+                        <strong>${selections.perks.length}</strong>Perks
+                        <div class="mod-badge-dropdown" id="perksDropdown" style="background: rgba(50, 30, 0, 0.95);">
+                            <div style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                                <button class="btn btn-secondary" style="width: 100%; padding: 6px; font-size: 0.85em; margin-bottom: 5px;" onclick="event.stopPropagation(); removeAllPerks()">🗑️ Remove All Perks</button>
+                                <button class="btn btn-primary" style="width: 100%; padding: 6px; font-size: 0.85em;" onclick="event.stopPropagation(); goToSection(1)">✏️ Edit Perks</button>
+                            </div>
+                            ${selections.perks.map(perk => 
+                                `<div class="mod-badge-item">
+                                    <span>${perk}</span>
+                                    <span class="remove-btn" onclick="event.stopPropagation(); removePerk('${perk.replace(/'/g, "\\'")}')">✕</span>
+                                </div>`
+                            ).join('')}
+                        </div>
+                    </div>`;
+            }
+            if (selections.stats.length > 0) {
+                const statCounts = {};
+                selections.stats.forEach(stat => {
+                    statCounts[stat] = (statCounts[stat] || 0) + 1;
+                });
+                summaryHTML += `
+                    <div class="mod-badge" style="background: rgba(255, 165, 0, 0.3); cursor: pointer;" onclick="toggleModBadge(event, 'stats')">
+                        <strong>${selections.stats.length}</strong>Stats
+                        <div class="mod-badge-dropdown" id="statsDropdown" style="background: rgba(50, 30, 0, 0.95);">
+                            <div style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                                <button class="btn btn-secondary" style="width: 100%; padding: 6px; font-size: 0.85em; margin-bottom: 5px;" onclick="event.stopPropagation(); removeAllStats()">🗑️ Remove All Stats</button>
+                                <button class="btn btn-primary" style="width: 100%; padding: 6px; font-size: 0.85em;" onclick="event.stopPropagation(); goToSection(2)">✏️ Edit Stats</button>
+                            </div>
+                            ${Object.entries(statCounts).map(([stat, count]) => 
+                                `<div class="mod-badge-item">
+                                    <span>${stat}${count > 1 ? ` x${count}` : ''}</span>
+                                    <span class="remove-btn" onclick="event.stopPropagation(); removeStat('${stat}')">✕</span>
+                                </div>`
+                            ).join('')}
+                        </div>
+                    </div>`;
+            }
+            if (selections.altFire) {
+                summaryHTML += `
+                    <div class="mod-badge" style="background: rgba(255, 165, 0, 0.3); cursor: pointer;" onclick="event.stopPropagation(); goToSection(3)">
+                        <strong>✓</strong>Alt Fire
+                        <div style="font-size: 0.8em; margin-top: 3px;">${selections.altFire}</div>
+                    </div>`;
+            }
+            if (selections.element) {
+                summaryHTML += `
+                    <div class="mod-badge" style="background: rgba(255, 165, 0, 0.3); cursor: pointer;" onclick="event.stopPropagation(); goToSection(4)">
+                        <strong>✓</strong>Element
+                        <div style="font-size: 0.8em; margin-top: 3px;">${selections.element}</div>
+                    </div>`;
+            }
+            if (selections.skin) {
+                summaryHTML += `
+                    <div class="mod-badge" style="background: rgba(255, 165, 0, 0.3); cursor: pointer;" onclick="event.stopPropagation(); goToSection(5)">
+                        <strong>✓</strong>Skin
+                        <div style="font-size: 0.8em; margin-top: 3px;">${selections.skin}</div>
+                    </div>`;
+            }
+            
+            if (!summaryHTML) {
+                summaryHTML = '<em style="opacity: 0.5;">No parts identified</em>';
+            }
+            
+            modsSummary.innerHTML = summaryHTML;
+            
+            // Reopen the dropdown if it was open before the update
+            if (currentOpenDropdown) {
+                setTimeout(() => {
+                    const dropdown = document.getElementById(currentOpenDropdown);
+                    if (dropdown) {
+                        dropdown.classList.add('show');
+                        const badge = dropdown.closest('.mod-badge');
+                        if (badge) badge.classList.add('active');
+                    }
+                }, 0);
+            }
+        }
+
+        function toggleModBadge(event, type) {
+            event.stopPropagation();
+            
+            const dropdownId = `${type}Dropdown`;
+            const dropdown = document.getElementById(dropdownId);
+            const isCurrentlyOpen = dropdown && dropdown.classList.contains('show');
+            
+            // Close all other dropdowns and remove active class
+            document.querySelectorAll('.mod-badge-dropdown').forEach(dropdown => {
+                if (dropdown.id !== dropdownId) {
+                    dropdown.classList.remove('show');
+                    dropdown.closest('.mod-badge').classList.remove('active');
+                }
+            });
+            
+            // Toggle this dropdown
+            if (dropdown) {
+                const isShowing = dropdown.classList.toggle('show');
+                const badge = dropdown.closest('.mod-badge');
+                if (isShowing) {
+                    badge.classList.add('active');
+                    currentOpenDropdown = dropdownId;
+                } else {
+                    badge.classList.remove('active');
+                    currentOpenDropdown = null;
+                }
+            }
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.mod-badge')) {
+                document.querySelectorAll('.mod-badge-dropdown').forEach(dropdown => {
+                    dropdown.classList.remove('show');
+                    const badge = dropdown.closest('.mod-badge');
+                    if (badge) badge.classList.remove('active');
+                });
+                currentOpenDropdown = null;
+            }
+        });
+
+        // Toggle existing parts badge dropdown
+        function toggleExistingBadge(event, type) {
+            event.stopPropagation();
+            
+            const dropdownId = `existing${type.charAt(0).toUpperCase() + type.slice(1)}Dropdown`;
+            const dropdown = document.getElementById(dropdownId);
+            
+            // Close all dropdowns
+            document.querySelectorAll('.mod-badge-dropdown').forEach(dd => {
+                if (dd.id !== dropdownId) {
+                    dd.classList.remove('show');
+                    const badge = dd.closest('.mod-badge');
+                    if (badge) badge.classList.remove('active');
+                }
+            });
+            
+            // Toggle this dropdown
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+                const badge = dropdown.closest('.mod-badge');
+                if (dropdown.classList.contains('show')) {
+                    badge.classList.add('active');
+                    currentOpenDropdown = dropdownId;
+                } else {
+                    badge.classList.remove('active');
+                    currentOpenDropdown = null;
+                }
+            }
+        }
+
+        // Remove individual existing parts
+        function removeExistingPerk(perk) {
+            const index = baseSerialData.existingParts.perks.indexOf(perk);
+            if (index > -1) {
+                baseSerialData.existingParts.perks.splice(index, 1);
+                removeCodeFromSerial(perks[perk]);
+            }
+            // Also remove from selections
+            const selIndex = selections.perks.indexOf(perk);
+            if (selIndex > -1) {
+                selections.perks.splice(selIndex, 1);
+            }
+            updatePerksDisplay();
+            updateLivePreview();
+        }
+
+        function removeExistingStat(stat) {
+            const index = baseSerialData.existingParts.stats.indexOf(stat);
+            if (index > -1) {
+                baseSerialData.existingParts.stats.splice(index, 1);
+                removeCodeFromSerial(stats[stat]);
+            }
+            // Also remove from selections (remove first occurrence)
+            const selIndex = selections.stats.indexOf(stat);
+            if (selIndex > -1) {
+                selections.stats.splice(selIndex, 1);
+            }
+            updateStatsDisplay();
+            updateLivePreview();
+        }
+
+        function removeExistingAltFire() {
+            if (baseSerialData.existingParts.altFire) {
+                removeCodeFromSerial(altFires[baseSerialData.existingParts.altFire]);
+                baseSerialData.existingParts.altFire = null;
+                selections.altFire = null;
+                updateAltFireDisplay();
+                updateLivePreview();
+            }
+        }
+
+        function removeExistingElement() {
+            if (baseSerialData.existingParts.element) {
+                removeCodeFromSerial(elements[baseSerialData.existingParts.element]);
+                baseSerialData.existingParts.element = null;
+                selections.element = null;
+                updateElementDisplay();
+                updateLivePreview();
+            }
+        }
+
+        function removeExistingSkin() {
+            if (baseSerialData.existingParts.skin) {
+                const skinCode = findSkinCode(baseSerialData.existingParts.skin);
+                if (skinCode) {
+                    removeCodeFromSerial(skinCode);
+                }
+                baseSerialData.existingParts.skin = null;
+                selections.skin = null;
+                updateSkinDisplay();
+                updateLivePreview();
+            }
+        }
+
+        function findSkinCode(skinName) {
+            for (const category in skins) {
+                if (skins[category][skinName]) {
+                    return skins[category][skinName];
+                }
+            }
+            return null;
+        }
+
+        function removeAllExistingPerks() {
+            baseSerialData.existingParts.perks.forEach(perk => {
+                removeCodeFromSerial(perks[perk]);
+                // Remove from selections too
+                const selIndex = selections.perks.indexOf(perk);
+                if (selIndex > -1) {
+                    selections.perks.splice(selIndex, 1);
+                }
+            });
+            baseSerialData.existingParts.perks = [];
+            updatePerksDisplay();
+            updateLivePreview();
+        }
+
+        function removeAllExistingStats() {
+            baseSerialData.existingParts.stats.forEach(stat => {
+                removeCodeFromSerial(stats[stat]);
+                // Remove from selections too
+                const selIndex = selections.stats.indexOf(stat);
+                if (selIndex > -1) {
+                    selections.stats.splice(selIndex, 1);
+                }
+            });
+            baseSerialData.existingParts.stats = [];
+            updateStatsDisplay();
+            updateLivePreview();
+        }
+
+        // Remove a code from the serial
+        function removeCodeFromSerial(code) {
+            // Remove from remainingParts
+            if (baseSerialData.remainingParts) {
+                const parts = baseSerialData.remainingParts.split(/\s+/);
+                const filtered = parts.filter(part => part !== code);
+                baseSerialData.remainingParts = filtered.join(' ');
+            }
+            
+            // Also update original
+            if (baseSerialData.original) {
+                baseSerialData.original = baseSerialData.original.replace(new RegExp('\\s*' + code.replace(/[{}[\]()]/g, '\\$&') + '\\s*', 'g'), ' ').replace(/\s+/g, ' ');
+            }
+        }
+
+        // Navigate to a section
+        function goToSection(step) {
+            // Close all dropdowns
+            document.querySelectorAll('.mod-badge-dropdown').forEach(dropdown => {
+                dropdown.classList.remove('show');
+                const badge = dropdown.closest('.mod-badge');
+                if (badge) badge.classList.remove('active');
+            });
+            currentOpenDropdown = null;
+            
+            nextStep(step);
+        }
+
+        function renderPerks() {
+            const container = document.getElementById('perksList');
+            container.innerHTML = '';
+            Object.keys(perks).forEach(perk => {
+                const div = document.createElement('div');
+                div.className = 'option-item';
+                div.textContent = perk;
+                div.onclick = () => togglePerk(perk, div);
+                container.appendChild(div);
+            });
+        }
+
+        function togglePerk(perk, element) {
+            const index = selections.perks.indexOf(perk);
+            if (index > -1) {
+                selections.perks.splice(index, 1);
+                element.classList.remove('selected');
+            } else {
+                selections.perks.push(perk);
+                element.classList.add('selected');
+            }
+            updatePerksDisplay();
+        }
+
+        function selectAllPerks() {
+            selections.perks = Object.keys(perks);
+            document.querySelectorAll('#perksList .option-item').forEach(el => {
+                el.classList.add('selected');
+            });
+            updatePerksDisplay();
+        }
+
+        function removeAllPerks() {
+            // Remove codes from serial for existing perks
+            baseSerialData.existingParts.perks.forEach(perk => {
+                removeCodeFromSerial(perks[perk]);
+            });
+            baseSerialData.existingParts.perks = [];
+            selections.perks = [];
+            document.querySelectorAll('#perksList .option-item').forEach(el => {
+                el.classList.remove('selected');
+            });
+            updatePerksDisplay();
+            updateLivePreview();
+        }
+
+        function updatePerksDisplay() {
+            const display = document.getElementById('perksDisplay');
+            const summary = document.getElementById('perksSummary');
+            
+            if (selections.perks.length === 0) {
+                display.innerHTML = '<em>No perks selected</em>';
+                summary.textContent = ' - None selected';
+            } else {
+                display.innerHTML = selections.perks.map(perk => 
+                    `<span class="selection-tag">${perk}<span class="remove" onclick="removePerk('${perk}')">✕</span></span>`
+                ).join('');
+                summary.textContent = ` - ${selections.perks.length} selected`;
+            }
+            updateLivePreview();
+        }
+
+        function removePerk(perk) {
+            const index = selections.perks.indexOf(perk);
+            if (index > -1) {
+                selections.perks.splice(index, 1);
+                // Also remove from existing parts if present
+                const existingIndex = baseSerialData.existingParts.perks.indexOf(perk);
+                if (existingIndex > -1) {
+                    baseSerialData.existingParts.perks.splice(existingIndex, 1);
+                    removeCodeFromSerial(perks[perk]);
+                }
+                const elements = document.querySelectorAll('#perksList .option-item');
+                elements.forEach(el => {
+                    if (el.textContent === perk) {
+                        el.classList.remove('selected');
+                    }
+                });
+                updatePerksDisplay();
+                updateLivePreview();
+            }
+        }
+
+        function renderStats() {
+            const container = document.getElementById('statsList');
+            container.innerHTML = '';
+            Object.keys(stats).forEach(stat => {
+                const div = document.createElement('div');
+                div.className = 'option-item';
+                
+                if (stat === 'All Stats Ramp') {
+                    div.textContent = stat;
+                    div.onclick = () => selectStatRamp(stat, div);
+                } else {
+                    const wrapper = document.createElement('div');
+                    wrapper.style.display = 'flex';
+                    wrapper.style.justifyContent = 'space-between';
+                    wrapper.style.alignItems = 'center';
+                    
+                    const name = document.createElement('span');
+                    name.textContent = stat;
+                    
+                    const controls = document.createElement('div');
+                    controls.style.display = 'flex';
+                    controls.style.gap = '5px';
+                    
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.min = '0';
+                    input.max = '20';
+                    input.value = '1';
+                    input.style.width = '50px';
+                    input.style.padding = '4px';
+                    input.onclick = (e) => e.stopPropagation();
+                    
+                    const addBtn = document.createElement('button');
+                    addBtn.textContent = 'Add';
+                    addBtn.className = 'btn btn-primary';
+                    addBtn.style.padding = '4px 12px';
+                    addBtn.style.fontSize = '0.8em';
+                    addBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        addStat(stat, parseInt(input.value) || 1);
+                    };
+                    
+                    controls.appendChild(input);
+                    controls.appendChild(addBtn);
+                    
+                    wrapper.appendChild(name);
+                    wrapper.appendChild(controls);
+                    div.appendChild(wrapper);
+                }
+                
+                container.appendChild(div);
+            });
+        }
+
+        function addStat(stat, count) {
+            for (let i = 0; i < count; i++) {
+                selections.stats.push(stat);
+            }
+            updateStatsDisplay();
+        }
+
+        function selectStatRamp(stat, element) {
+            if (!selections.stats.includes(stat)) {
+                selections.stats.push(stat);
+                element.classList.add('selected');
+            }
+            updateStatsDisplay();
+        }
+
+        function removeAllStats() {
+            // Remove codes from serial for existing stats
+            baseSerialData.existingParts.stats.forEach(stat => {
+                removeCodeFromSerial(stats[stat]);
+            });
+            baseSerialData.existingParts.stats = [];
+            selections.stats = [];
+            updateStatsDisplay();
+            updateLivePreview();
+        }
+
+        function updateStatsDisplay() {
+            const display = document.getElementById('statsDisplay');
+            const summary = document.getElementById('statsSummary');
+            
+            if (selections.stats.length === 0) {
+                display.innerHTML = '<em>No stats selected</em>';
+                summary.textContent = ' - None selected';
+            } else {
+                const statCounts = {};
+                selections.stats.forEach(stat => {
+                    statCounts[stat] = (statCounts[stat] || 0) + 1;
+                });
+                display.innerHTML = Object.entries(statCounts).map(([stat, count]) => 
+                    `<span class="selection-tag">${stat}${count > 1 ? ` x${count}` : ''}<span class="remove" onclick="removeStat('${stat}')">✕</span></span>`
+                ).join('');
+                
+                const uniqueStats = Object.keys(statCounts).length;
+                summary.textContent = ` - ${selections.stats.length} item${selections.stats.length !== 1 ? 's' : ''} (${uniqueStats} unique)`;
+            }
+            updateLivePreview();
+        }
+
+        function removeStat(stat) {
+            const index = selections.stats.indexOf(stat);
+            if (index > -1) {
+                selections.stats.splice(index, 1);
+                // Also remove from existing parts if present
+                const existingIndex = baseSerialData.existingParts.stats.indexOf(stat);
+                if (existingIndex > -1) {
+                    baseSerialData.existingParts.stats.splice(existingIndex, 1);
+                    removeCodeFromSerial(stats[stat]);
+                }
+                updateStatsDisplay();
+                updateLivePreview();
+            }
+        }
+
+        function renderAltFires() {
+            const container = document.getElementById('altFireList');
+            container.innerHTML = '';
+            Object.keys(altFires).forEach(altFire => {
+                const div = document.createElement('div');
+                div.className = 'option-item';
+                div.textContent = altFire;
+                div.onclick = () => selectAltFire(altFire, div);
+                container.appendChild(div);
+            });
+        }
+
+        function selectAltFire(altFire, element) {
+            document.querySelectorAll('#altFireList .option-item').forEach(el => {
+                el.classList.remove('selected');
+            });
+            selections.altFire = altFire;
+            element.classList.add('selected');
+            updateAltFireDisplay();
+        }
+
+        function updateAltFireDisplay() {
+            const display = document.getElementById('altFireDisplay');
+            if (!selections.altFire) {
+                display.innerHTML = '<em>No alt fire selected</em>';
+            } else {
+                display.innerHTML = `<span class="selection-tag">${selections.altFire}<span class="remove" onclick="removeAltFire()">✕</span></span>`;
+            }
+            updateLivePreview();
+        }
+
+        function removeAltFire() {
+            if (selections.altFire) {
+                // Remove from existing parts if present
+                if (baseSerialData.existingParts.altFire) {
+                    removeCodeFromSerial(altFires[baseSerialData.existingParts.altFire]);
+                    baseSerialData.existingParts.altFire = null;
+                }
+            selections.altFire = null;
+            document.querySelectorAll('#altFireList .option-item').forEach(el => {
+                el.classList.remove('selected');
+            });
+            updateAltFireDisplay();
+                updateLivePreview();
+            }
+        }
+
+        function renderElements() {
+            const container = document.getElementById('elementList');
+            container.innerHTML = '';
+            Object.keys(elements).forEach(element => {
+                const div = document.createElement('div');
+                div.className = 'option-item';
+                div.textContent = element;
+                div.onclick = () => selectElement(element, div);
+                container.appendChild(div);
+            });
+        }
+
+        function selectElement(element, elementDiv) {
+            document.querySelectorAll('#elementList .option-item').forEach(el => {
+                el.classList.remove('selected');
+            });
+            selections.element = element;
+            elementDiv.classList.add('selected');
+            updateElementDisplay();
+        }
+
+        function updateElementDisplay() {
+            const display = document.getElementById('elementDisplay');
+            if (!selections.element) {
+                display.innerHTML = '<em>No element selected</em>';
+            } else {
+                display.innerHTML = `<span class="selection-tag">${selections.element}<span class="remove" onclick="removeElement()">✕</span></span>`;
+            }
+            updateLivePreview();
+        }
+
+        function removeElement() {
+            if (selections.element) {
+                // Remove from existing parts if present
+                if (baseSerialData.existingParts.element) {
+                    removeCodeFromSerial(elements[baseSerialData.existingParts.element]);
+                    baseSerialData.existingParts.element = null;
+                }
+            selections.element = null;
+            document.querySelectorAll('#elementList .option-item').forEach(el => {
+                el.classList.remove('selected');
+            });
+            updateElementDisplay();
+                updateLivePreview();
+            }
+        }
+
+        function renderSkins() {
+            const container = document.getElementById('skinsList');
+            container.innerHTML = '';
+            
+            Object.entries(skins).forEach(([category, skinList]) => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'category-title';
+                categoryDiv.textContent = category;
+                container.appendChild(categoryDiv);
+                
+                const grid = document.createElement('div');
+                grid.className = 'options-grid';
+                
+                Object.keys(skinList).forEach(skin => {
+                    const div = document.createElement('div');
+                    div.className = 'option-item';
+                    div.textContent = skin;
+                    div.onclick = () => selectSkin(skin, div);
+                    grid.appendChild(div);
+                });
+                
+                container.appendChild(grid);
+            });
+        }
+
+        function selectSkin(skin, element) {
+            document.querySelectorAll('#skinsList .option-item').forEach(el => {
+                el.classList.remove('selected');
+            });
+            selections.skin = skin;
+            element.classList.add('selected');
+            updateSkinDisplay();
+        }
+
+        function updateSkinDisplay() {
+            const display = document.getElementById('skinDisplay');
+            if (!selections.skin) {
+                display.innerHTML = '<em>No skin selected</em>';
+            } else {
+                display.innerHTML = `<span class="selection-tag">${selections.skin}<span class="remove" onclick="removeSkin()">✕</span></span>`;
+            }
+            updateLivePreview();
+        }
+
+        function removeSkin() {
+            if (selections.skin) {
+                // Remove from existing parts if present
+                if (baseSerialData.existingParts.skin) {
+                    const skinCode = findSkinCode(baseSerialData.existingParts.skin);
+                    if (skinCode) {
+                        removeCodeFromSerial(skinCode);
+                    }
+                    baseSerialData.existingParts.skin = null;
+                }
+            selections.skin = null;
+            document.querySelectorAll('#skinsList .option-item').forEach(el => {
+                el.classList.remove('selected');
+            });
+            updateSkinDisplay();
+                updateLivePreview();
+            }
+        }
+
+        async function parseSerial() {
+            const input = document.getElementById('baseSerial').value.trim();
+            if (!input) {
+                showMessage('Please enter a base serial code', 'error');
+                return;
+            }
+            
+            // Check if input is in serialized format (@U format)
+            if (input.startsWith('@')) {
+                showMessage('⚠️ This is a serialized game code! Please click "Deserialize Serial Code" first.', 'error');
+                return;
+            }
+            
+            // Validate deserialized format pattern
+            // Must contain pipes and match pattern like: "9, 0, 1, 50| 2, 1626|| ..."
+            const deserializedPattern = /^\d+,\s*\d+,\s*\d+,\s*\d+\|.*\|\|/;
+            if (!deserializedPattern.test(input)) {
+                showMessage('⚠️ Invalid format! Expected deserialized format like: "9, 0, 1, 50| 2, 1626|| {80} {2}|"\n\nIf you have a @U format serial, click "Deserialize Serial Code" first.', 'error');
+                return;
+            }
+            
+            // If we don't have item info yet, fetch it by reserializing and deserializing
+            if (!baseSerialData.itemInfo) {
+                showLoading(true);
+                try {
+                    // Step 1: Reserialize to get @U format
+                    let cleanedSerial = input.trim();
+                    if (!cleanedSerial.endsWith('|')) {
+                        cleanedSerial += '|';
+                    }
+                    
+                    const reserializeResponse = await fetch(`${API_BASE_URL}/reserialize`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            deserialized: cleanedSerial
+                        })
+                    });
+                    
+                    if (reserializeResponse.ok) {
+                        const reserializeResult = await reserializeResponse.json();
+                        const gameSerial = reserializeResult.serial_b85;
+                        
+                        // Step 2: Deserialize it back to get metadata
+                        const deserializeResponse = await fetch(`${API_BASE_URL}/deserialize_bulk`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify([gameSerial])
+                        });
+                        
+                        if (deserializeResponse.ok) {
+                            const deserializeResult = await deserializeResponse.json();
+                            const firstKey = Object.keys(deserializeResult)[0];
+                            if (deserializeResult[firstKey] && deserializeResult[firstKey].success) {
+                                const itemData = deserializeResult[firstKey];
+                                baseSerialData.itemInfo = {
+                                    level: itemData.deserialized_level || 'Unknown',
+                                    type: itemData.deserialized_type || 'Unknown',
+                                    manufacturer: itemData.deserialized_manufacturer || 'Unknown',
+                                    rarity: itemData.deserialized_rarity || '',
+                                    name: itemData.deserialized_base_name || ''
+                                };
+                                console.log('Fetched item info:', baseSerialData.itemInfo);
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Could not fetch item metadata:', error);
+                    // Continue anyway without metadata
+                } finally {
+                    showLoading(false);
+                }
+            }
+            
+            baseSerialData.original = input;
+            
+            const doublePipeIndex = input.indexOf('||');
+            
+            if (doublePipeIndex !== -1) {
+                baseSerialData.header = input.substring(0, doublePipeIndex + 2).trim();
+                const afterDoublePipe = input.substring(doublePipeIndex + 2).trim();
+                const codes = afterDoublePipe.replace(/\|+$/, '').trim().split(/\s+/);
+                
+                if (codes.length > 0 && codes[0]) {
+                    baseSerialData.firstPartCode = codes[0];
+                    baseSerialData.remainingParts = codes.slice(1).join(' ');
+                } else {
+                    baseSerialData.firstPartCode = '';
+                    baseSerialData.remainingParts = '';
+                }
+            } else {
+                baseSerialData.header = input.substring(0, input.indexOf('|') + 1);
+                baseSerialData.firstPartCode = '';
+                baseSerialData.remainingParts = '';
+            }
+            
+            updateLivePreview();
+            nextStep(1);
+        }
+
+        function nextStep(step) {
+            for (let i = 0; i <= 5; i++) {
+                document.getElementById(`step${i}`).classList.add('hidden');
+            }
+            document.getElementById('stepFinal').classList.add('hidden');
+            
+            document.getElementById(`step${step}`).classList.remove('hidden');
+            // Update existing parts display for this step
+            updateExistingPartsDisplay(step);
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function updateItemTypeCode(newCode) {
+            const itemTypeCode = parseInt(newCode);
+            
+            if (isNaN(itemTypeCode) || itemTypeCode < 1 || itemTypeCode > 27) {
+                showMessage('⚠️ Item type code must be between 1 and 27', 'error');
+                return;
+            }
+            
+            // Update the 1st number in header (item type code)
+            const headerParts = baseSerialData.header.split(',');
+            if (headerParts.length >= 1) {
+                headerParts[0] = itemTypeCode.toString();
+                baseSerialData.header = headerParts.join(',');
+                
+                // Update the original serial too
+                const originalParts = baseSerialData.original.split(',');
+                if (originalParts.length >= 1) {
+                    originalParts[0] = itemTypeCode.toString();
+                    baseSerialData.original = originalParts.join(',');
+                }
+                
+                // Reserialize and deserialize to get fresh metadata
+                showLoading(true);
+                try {
+                    let cleanedSerial = baseSerialData.original.trim();
+                    if (!cleanedSerial.endsWith('|')) {
+                        cleanedSerial += '|';
+                    }
+                    
+                    const reserializeResponse = await fetch(`${API_BASE_URL}/reserialize`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            deserialized: cleanedSerial
+                        })
+                    });
+                    
+                    if (reserializeResponse.ok) {
+                        const reserializeResult = await reserializeResponse.json();
+                        const gameSerial = reserializeResult.serial_b85;
+                        
+                        const deserializeResponse = await fetch(`${API_BASE_URL}/deserialize_bulk`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify([gameSerial])
+                        });
+                        
+                        if (deserializeResponse.ok) {
+                            const deserializeResult = await deserializeResponse.json();
+                            const firstKey = Object.keys(deserializeResult)[0];
+                            if (deserializeResult[firstKey] && deserializeResult[firstKey].success) {
+                                const itemData = deserializeResult[firstKey];
+                                baseSerialData.itemInfo = {
+                                    level: itemData.deserialized_level || 'Unknown',
+                                    type: itemData.deserialized_type || 'Unknown',
+                                    manufacturer: itemData.deserialized_manufacturer || 'Unknown',
+                                    rarity: itemData.deserialized_rarity || '',
+                                    name: itemData.deserialized_base_name || ''
+                                };
+                                console.log('✅ Item type updated:', baseSerialData.itemInfo.type);
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Could not fetch updated item metadata:', error);
+                } finally {
+                    showLoading(false);
+                }
+                
+                updateLivePreview();
+                showMessage(`✅ Item type code updated to ${itemTypeCode}!`, 'success');
+            }
+        }
+
+        function updateExistingPartsDisplay(step) {
+            // Perks step
+            if (step === 1) {
+                const perksText = document.getElementById('existingPerksText');
+                if (baseSerialData.existingParts.perks.length > 0) {
+                    perksText.textContent = `${baseSerialData.existingParts.perks.length} perk${baseSerialData.existingParts.perks.length !== 1 ? 's' : ''} (${baseSerialData.existingParts.perks.join(', ')})`;
+                } else {
+                    perksText.textContent = 'None';
+                }
+            }
+            
+            // Stats step
+            if (step === 2) {
+                const statsText = document.getElementById('existingStatsText');
+                if (baseSerialData.existingParts.stats.length > 0) {
+                    const statCounts = {};
+                    baseSerialData.existingParts.stats.forEach(stat => {
+                        statCounts[stat] = (statCounts[stat] || 0) + 1;
+                    });
+                    const statsDisplay = Object.entries(statCounts).map(([stat, count]) => 
+                        count > 1 ? `${stat} x${count}` : stat
+                    ).join(', ');
+                    statsText.textContent = statsDisplay;
+                } else {
+                    statsText.textContent = 'None';
+                }
+            }
+            
+            // Alt Fire step
+            if (step === 3) {
+                const altFireText = document.getElementById('existingAltFireText');
+                altFireText.textContent = baseSerialData.existingParts.altFire || 'None';
+            }
+            
+            // Element step
+            if (step === 4) {
+                const elementText = document.getElementById('existingElementText');
+                elementText.textContent = baseSerialData.existingParts.element || 'None';
+            }
+            
+            // Skin step
+            if (step === 5) {
+                const skinText = document.getElementById('existingSkinText');
+                skinText.textContent = baseSerialData.existingParts.skin || 'None';
+            }
+        }
+
+        function goBackToStep(step) {
+            nextStep(step);
+        }
+
+        function finalizeSerial() {
+            let finalSerial = '';
+            
+            finalSerial = baseSerialData.header;
+            
+            if (selections.skin) {
+                const skinCode = findSkinCode(selections.skin);
+                finalSerial += ' ' + skinCode;
+            } else if (baseSerialData.firstPartCode) {
+                finalSerial += ' ' + baseSerialData.firstPartCode;
+            }
+            
+            if (selections.perks.length > 0) {
+                selections.perks.forEach(perk => {
+                    finalSerial += ' ' + perks[perk];
+                });
+            }
+            
+            if (selections.altFire) {
+                finalSerial += ' ' + altFires[selections.altFire];
+            }
+            
+            if (selections.element) {
+                finalSerial += ' ' + elements[selections.element];
+            }
+            
+            if (baseSerialData.remainingParts) {
+                finalSerial += ' ' + baseSerialData.remainingParts;
+            }
+            
+            if (selections.stats.length > 0) {
+                selections.stats.forEach(stat => {
+                    finalSerial += ' ' + stats[stat];
+                });
+            }
+            
+            finalSerial = finalSerial.trim();
+            if (!finalSerial.endsWith('|')) {
+                finalSerial += '|';
+            }
+            
+            document.getElementById('finalSerial').textContent = finalSerial;
+            document.getElementById('stepFinal').classList.remove('hidden');
+            document.getElementById('step5').classList.add('hidden');
+            
+            // Automatically generate game serial
+            setTimeout(() => reserializeSerial(), 500);
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function findSkinCode(skinName) {
+            for (const category in skins) {
+                if (skins[category][skinName]) {
+                    return skins[category][skinName];
+                }
+            }
+            return baseSerialData.firstPart;
+        }
+
+        function copySerial() {
+            const serial = document.getElementById('finalSerial').textContent;
+            navigator.clipboard.writeText(serial).then(() => {
+                showMessage('Deserialized serial copied to clipboard!', 'success');
+            }).catch(() => {
+                showMessage('Failed to copy', 'error');
+            });
+        }
+
+        function copyGameSerial() {
+            const serial = document.getElementById('gameSerial').textContent;
+            if (serial.startsWith('Error') || serial === 'Generating...') {
+                showMessage('Game serial not ready yet!', 'error');
+                return;
+            }
+            navigator.clipboard.writeText(serial).then(() => {
+                showMessage('✅ Game serial copied! Ready to paste in game.', 'success');
+            }).catch(() => {
+                showMessage('Failed to copy', 'error');
+            });
+        }
+
+        function resetEditor() {
+            selections = {
+                perks: [],
+                stats: [],
+                altFire: null,
+                element: null,
+                skin: null
+            };
+            
+            baseSerialData = {
+                original: "",
+                header: "",
+                firstPartCode: "",
+                remainingParts: "",
+                itemInfo: null,
+                existingParts: {
+                    perks: [],
+                    stats: [],
+                    altFire: null,
+                    element: null,
+                    skin: null
+                }
+            };
+            
+            document.getElementById('baseSerial').value = '';
+            document.getElementById('livePreview').classList.add('hidden');
+            
+            updatePerksDisplay();
+            updateStatsDisplay();
+            updateAltFireDisplay();
+            updateElementDisplay();
+            updateSkinDisplay();
+            
+            document.querySelectorAll('.option-item').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            nextStep(0);
+        }
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
