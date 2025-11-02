@@ -386,10 +386,28 @@
         }
         .breakdown-part-name {
             color: #e8e8e8;
-            font-weight: 400;
+            font-weight: 600;
             font-size: 1em;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             letter-spacing: 0.3px;
+        }
+        .breakdown-copy-btn {
+            background: rgba(255, 170, 68, 0.2);
+            border: 1px solid rgba(255, 170, 68, 0.4);
+            color: #ffaa44;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+            transition: all 0.2s;
+        }
+        .breakdown-copy-btn:hover {
+            background: rgba(255, 170, 68, 0.3);
+            border-color: #ffaa44;
+        }
+        .breakdown-copy-btn:active {
+            background: rgba(255, 170, 68, 0.4);
         }
         .breakdown-part-type {
             color: #b0b0b0;
@@ -2885,7 +2903,71 @@ document.addEventListener('DOMContentLoaded', () => {
     async function lookupPart(itemTypeCode, partId, category = null) {
         await loadSpecialData();
         
-        // First, check if it's a legendary perk, element, or alt-fire
+        // PRIORITY 1: Check if category is 1 (Elements) - this MUST be checked first!
+        if (category === '1' || category === 1) {
+            const elementKey = `1:${partId}`;
+            const elementNames = {
+                '10': 'Corrosive',
+                '11': 'Cryo',
+                '12': 'Fire',
+                '13': 'Radiation',
+                '14': 'Shock',
+                '5': 'Maliwan - Can switch between Shock and Radiation Elements',
+                '6': 'Maliwan - Can switch between Shock and Incendiary Elements',
+                '7': 'Maliwan - Can switch between Shock and Cryo Elements',
+                '8': 'Maliwan - Can switch between Shock and Corrosive Elements',
+                '9': 'Maliwan - Can switch between Radiation and Shock Elements',
+                '15': 'Maliwan - Can switch between Radiation and Incendiary Elements',
+                '16': 'Maliwan - Can switch between Radiation and Cryo Elements',
+                '17': 'Maliwan - Can switch between Radiation and Corrosive Elements',
+                '18': 'Maliwan - Can switch between Incendiary and Radiation Elements',
+                '19': 'Maliwan - Can switch between Incendiary and Cryo Elements',
+                '20': 'Maliwan - Can switch between Incendiary and Corrosive Elements',
+                '21': 'Maliwan - Can switch between Cryo and Shock Elements',
+                '22': 'Maliwan - Can switch between Cryo and Radiation Elements',
+                '23': 'Maliwan - Can switch between Cryo and Incendiary Elements',
+                '24': 'Maliwan - Can switch between Cryo and Corrosive Elements',
+                '25': 'Maliwan - Can switch between Corrosive and Shock Elements',
+                '26': 'Maliwan - Can switch between Corrosive and Radiation Elements',
+                '27': 'Maliwan - Can switch between Corrosive and Incendiary Elements',
+                '28': 'Maliwan - Can switch between Corrosive and Cryo Elements',
+                '29': 'Maliwan-Licensed Underbarrel - Can switch between Shock and Radiation Elements',
+                '30': 'Maliwan-Licensed Underbarrel - Can switch between Incendiary and Radiation Elements',
+                '31': 'Maliwan-Licensed Underbarrel - Can switch between Cryo and Radiation Elements',
+                '32': 'Maliwan-Licensed Underbarrel - Can switch between Corrosive and Radiation Elements',
+                '33': 'Maliwan-Licensed Underbarrel - Can switch between Radiation and Corrosive Elements',
+                '34': 'Maliwan-Licensed Underbarrel - Can switch between Shock and Corrosive Elements',
+                '35': 'Maliwan-Licensed Underbarrel - Can switch between Incendiary and Corrosive Elements',
+                '36': 'Maliwan-Licensed Underbarrel - Can switch between Cryo and Corrosive Elements',
+                '37': 'Maliwan-Licensed Underbarrel - Can switch between Radiation and Cryo Elements',
+                '38': 'Maliwan-Licensed Underbarrel - Can switch between Shock and Cryo Elements',
+                '39': 'Maliwan-Licensed Underbarrel - Can switch between Incendiary and Cryo Elements',
+                '40': 'Maliwan-Licensed Underbarrel - Can switch between Corrosive and Cryo Elements',
+                '41': 'Maliwan-Licensed Underbarrel - Can switch between Radiation and Incendiary Elements',
+                '42': 'Maliwan-Licensed Underbarrel - Can switch between Cryo and Incendiary Elements',
+                '43': 'Maliwan-Licensed Underbarrel - Can switch between Shock and Incendiary Elements',
+                '44': 'Maliwan-Licensed Underbarrel - Can switch between Corrosive and Incendiary Elements',
+                '45': 'Maliwan-Licensed Underbarrel - Can switch between Radiation and Shock Elements',
+                '46': 'Maliwan-Licensed Underbarrel - Can switch between Cryo and Shock Elements',
+                '47': 'Maliwan-Licensed Underbarrel - Can switch between Corrosive and Shock Elements',
+                '48': 'Maliwan - Can switch between Incendiary and Shock Elements',
+                '49': 'Maliwan-Licensed Underbarrel - Can switch between Incendiary and Shock Elements'
+            };
+            // Check CSV mapping first (priority)
+            if (elementNames[partId]) {
+                return {
+                    name: elementNames[partId],
+                    type: 'Element',
+                    code: `{1:${partId}}`
+                };
+            }
+            // Fall back to JSON data if available
+            if (elementsMap && elementsMap.has(elementKey)) {
+                return elementsMap.get(elementKey);
+            }
+        }
+        
+        // PRIORITY 2: Check other special categories (perks, alt-fire)
         if (category) {
             const specialKey = `${category}:${partId}`;
             if (legendaryPerksMap && legendaryPerksMap.has(specialKey)) {
@@ -2942,6 +3024,72 @@ document.addEventListener('DOMContentLoaded', () => {
         return result || null;
     }
 
+    // Helper function to copy part code to clipboard
+    function copyPartCode(code, btnId) {
+        navigator.clipboard.writeText(code).then(() => {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            }
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+        });
+    }
+    window.copyPartCode = copyPartCode;
+
+    // Helper function to render a single part breakdown item
+    function renderPartItem(code, partInfo, category = null, count = 1) {
+        const copyBtnId = `copy-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+        let html = '<div class="breakdown-item">';
+        
+        // Copy button
+        html += `<button class="breakdown-copy-btn" id="${copyBtnId}" onclick="copyPartCode('${code}', '${copyBtnId}')" title="Copy ${code}">📋</button>`;
+        
+        // Code display
+        html += `<span class="breakdown-code">${code}</span>`;
+        
+        if (count > 1) {
+            html += ` <span class="breakdown-part-type">x${count} times</span>`;
+        }
+        
+        if (partInfo) {
+            // Check if it's a special type (perk/element/alt-fire)
+            if (partInfo.type) {
+                html += ` - <span class="breakdown-part-name" style="color: var(--accent-orange);">${partInfo.name}</span>`;
+                html += ` <span class="breakdown-part-type">(${partInfo.type})</span>`;
+            } else {
+                // Regular part - prioritize stringName if available
+                const displayName = partInfo.stringName || partInfo.modelName || partInfo.partType || 'Part';
+                if (category && category !== '1') {
+                    html += ` <span class="breakdown-part-type">(Category: ${category})</span>`;
+                }
+                html += ` - <span class="breakdown-part-name">${displayName}</span>`;
+                // Show part type if different from what's displayed
+                if (partInfo.partType && partInfo.partType !== displayName && partInfo.partType !== partInfo.stringName) {
+                    html += ` <span class="breakdown-part-type">(${partInfo.partType})</span>`;
+                }
+                if (partInfo.stats) {
+                    html += `<div class="breakdown-stats">📊 Stats: ${partInfo.stats}</div>`;
+                }
+                if (partInfo.effects) {
+                    html += `<div class="breakdown-effects">✨ Effects: ${partInfo.effects}</div>`;
+                }
+            }
+        } else {
+            if (category && category !== '1') {
+                html += ` <span class="breakdown-part-type">(Category: ${category})</span>`;
+            }
+            html += ` - <span class="breakdown-unknown">Unknown Part</span>`;
+        }
+        
+        html += '</div>';
+        return html;
+    }
+
     // Generate breakdown HTML
     async function generateBreakdown(parsed) {
         if (!parsed || parsed.error) {
@@ -2961,83 +3109,68 @@ document.addEventListener('DOMContentLoaded', () => {
         html += `</div>`;
         html += `<div class="breakdown-content" id="${breakdownId}">`;
 
-        // Process single parts {123} - these belong to the item type from header
+        // Process single parts {123} - group duplicates
+        const singlePartsMap = new Map();
         for (const part of singleParts) {
-            const partInfo = await lookupPart(itemTypeCode, part.partId);
-            
-            html += '<div class="breakdown-item">';
-            html += `<span class="breakdown-code">{${part.partId}}</span>`;
-            
-            if (partInfo) {
-                // Prioritize stringName (like JAK_AR.part_barrel_02_c) if available
-                const displayName = partInfo.stringName || partInfo.modelName || partInfo.partType || 'Part';
-                html += ` - <span class="breakdown-part-name">${displayName}</span>`;
-                // Show part type if different from what's displayed
-                if (partInfo.partType && partInfo.partType !== displayName && partInfo.partType !== partInfo.stringName) {
-                    html += ` <span class="breakdown-part-type">(${partInfo.partType})</span>`;
-                }
-                if (partInfo.stats) {
-                    html += `<div class="breakdown-stats">📊 Stats: ${partInfo.stats}</div>`;
-                }
-                if (partInfo.effects) {
-                    html += `<div class="breakdown-effects">✨ Effects: ${partInfo.effects}</div>`;
-                }
+            const key = part.partId;
+            if (singlePartsMap.has(key)) {
+                singlePartsMap.set(key, singlePartsMap.get(key) + 1);
             } else {
-                html += ` - <span class="breakdown-unknown">Unknown Part (ID: ${part.partId})</span>`;
+                singlePartsMap.set(key, 1);
             }
-            html += '</div>';
+        }
+        
+        for (const [partId, count] of singlePartsMap.entries()) {
+            const partInfo = await lookupPart(itemTypeCode, partId);
+            const code = `{${partId}}`;
+            html += renderPartItem(code, partInfo, null, count);
         }
 
-        // Process keyed parts {123:45} - category:partId format
-        // If category is a valid item type code and lookup fails as special, try using category as item type
+        // Process keyed parts {123:45} - group duplicates
+        const keyedPartsMap = new Map();
         for (const keyedPart of keyedParts) {
-            let partInfo = await lookupPart(itemTypeCode, keyedPart.partId, keyedPart.category);
+            const key = `${keyedPart.category}:${keyedPart.partId}`;
+            if (keyedPartsMap.has(key)) {
+                const existing = keyedPartsMap.get(key);
+                existing.count++;
+            } else {
+                keyedPartsMap.set(key, {
+                    category: keyedPart.category,
+                    partId: keyedPart.partId,
+                    count: 1
+                });
+            }
+        }
+        
+        for (const [key, data] of keyedPartsMap.entries()) {
+            let partInfo = await lookupPart(itemTypeCode, data.partId, data.category);
             
             // If not found and category could be an item type code, try using it
             if (!partInfo) {
-                const categoryAsItemType = parseInt(keyedPart.category, 10);
+                const categoryAsItemType = parseInt(data.category, 10);
                 if (ITEM_TYPES[categoryAsItemType] && categoryAsItemType !== itemTypeCode) {
-                    // Category is a valid item type code, try using it for lookup
-                    partInfo = await lookupPart(categoryAsItemType, keyedPart.partId, keyedPart.category);
+                    partInfo = await lookupPart(categoryAsItemType, data.partId, data.category);
                 }
             }
             
-            html += '<div class="breakdown-item">';
-            html += `<span class="breakdown-code">{${keyedPart.category}:${keyedPart.partId}}</span>`;
-            
-            if (partInfo) {
-                // Check if it's a special type (perk/element/alt-fire)
-                if (partInfo.type) {
-                    html += ` - <span class="breakdown-part-name" style="color: var(--accent-orange);">${partInfo.name}</span>`;
-                    html += ` <span class="breakdown-part-type">(${partInfo.type})</span>`;
-                } else {
-                    // Regular part - prioritize stringName if available
-                    const displayName = partInfo.stringName || partInfo.modelName || partInfo.partType || 'Part';
-                    html += ` <span class="breakdown-part-type">(Category: ${keyedPart.category})</span>`;
-                    html += ` - <span class="breakdown-part-name">${displayName}</span>`;
-                    // Show part type if different from what's displayed
-                    if (partInfo.partType && partInfo.partType !== displayName && partInfo.partType !== partInfo.stringName) {
-                        html += ` <span class="breakdown-part-type">(${partInfo.partType})</span>`;
-                    }
-                    if (partInfo.stats) {
-                        html += `<div class="breakdown-stats">📊 Stats: ${partInfo.stats}</div>`;
-                    }
-                    if (partInfo.effects) {
-                        html += `<div class="breakdown-effects">✨ Effects: ${partInfo.effects}</div>`;
-                    }
-                }
-            } else {
-                html += ` <span class="breakdown-part-type">(Category: ${keyedPart.category})</span>`;
-                html += ` - <span class="breakdown-unknown">Unknown Part (ID: ${keyedPart.partId})</span>`;
-            }
-            html += '</div>';
+            const code = `{${data.category}:${data.partId}}`;
+            html += renderPartItem(code, partInfo, data.category, data.count);
         }
 
-        // Process array parts {123:[456 789]} - category:[partIds] format
-        // Note: The category number IS the item type code for array parts!
+        // Process array parts {123:[456 789]} - group duplicates within arrays
         for (const arrayPart of arrayParts) {
             const arrayItemTypeCode = parseInt(arrayPart.category, 10);
             const arrayItemTypeInfo = ITEM_TYPES[arrayItemTypeCode];
+            
+            // Count occurrences of each part ID in the array
+            const arrayPartsMap = new Map();
+            for (const value of arrayPart.values) {
+                if (arrayPartsMap.has(value)) {
+                    arrayPartsMap.set(value, arrayPartsMap.get(value) + 1);
+                } else {
+                    arrayPartsMap.set(value, 1);
+                }
+            }
             
             html += '<div class="breakdown-item">';
             html += `<span class="breakdown-code">{${arrayPart.category}:[${arrayPart.values.join(' ')}]}</span>`;
@@ -3047,22 +3180,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 html += ` - <span class="breakdown-part-type">Array (Category: ${arrayPart.category})</span>`;
             }
             
-            for (const value of arrayPart.values) {
-                // Use arrayItemTypeCode (category number) instead of header's itemTypeCode
+            // Render grouped parts
+            for (const [value, count] of arrayPartsMap.entries()) {
                 const partInfo = await lookupPart(arrayItemTypeCode, value, arrayPart.category);
+                const copyBtnId = `copy-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+                const code = `{${arrayPart.category}:${value}}`;
+                
                 html += '<div style="margin-left: 1rem; margin-top: 0.25rem;">';
+                html += `<button class="breakdown-copy-btn" id="${copyBtnId}" onclick="copyPartCode('${code}', '${copyBtnId}')" title="Copy ${code}">📋</button>`;
                 html += `<span class="breakdown-code">${value}</span>`;
                 
+                if (count > 1) {
+                    html += ` <span class="breakdown-part-type">x${count} times</span>`;
+                }
+                
                 if (partInfo) {
-                    // Check if it's a special type (perk/element/alt-fire)
                     if (partInfo.type) {
                         html += ` - <span class="breakdown-part-name" style="color: var(--accent-orange);">${partInfo.name}</span>`;
                         html += ` <span class="breakdown-part-type">(${partInfo.type})</span>`;
                     } else {
-                        // Regular part - prioritize stringName (like JAK_AR.part_barrel_02_c) if available
                         const displayName = partInfo.stringName || partInfo.modelName || partInfo.partType || 'Part';
                         html += ` - <span class="breakdown-part-name">${displayName}</span>`;
-                        // Show part type if different from what's displayed
                         if (partInfo.partType && partInfo.partType !== displayName && partInfo.partType !== partInfo.stringName) {
                             html += ` <span class="breakdown-part-type">(${partInfo.partType})</span>`;
                         }
@@ -3074,7 +3212,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                 } else {
-                    html += ` - <span class="breakdown-unknown">Unknown Part (ID: ${value})</span>`;
+                    html += ` - <span class="breakdown-unknown">Unknown Part</span>`;
                 }
                 html += '</div>';
             }
