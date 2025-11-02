@@ -373,9 +373,16 @@
             background: rgba(255, 255, 255, 0.03);
             border-radius: 4px;
             transition: background 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
         }
         .breakdown-item:hover {
             background: rgba(255, 255, 255, 0.05);
+        }
+        .breakdown-item-content {
+            flex: 1;
         }
         .breakdown-code {
             color: var(--accent-orange);
@@ -399,8 +406,8 @@
             border-radius: 3px;
             cursor: pointer;
             font-size: 0.75rem;
-            margin-left: 0.5rem;
             transition: all 0.2s;
+            flex-shrink: 0;
         }
         .breakdown-copy-btn:hover {
             background: rgba(255, 170, 68, 0.3);
@@ -409,12 +416,67 @@
         .breakdown-copy-btn:active {
             background: rgba(255, 170, 68, 0.4);
         }
+        .breakdown-copy-group {
+            display: flex;
+            gap: 0.3rem;
+            flex-shrink: 0;
+        }
+        .breakdown-duplicate-report {
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .breakdown-duplicate-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            cursor: pointer;
+            background: rgba(255, 170, 68, 0.1);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .breakdown-duplicate-header:hover {
+            background: rgba(255, 170, 68, 0.15);
+        }
+        .breakdown-duplicate-content {
+            padding: 0.75rem;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            overflow: hidden;
+            max-height: 5000px;
+        }
+        .breakdown-duplicate-content.collapsed {
+            max-height: 0 !important;
+            opacity: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        .breakdown-duplicate-item {
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-left: 2px solid #ffaa44;
+            padding-left: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
         .breakdown-part-type {
             color: #b0b0b0;
             font-style: italic;
             font-size: 0.88em;
             font-weight: 300;
             margin-left: 0.3rem;
+        }
+        .breakdown-count {
+            color: #ffaa44;
+            font-weight: 600;
+            font-size: 0.9em;
+            margin-left: 0.5rem;
+            background: rgba(255, 170, 68, 0.15);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
         }
         .breakdown-stats {
             color: #7dd87d;
@@ -3039,21 +3101,38 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Failed to copy:', err);
         });
     }
+    
+    // Copy single part with item type
+    function copySinglePart(itemTypeCode, partId, btnId) {
+        const code = `{${itemTypeCode}:${partId}}`;
+        copyPartCode(code, btnId);
+    }
+    
+    // Copy all duplicates as array
+    function copyDuplicatesAsArray(itemTypeCode, partId, count, btnId) {
+        const duplicates = Array(count).fill(partId).join(' ');
+        const code = `{${itemTypeCode}:[${duplicates}]}`;
+        copyPartCode(code, btnId);
+    }
+    
     window.copyPartCode = copyPartCode;
+    window.copySinglePart = copySinglePart;
+    window.copyDuplicatesAsArray = copyDuplicatesAsArray;
 
     // Helper function to render a single part breakdown item
-    function renderPartItem(code, partInfo, category = null, count = 1) {
+    function renderPartItem(code, partInfo, category = null, count = 1, itemTypeCode = null, partId = null) {
         const copyBtnId = `copy-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
-        let html = '<div class="breakdown-item">';
+        const copySingleId = `copy-single-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+        const copyArrayId = `copy-array-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
         
-        // Copy button
-        html += `<button class="breakdown-copy-btn" id="${copyBtnId}" onclick="copyPartCode('${code}', '${copyBtnId}')" title="Copy ${code}">📋</button>`;
+        let html = '<div class="breakdown-item">';
+        html += '<div class="breakdown-item-content">';
         
         // Code display
         html += `<span class="breakdown-code">${code}</span>`;
         
         if (count > 1) {
-            html += ` <span class="breakdown-part-type">x${count} times</span>`;
+            html += ` <span class="breakdown-count">x${count} times</span>`;
         }
         
         if (partInfo) {
@@ -3086,7 +3165,126 @@ document.addEventListener('DOMContentLoaded', () => {
             html += ` - <span class="breakdown-unknown">Unknown Part</span>`;
         }
         
-        html += '</div>';
+        html += '</div>'; // Close breakdown-item-content
+        
+        // Copy buttons on the right
+        html += '<div class="breakdown-copy-group">';
+        
+        // For single parts without category, use itemTypeCode
+        if (category === null && itemTypeCode !== null && partId !== null) {
+            // Single part - copy as {itemTypeCode:partId}
+            html += `<button class="breakdown-copy-btn" id="${copyBtnId}" onclick="copySinglePart('${itemTypeCode}', '${partId}', '${copyBtnId}')" title="Copy {${itemTypeCode}:${partId}}">📋</button>`;
+            if (count > 1) {
+                // Offer option to copy as array
+                html += `<button class="breakdown-copy-btn" id="${copyArrayId}" onclick="copyDuplicatesAsArray('${itemTypeCode}', '${partId}', ${count}, '${copyArrayId}')" title="Copy all ${count} as array">📋×${count}</button>`;
+            }
+        } else {
+            // Keyed part - copy as-is
+            html += `<button class="breakdown-copy-btn" id="${copyBtnId}" onclick="copyPartCode('${code}', '${copyBtnId}')" title="Copy ${code}">📋</button>`;
+            if (count > 1 && itemTypeCode !== null && partId !== null && category) {
+                // Offer option to copy as array
+                html += `<button class="breakdown-copy-btn" id="${copyArrayId}" onclick="copyDuplicatesAsArray('${itemTypeCode}', '${partId}', ${count}, '${copyArrayId}')" title="Copy all ${count} as array">📋×${count}</button>`;
+            }
+        }
+        
+        html += '</div>'; // Close breakdown-copy-group
+        html += '</div>'; // Close breakdown-item
+        return html;
+    }
+
+    // Generate duplicate parts report
+    function generateDuplicateReport(singlePartsMap, keyedPartsMap, arrayParts, itemTypeCode) {
+        const duplicateId = `duplicates-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        let html = '';
+        let hasDuplicates = false;
+        
+        // Check for duplicates in single parts
+        const singleDuplicates = [];
+        for (const [partId, count] of singlePartsMap.entries()) {
+            if (count > 1) {
+                hasDuplicates = true;
+                singleDuplicates.push({ partId, count, itemTypeCode });
+            }
+        }
+        
+        // Check for duplicates in keyed parts
+        const keyedDuplicates = [];
+        for (const [key, data] of keyedPartsMap.entries()) {
+            if (data.count > 1) {
+                hasDuplicates = true;
+                keyedDuplicates.push({ ...data, key });
+            }
+        }
+        
+        // Check for duplicates in array parts
+        const arrayDuplicates = [];
+        for (const arrayPart of arrayParts) {
+            const arrayItemTypeCode = parseInt(arrayPart.category, 10);
+            const arrayPartsMap = new Map();
+            for (const value of arrayPart.values) {
+                arrayPartsMap.set(value, (arrayPartsMap.get(value) || 0) + 1);
+            }
+            for (const [value, count] of arrayPartsMap.entries()) {
+                if (count > 1) {
+                    hasDuplicates = true;
+                    arrayDuplicates.push({ category: arrayPart.category, partId: value, count, itemTypeCode: arrayItemTypeCode });
+                }
+            }
+        }
+        
+        if (!hasDuplicates) {
+            return '';
+        }
+        
+        html += '<div class="breakdown-duplicate-report">';
+        html += `<div class="breakdown-duplicate-header" onclick="toggleBreakdown('${duplicateId}')">`;
+        html += `<span style="font-weight: 600; color: #ffaa44;">📊 Duplicate Parts Report</span>`;
+        html += `<button class="breakdown-toggle" id="toggle-${duplicateId}">Expand</button>`;
+        html += `</div>`;
+        html += `<div class="breakdown-duplicate-content collapsed" id="${duplicateId}">`;
+        
+        if (singleDuplicates.length > 0) {
+            html += '<div style="margin-bottom: 1rem;"><strong>Duplicate Single Parts:</strong></div>';
+            singleDuplicates.forEach((dup, idx) => {
+                const dupCopySingleId = `dup-copy-single-${duplicateId}-${idx}-0`;
+                const dupCopyArrayId = `dup-copy-array-${duplicateId}-${idx}-0`;
+                html += '<div class="breakdown-duplicate-item">';
+                html += `<div><span class="breakdown-code">{${dup.partId}}</span> <span class="breakdown-count">x${dup.count} times</span></div>`;
+                html += '<div class="breakdown-copy-group">';
+                html += `<button class="breakdown-copy-btn" id="${dupCopySingleId}" onclick="copySinglePart('${dup.itemTypeCode}', '${dup.partId}', '${dupCopySingleId}')">📋 Copy {${dup.itemTypeCode}:${dup.partId}}</button>`;
+                html += `<button class="breakdown-copy-btn" id="${dupCopyArrayId}" onclick="copyDuplicatesAsArray('${dup.itemTypeCode}', '${dup.partId}', ${dup.count}, '${dupCopyArrayId}')">📋×${dup.count} Copy Array</button>`;
+                html += '</div></div>';
+            });
+        }
+        
+        if (keyedDuplicates.length > 0) {
+            html += '<div style="margin-top: 1rem; margin-bottom: 1rem;"><strong>Duplicate Keyed Parts:</strong></div>';
+            keyedDuplicates.forEach((dup, idx) => {
+                const dupKeyedCopyId = `dup-copy-keyed-${duplicateId}-${idx}`;
+                html += '<div class="breakdown-duplicate-item">';
+                html += `<div><span class="breakdown-code">{${dup.category}:${dup.partId}}</span> <span class="breakdown-count">x${dup.count} times</span></div>`;
+                html += '<div class="breakdown-copy-group">';
+                html += `<button class="breakdown-copy-btn" id="${dupKeyedCopyId}" onclick="copyPartCode('{${dup.category}:${dup.partId}}', '${dupKeyedCopyId}')">📋 Copy {${dup.category}:${dup.partId}}</button>`;
+                html += '</div></div>';
+            });
+        }
+        
+        if (arrayDuplicates.length > 0) {
+            html += '<div style="margin-top: 1rem; margin-bottom: 1rem;"><strong>Duplicate Parts within Arrays:</strong></div>';
+            arrayDuplicates.forEach((dup, idx) => {
+                const dupArrayCopySingleId = `dup-array-copy-single-${duplicateId}-${idx}`;
+                const dupArrayCopyArrayId = `dup-array-copy-array-${duplicateId}-${idx}`;
+                html += '<div class="breakdown-duplicate-item">';
+                html += `<div><span class="breakdown-code">{${dup.category}:${dup.partId}}</span> <span class="breakdown-count">x${dup.count} times</span> in array {${dup.category}:[...]}</div>`;
+                html += '<div class="breakdown-copy-group">';
+                html += `<button class="breakdown-copy-btn" id="${dupArrayCopySingleId}" onclick="copyPartCode('{${dup.category}:${dup.partId}}', '${dupArrayCopySingleId}')">📋 Copy {${dup.category}:${dup.partId}}</button>`;
+                html += `<button class="breakdown-copy-btn" id="${dupArrayCopyArrayId}" onclick="copyDuplicatesAsArray('${dup.category}', '${dup.partId}', ${dup.count}, '${dupArrayCopyArrayId}')">📋×${dup.count} Copy Array</button>`;
+                html += '</div></div>';
+            });
+        }
+        
+        html += '</div></div>'; // Close duplicate content and report
+        
         return html;
     }
 
@@ -3100,15 +3298,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const breakdownId = `breakdown-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         let html = '';
 
-        // Item type header with toggle button
-        const manufacturerName = itemTypeInfo.manufacturer.charAt(0).toUpperCase() + itemTypeInfo.manufacturer.slice(1);
-        const itemTypeName = itemTypeInfo.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-        html += `<div class="breakdown-header">`;
-        html += `<span class="breakdown-item-type">Item Type: ${itemTypeCode} - ${manufacturerName} ${itemTypeName}</span>`;
-        html += `<button class="breakdown-toggle" onclick="toggleBreakdown('${breakdownId}')" id="toggle-${breakdownId}">Collapse</button>`;
-        html += `</div>`;
-        html += `<div class="breakdown-content" id="${breakdownId}">`;
-
         // Process single parts {123} - group duplicates
         const singlePartsMap = new Map();
         for (const part of singleParts) {
@@ -3120,12 +3309,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        for (const [partId, count] of singlePartsMap.entries()) {
-            const partInfo = await lookupPart(itemTypeCode, partId);
-            const code = `{${partId}}`;
-            html += renderPartItem(code, partInfo, null, count);
-        }
-
         // Process keyed parts {123:45} - group duplicates
         const keyedPartsMap = new Map();
         for (const keyedPart of keyedParts) {
@@ -3142,6 +3325,26 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
+        // Generate duplicate parts report (collapsed by default)
+        html += generateDuplicateReport(singlePartsMap, keyedPartsMap, arrayParts, itemTypeCode);
+
+        // Item type header with toggle button
+        const manufacturerName = itemTypeInfo.manufacturer.charAt(0).toUpperCase() + itemTypeInfo.manufacturer.slice(1);
+        const itemTypeName = itemTypeInfo.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        html += `<div class="breakdown-header">`;
+        html += `<span class="breakdown-item-type">Item Type: ${itemTypeCode} - ${manufacturerName} ${itemTypeName}</span>`;
+        html += `<button class="breakdown-toggle" onclick="toggleBreakdown('${breakdownId}')" id="toggle-${breakdownId}">Collapse</button>`;
+        html += `</div>`;
+        html += `<div class="breakdown-content" id="${breakdownId}">`;
+
+        // Render single parts
+        for (const [partId, count] of singlePartsMap.entries()) {
+            const partInfo = await lookupPart(itemTypeCode, partId);
+            const code = `{${partId}}`;
+            html += renderPartItem(code, partInfo, null, count, itemTypeCode, partId);
+        }
+
+        // Render keyed parts
         for (const [key, data] of keyedPartsMap.entries()) {
             let partInfo = await lookupPart(itemTypeCode, data.partId, data.category);
             
@@ -3154,7 +3357,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             const code = `{${data.category}:${data.partId}}`;
-            html += renderPartItem(code, partInfo, data.category, data.count);
+            html += renderPartItem(code, partInfo, data.category, data.count, itemTypeCode, data.partId);
         }
 
         // Process array parts {123:[456 789]} - group duplicates within arrays
@@ -3184,14 +3387,15 @@ document.addEventListener('DOMContentLoaded', () => {
             for (const [value, count] of arrayPartsMap.entries()) {
                 const partInfo = await lookupPart(arrayItemTypeCode, value, arrayPart.category);
                 const copyBtnId = `copy-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+                const copyArrayId = `copy-array-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
                 const code = `{${arrayPart.category}:${value}}`;
                 
-                html += '<div style="margin-left: 1rem; margin-top: 0.25rem;">';
-                html += `<button class="breakdown-copy-btn" id="${copyBtnId}" onclick="copyPartCode('${code}', '${copyBtnId}')" title="Copy ${code}">📋</button>`;
+                html += '<div style="margin-left: 1rem; margin-top: 0.25rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">';
+                html += '<div>';
                 html += `<span class="breakdown-code">${value}</span>`;
                 
                 if (count > 1) {
-                    html += ` <span class="breakdown-part-type">x${count} times</span>`;
+                    html += ` <span class="breakdown-count">x${count} times</span>`;
                 }
                 
                 if (partInfo) {
@@ -3215,6 +3419,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     html += ` - <span class="breakdown-unknown">Unknown Part</span>`;
                 }
                 html += '</div>';
+                
+                // Copy buttons on the right
+                html += '<div class="breakdown-copy-group">';
+                html += `<button class="breakdown-copy-btn" id="${copyBtnId}" onclick="copyPartCode('${code}', '${copyBtnId}')" title="Copy ${code}">📋</button>`;
+                if (count > 1) {
+                    html += `<button class="breakdown-copy-btn" id="${copyArrayId}" onclick="copyDuplicatesAsArray('${arrayPart.category}', '${value}', ${count}, '${copyArrayId}')" title="Copy all ${count} as array">📋×${count}</button>`;
+                }
+                html += '</div>';
+                html += '</div>';
             }
             html += '</div>';
         }
@@ -3235,9 +3448,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!content || !toggleBtn) return;
         
         if (content.classList.contains('collapsed')) {
-            content.classList.remove('collapsed');
+            // Expand
+            content.style.maxHeight = content.scrollHeight + 'px';
+            setTimeout(() => {
+                content.classList.remove('collapsed');
+                content.style.maxHeight = 'none';
+            }, 300);
             toggleBtn.textContent = 'Collapse';
         } else {
+            // Collapse
+            content.style.maxHeight = content.scrollHeight + 'px';
+            setTimeout(() => {
+                content.style.maxHeight = '0';
+            }, 10);
             content.classList.add('collapsed');
             toggleBtn.textContent = 'Expand';
         }
