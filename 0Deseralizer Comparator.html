@@ -1,0 +1,3359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BL4 Serial Editor Suite (Comparator)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        :root {
+            --bg-deep-blue: #1a1a2e; --bg-element: #2c2c4d; --border-color: #4b4b7d;
+            --text-primary: #e0e0e0; --text-secondary: #a0a0c0; --accent-orange: #e59400;
+            --accent-orange-hover: #ffb84d; --success-green: #28a745; --danger-red: #e74c3c;
+            --highlight-bg: #e59400; --highlight-text: #1a1a2e;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-deep-blue); color: var(--text-primary); margin: 0; padding: 2rem; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1, h2, h3 { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+        h1 { text-shadow: 0 0 8px var(--accent-orange); }
+        h3 { border-bottom: none; font-family: 'Inter'; margin-top: 0; margin-bottom: 0.5rem; font-size: 1.2rem; color: var(--text-secondary); }
+        h4 { font-family: 'Inter'; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.5rem; color: var(--text-secondary); }
+        /* SURGICAL ADDITION: Added input[type="text"] to this rule for Workstation */
+        textarea, input[type="text"], input[type="number"], select { width: 100%; padding: 0.75rem; background-color: var(--bg-element); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
+        /* SURGICAL ADDITION: Added this rule for Workstation "Name" fields */
+        input[type="text"] { font-family: 'Inter', sans-serif; }
+        select { font-family: 'Inter', sans-serif; }
+        button { padding: 0.5rem 1rem; background-color: var(--accent-orange); color: var(--bg-deep-blue); border: none; border-radius: 6px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; margin-right: 0.5rem; }
+        button:hover { background-color: var(--accent-orange-hover); }
+        button:disabled { background-color: #555; cursor: not-allowed; }
+        .modify-btn, .btn-cancel, .util-btn { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+        .util-btn { background-color: #6c757d; color: white; }
+        .btn-keep { background-color: #4b4b7d; } /* Muted purple-blue from theme */
+        .btn-keep:hover { background-color: #6a6a9d; }
+        .btn-remove { background-color: #c07c00; } /* Darker orange */
+        .btn-remove:hover { background-color: var(--accent-orange); } /* Original accent orange on hover */
+        .btn-bulk { background-color: #00695C; } /* Match Analyze Structure button */
+        .btn-bulk:hover { background-color: #004D40; }
+        .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        .comparison-results { display: none; margin-top: 1.5rem; border-top: 2px solid var(--border-color); padding-top: 1.5rem; }
+        .comparison-block { margin-bottom: 2.5rem; }
+        .comparison-block-header { margin-bottom: 1rem; }
+        .comparison-block-header h3 { margin-bottom: 0.25rem; }
+        .comparison-stats { font-family: 'Inter', sans-serif; font-size: 0.9rem; color: var(--text-secondary); }
+        .comparison-stats span { margin-right: 1.5rem; }
+        .comparison-stats strong { font-weight: 700; }
+        .display-box { padding: 0.75rem; background-color: var(--bg-element); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; font-family: 'Courier New', Courier, monospace; min-height: 40px; white-space: pre-wrap; word-break: break-all; margin-bottom: 0.5rem; }
+        .display-box.editing, .display-box.editing span { border-color: var(--accent-orange); outline: none; box-shadow: 0 0 8px var(--accent-orange); background-color: #3c3c6d; }
+        .diff-highlight { color: var(--danger-red); font-weight: bold; }
+        .added-char { color: var(--accent-orange); font-weight: bold; }
+        .match-char { color: #aaa; }
+        .common-pattern { color: var(--success-green); border: 1px dotted var(--success-green); padding: 0 2px; margin: 0 1px; border-radius: 3px; }
+        .unique-pattern { color: var(--danger-red); border: 1px dotted var(--danger-red); padding: 0 2px; margin: 0 1px; border-radius: 3px; }
+        .stats, .help-text { font-family: 'Inter'; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+        .help-text { margin-top: -0.5rem; }
+        #final-output-container { margin-top: 2rem; padding: 1rem; background-color: var(--bg-element); border: 1px solid var(--success-green); border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 1.1rem; }
+        .final-output-code { color: var(--success-green); font-weight: bold; font-family: 'Courier New', monospace; word-break: break-all; }
+        .btn-cancel { background-color: #6c757d; color: white; }
+        .tabs { border-bottom: 2px solid var(--border-color); margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; }
+        .tab-link { background: none; border: none; color: var(--text-secondary); font-size: 1.1rem; font-weight: 600; padding: 0.75rem 1.5rem; border-radius: 6px 6px 0 0; cursor: pointer; margin-right: 0; }
+        .tab-link:hover { background-color: var(--bg-element); }
+        .tab-link.active { background-color: var(--bg-element); color: var(--accent-orange); border: 2px solid var(--border-color); border-bottom: 2px solid var(--bg-element); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .output-header { border-bottom: 3px solid var(--accent-orange); margin-bottom: 1rem; padding-bottom: 0.5rem; }
+        .output-header h3 { border-bottom: none; margin-bottom: 0.25rem; font-size: 1.5rem; }
+        .serial-count { color: var(--success-green); font-weight: bold; }
+        .output-header .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .output-header .stats { margin-bottom: 0; }
+        #permutator-output { white-space: pre; }
+
+        /* --- STYLES FOR DESERIALIZER TAB --- */
+        /* --- THIS SECTION IS UNTOUCHED --- */
+        #Deserializer * { margin: 0; padding: 0; box-sizing: border-box; }
+        #Deserializer { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #eee; 
+            padding: 20px;
+            border-radius: 0 0 6px 6px; /* Match container style */
+        }
+        #Deserializer .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #1a1a2e;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        #Deserializer h1 {
+            text-align: center;
+            color: #fff;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            /* Reset existing h1 styles */
+            border-bottom: none; 
+        }
+        #Deserializer .section {
+            margin-bottom: 30px;
+        }
+        #Deserializer label {
+            display: block;
+            margin-bottom: 10px;
+            color: #764ba2;
+            font-weight: bold;
+        }
+        #Deserializer textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 15px;
+            background: #0f3460;
+            color: #fff;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            resize: vertical;
+        }
+        #Deserializer textarea:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 20px rgba(118, 75, 162, 0.5);
+        }
+        #Deserializer button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            /* Explicitly set margin for override */
+            margin-right: 0.5rem; 
+        }
+        #Deserializer button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            /* Override existing hover */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        #Deserializer button:active {
+            transform: translateY(0);
+        }
+        #Deserializer .button-container {
+            text-align: center;
+            margin: 25px 0;
+        }
+        #Deserializer .status {
+            text-align: center;
+            padding: 15px;
+            background: #16213e;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-family: monospace;
+        }
+        #Deserializer .status.active {
+            display: block;
+        }
+        #Deserializer .status.success {
+            background: #1a4d3a;
+            color: #4CAF50;
+        }
+        #Deserializer .status.error {
+            background: #4d1a1a;
+            color: #f44336;
+        }
+        #Deserializer .status.processing {
+            background: #3d3d1a;
+            color: #FFD700;
+        }
+        #Deserializer .output-box {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        #Deserializer .help-section {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            border: 2px solid #764ba2;
+        }
+        #Deserializer .help-section.active {
+            display: block;
+        }
+        #Deserializer .help-section h3 {
+            color: #764ba2;
+            margin-bottom: 15px;
+            /* Reset existing h3 styles */
+            border-bottom: none;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 1.2rem;
+            color: #764ba2;
+        }
+        #Deserializer .help-section p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        #Deserializer .help-section code {
+            background: #0f3460;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #4CAF50;
+        }
+        /* --- END OF UNTOUCHED SECTION --- */
+
+
+        /* --- SURGICAL ADDITION: STYLES FOR WORKSTATION TAB --- */
+        #Workstation {
+            font-family: 'Inter', sans-serif;
+        }
+        .workstation-intro, .workstation-example {
+            background-color: var(--bg-deep-blue);
+            padding: 1rem 1.5rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+        .workstation-example h3 {
+            border-bottom: none;
+            margin-top: 0;
+            color: var(--accent-orange);
+        }
+        .workstation-example code {
+            background-color: var(--bg-element);
+            color: var(--text-primary);
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+        /* Style for the example code block highlight */
+        span.ws-highlight {
+            background-color: var(--highlight-bg);
+            color: var(--highlight-text);
+            border-radius: 3px;
+            padding: 0 2px;
+            transition: all 0.1s ease-in-out;
+        }
+        .workstation-example ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .workstation-example ul li {
+            margin-bottom: 0.5rem;
+        }
+        /* Style for the clickable list items */
+        .workstation-example ul li.highlight-trigger {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .workstation-example ul li.highlight-trigger:hover {
+            color: var(--accent-orange-hover);
+        }
+        /* Style for the new workstation help section */
+        #workstation-help-section {
+            background: var(--bg-deep-blue);
+            padding: 1rem 1.5rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            display: none; /* Hidden by default */
+        }
+        #workstation-help-section.active {
+            display: block; /* Shown when active */
+        }
+        .workstation-hr {
+            border: 0;
+            height: 2px;
+            background-color: var(--border-color);
+            margin: 2rem 0;
+        }
+        .workstation-item {
+            background-color: var(--bg-element);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .workstation-item h3 {
+            color: var(--accent-orange);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .workstation-item label {
+            display: block;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+        }
+        .workstation-item textarea {
+            min-height: 60px;
+            font-size: 0.9rem;
+        }
+        .workstation-item .test-code {
+            min-height: 120px;
+            background-color: #1a222e;
+        }
+        .workstation-item .final-code {
+            min-height: 80px;
+            background-color: #1f2b2e; /* A slightly different "final" color */
+            border-color: var(--success-green);
+        }
+        .breakdown-btn {
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+        .breakdown-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        .breakdown-display {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        .breakdown-header {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        .breakdown-item {
+            margin-bottom: 0.75rem;
+            padding: 0.5rem;
+            border-left: 3px solid var(--border-color);
+            padding-left: 0.75rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 3px;
+        }
+        .breakdown-code {
+            color: var(--accent-orange);
+            font-weight: bold;
+        }
+        .breakdown-part-name {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .breakdown-part-type {
+            color: var(--text-secondary);
+            font-style: italic;
+            font-size: 0.85em;
+        }
+        .breakdown-stats {
+            color: var(--success-green);
+            margin-top: 0.25rem;
+            font-size: 0.9em;
+        }
+        .breakdown-effects {
+            color: var(--accent-orange);
+            margin-top: 0.25rem;
+            font-size: 0.9em;
+        }
+        .breakdown-unknown {
+            color: var(--danger-red);
+        }
+        .breakdown-item-type {
+            color: #87ceeb;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        /* Style for the new control buttons */
+        #add-workstation-item-btn {
+            background: var(--accent-orange);
+            color: var(--bg-deep-blue);
+            border: none;
+            padding: 0.5rem 1.5rem;
+            font-size: 1.5rem;
+            border-radius: 50px; /* Rounded button */
+            cursor: pointer;
+            font-weight: 700;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: all 0.2s ease-in-out;
+            margin: 0.5rem;
+        }
+        #add-workstation-item-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            background: var(--accent-orange-hover);
+        }
+        #export-workstation-btn {
+            background: var(--success-green);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: all 0.2s ease-in-out;
+            margin: 0.5rem;
+        }
+        #export-workstation-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            background: #34c759;
+        }
+        /* --- END OF SURGICAL ADDITION --- */
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>BL4 Serial Editor Suite</h1>
+    <div class="tabs">
+        <button class="tab-link" onclick="openTab(event, 'Comparator')">🔬 Comparator & Editor</button>
+        <button class="tab-link" onclick="openTab(event, 'Deserializer')">🔓 Deserializer</button>
+        <!-- SURGICAL ADDITION: New Tab Button -->
+        <button class="tab-link" onclick="openTab(event, 'Workstation')">🗂️ Workstation</button>
+    </div>
+
+    <div id="Comparator" class="tab-content"></div>
+    
+    
+    
+    <!-- DESERIALIZER TAB (UNTOUCHED) -->
+    <div id="Deserializer" class="tab-content">
+        <div class="container">        <h1>🔓 Borderlands 4 Bulk Deserializer</h1>        <p style="text-align: center; color: #aaa; margin-bottom: 20px;">            By @Nicnl | API: <a href="https://borderlands4-deserializer.nicnl.com" target="_blank" style="color: #667eea;">borderlands4-deserializer.nicnl.com</a> |             <button onclick="toggleHelp()" style="background: #764ba2; border: none; color: white; padding: 5px 15px; border-radius: 5px; cursor: pointer;">ℹ️ Help</button>        </p>                <div class="status" id="status"></div>        <div id="help-section" class="help-section">            <h3>🧠 How does it work? How can I use this?</h3>                        <p><strong>1. What are item serials?</strong><br>            The game stores its weapons and items inside "serials" that looks like this:<br>            <code>@Ugy3L+2}TYg%$yC%i7M2gZldO)@}cgb!l34$a-qf{00</code><br><br>            These serials contains core informations about the item (ex: manufacturer, type, level, and its "parts").            However, as you can see... those informations are scrambled, and not easily readable nor modifiable.</p>                        <p><strong>2. What does the deserializer do?</strong><br>            The deserialization tool is available here: <a href="https://borderlands4-deserializer.nicnl.com" target="_blank">borderlands4-deserializer.nicnl.com</a><br>            Basically, it decodes the "scrambled" serials into their core values, making them easy to read.            But most importantly, the deserializer works both ways: you can modify the values and reserialize your item.            This allows you to adjust your trusty Daedalus Darkbeast by putting the glass scope you like best.</p>                        <p><strong>3. Help, I don't understand the output of the deserializer!</strong><br>            Don't worry, it's not very complicated. Here are the basics.<br><br>            We'll start with this serial, a "Ricocheting GCX":<br>            <code>@UgwSAs2}TYg%+Cc1jp~P5)T82}IyDEC3v~`v4>e=}</code><br><br>            Putting it in the deserializer gives the following result:<br>            <code>20, 0, 1, 50| 2, 1439|| {96} {62} {5} {7} {88} {14} {25} {44} {51} {58} {1:12}|</code><br><br>                        <code>20, 0, 1, 50| 2, 1439|| {96} {62} {5} {7} {88} {14} {25} {44} {51} {58} {1:12}|</code><br>            <code>^^</code><br>            This is the manufacturer index: "20" means "daedalus:smg".            (See the "Item Types & Manufacturers" tab at the bottom.)            Usually you don't want to touch this number because it'll break the parts that comes afterwards.</p>                        <p style="text-align: center; color: #4CAF50; font-weight: bold;">                Created by @Nicnl | Tool powered by borderlands4-deserializer.nicnl.com API            </p>        </div>        <div class="section">            <label for="input-data">Paste your Base85 serial strings here (one per line):</label>            <textarea id="input-data" placeholder='Paste your serials here, example:@Ug!pHG2}TYgT$`TI-PE9Jw*U@Ug!pHG2}TYgT$`TI-PE9J*8l@Ug!pHG2}TYgT$`TI-PE9J_W%'></textarea>        </div>        <div class="button-container">            <button onclick="deserialize()">🔓 Deserialize</button>            <button onclick="serialize()" style="background: #4CAF50; margin-left: 10px;">⚙️ Reserialize</button>            <input type="file" id="fileInput" accept=".txt" style="display: none;" onchange="handleFileSelect(event)">            <button onclick="document.getElementById('fileInput').click()" style="background: #16213e; margin-left: 10px;">📂 Load from File...</button>        </div>        <div class="section">            <label for="output-data">Results: <button onclick="copyOutput()" style="background: #4CAF50; padding: 8px 20px; font-size: 0.9em; margin-left: 10px;">📋 Copy Output</button></label>            <textarea id="output-data" class="output-box" readonly placeholder="Results will appear here..."></textarea>        </div>    </div>
+    </div>
+    
+    <!-- SURGICAL ADDITION: New Workstation Tab Content -->
+    <div id="Workstation" class="tab-content">
+        <h2>🗂️ Personal Workstation</h2>
+        <div class="workstation-intro">
+            <p>This is your personal space to modify and test your items!</p>
+            <p>Posted below is an example of a gun fully parted out so you get the idea of how guns are parted together. Underneath the example is a full workstation ready for you to use.</p>
+            <!-- Button uses inline styles to avoid touching any CSS -->
+            <button onclick="toggleWorkstationHelp()" class="ws-item-breakdown-btn" style="margin-top: 1rem; margin-left: 0; background: #4b4b7d; color: white; padding: 0.5rem 1rem; font-size: 0.9rem; margin-right: 0.5rem;">Item Breakdown</button>
+            <p style="margin-top: 1rem; padding: 0.75rem; background: rgba(229, 148, 0, 0.1); border-left: 3px solid var(--accent-orange); border-radius: 4px;">
+                <strong>✨ New Feature:</strong> Paste a deserialized code in the "Deserial" field and click the <strong>"🔍 Breakdown Parts"</strong> button to see a color-coded breakdown of all parts with their stats and effects!
+            </p>
+        </div>
+    
+        <div id="workstation-help-section" class="workstation-example">
+            <h3>Example: "Boory" Breakdown</h3>
+            <code id="workstation-example-code" data-original-text="22, 0, 1, 50 2, 3288 {98} {2} {5} {3} {7} {75} {74} {73} {14} {26} {43} {48} {60}">22, 0, 1, 50 2, 3288 {98} {2} {5} {3} {7} {75} {74} {73} {14} {26} {43} {48} {60}</code>
+            <ul>
+                <li class="highlight-trigger" data-highlight="22"><code>22</code> = Item Type</li>
+                <li class="highlight-trigger" data-highlight="0"><code>0</code> = Static [Doesnt Change Ever]</li>
+                <li class="highlight-trigger" data-highlight="1"><code>1</code> = Static [Doesnt Change Ever]</li>
+                <li class="highlight-trigger" data-highlight="50"><code>50</code> = Weapon Level</li>
+                <li class="highlight-trigger" data-highlight="2, 3288"><code>2, 3288</code> = Unique Identifier</li>
+                <li class="highlight-trigger" data-highlight="{98}"><code>{98}</code> = Rarity</li>
+                <li class="highlight-trigger" data-highlight="{2}"><code>{2}</code> = Upper Reciever</li>
+                <li class="highlight-trigger" data-highlight="{5}"><code>{5}</code> = Reciever Attachment</li>
+                <li class="highlight-trigger" data-highlight="{3}"><code>{3}</code> = Lower Reciever</li>
+                <li class="highlight-trigger" data-highlight="{7}"><code>{7}</code> = Barrel</li>
+                <li class="highlight-trigger" data-highlight="{75}"><code>{75}</code> = Blowback Tube [+ Mag Size]</li>
+                <li class="highlight-trigger" data-highlight="{74}"><code>{74}</code> = Top Rail [+ Mag Size]</li>
+                <li class="highlight-trigger" data-highlight="{73}"><code>{73}</code> = Muzzle [+ 32% Crit Damage]</li>
+                <li class="highlight-trigger" data-highlight="{14}"><code>{14}</code> = Double Magazines [+ Damage + Reload Time + Mag Size]</li>
+                <li class="highlight-trigger" data-highlight="{26}"><code>{26}</code> = Glassless Optic/Iron Sights</li>
+                <li class="highlight-trigger" data-highlight="{43}"><code>{43}</code> = Hyperion Grip [- Accuracy]</li>
+                <li class="highlight-trigger" data-highlight="{48}"><code>{48}</code> = Atlas Tracking Grenade</li>
+                <li class="highlight-trigger" data-highlight="{60}"><code>{60}</code> = Pistol Grip With Handstock [+ Fire Rate]</li>
+            </ul>
+            <p>This is how you should aim to breakdown every weapon you test. Good luck!</p>
+        </div>
+
+        <hr class="workstation-hr">
+        
+        <div id="workstation-items-container">
+            <!-- Item 1 -->
+            <div class="workstation-item">
+                <h3>[1]</h3>
+                <label for="ws-1-name">Name:</label>
+                <input type="text" id="ws-1-name" name="ws-1-name">
+                
+                <label for="ws-1-serial">Serial:</label>
+                <textarea id="ws-1-serial" name="ws-1-serial"></textarea>
+                
+                <label for="ws-1-deserial">Deserial: <button type="button" class="breakdown-btn" data-item="1" style="background: var(--accent-orange); padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-left: 0.5rem;">🔍 Breakdown Parts</button></label>
+                <textarea id="ws-1-deserial" name="ws-1-deserial"></textarea>
+                <div id="ws-1-breakdown" class="breakdown-display" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--bg-element); border: 1px solid var(--border-color); border-radius: 6px;"></div>
+                
+                <label for="ws-1-test">Test:</label>
+                <textarea id="ws-1-test" name="ws-1-test" class="test-code"></textarea>
+                
+                <label for="ws-1-final">Final Code:</label>
+                <textarea id="ws-1-final" name="ws-1-final" class="final-code"></textarea>
+            </div>
+            
+            <!-- Item 2 -->
+            <div class="workstation-item" style="display: none;">
+                <h3>[2]</h3>
+                <label for="ws-2-name">Name:</label>
+                <input type="text" id="ws-2-name" name="ws-2-name">
+                
+                <label for="ws-2-serial">Serial:</label>
+                <textarea id="ws-2-serial" name="ws-2-serial"></textarea>
+                
+                <label for="ws-2-deserial">Deserial: <button type="button" class="breakdown-btn" data-item="2" style="background: var(--accent-orange); padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-left: 0.5rem;">🔍 Breakdown Parts</button></label>
+                <textarea id="ws-2-deserial" name="ws-2-deserial"></textarea>
+                <div id="ws-2-breakdown" class="breakdown-display" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--bg-element); border: 1px solid var(--border-color); border-radius: 6px;"></div>
+                
+                <label for="ws-2-test">Test:</label>
+                <textarea id="ws-2-test" name="ws-2-test" class="test-code"></textarea>
+                
+                <label for="ws-2-final">Final Code:</label>
+                <textarea id="ws-2-final" name="ws-2-final" class="final-code"></textarea>
+            </div>
+            
+            <!-- Item 3 -->
+            <div class="workstation-item" style="display: none;">
+                <h3>[3]</h3>
+                <label for="ws-3-name">Name:</label>
+                <input type="text" id="ws-3-name" name="ws-3-name">
+                
+                <label for="ws-3-serial">Serial:</label>
+                <textarea id="ws-3-serial" name="ws-3-serial"></textarea>
+                
+                <label for="ws-3-deserial">Deserial: <button type="button" class="breakdown-btn" data-item="3" style="background: var(--accent-orange); padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-left: 0.5rem;">🔍 Breakdown Parts</button></label>
+                <textarea id="ws-3-deserial" name="ws-3-deserial"></textarea>
+                <div id="ws-3-breakdown" class="breakdown-display" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--bg-element); border: 1px solid var(--border-color); border-radius: 6px;"></div>
+                
+                <label for="ws-3-test">Test:</label>
+                <textarea id="ws-3-test" name="ws-3-test" class="test-code"></textarea>
+                
+                <label for="ws-3-final">Final Code:</label>
+                <textarea id="ws-3-final" name="ws-3-final" class="final-code"></textarea>
+            </div>
+            
+            <!-- Item 4 -->
+            <div class="workstation-item" style="display: none;">
+                <h3>[4]</h3>
+                <label for="ws-4-name">Name:</label>
+                <input type="text" id="ws-4-name" name="ws-4-name">
+                
+                <label for="ws-4-serial">Serial:</label>
+                <textarea id="ws-4-serial" name="ws-4-serial"></textarea>
+                
+                <label for="ws-4-deserial">Deserial: <button type="button" class="breakdown-btn" data-item="4" style="background: var(--accent-orange); padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-left: 0.5rem;">🔍 Breakdown Parts</button></label>
+                <textarea id="ws-4-deserial" name="ws-4-deserial"></textarea>
+                <div id="ws-4-breakdown" class="breakdown-display" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--bg-element); border: 1px solid var(--border-color); border-radius: 6px;"></div>
+                
+                <label for="ws-4-test">Test:</label>
+                <textarea id="ws-4-test" name="ws-4-test" class="test-code"></textarea>
+                
+                <label for="ws-4-final">Final Code:</label>
+                <textarea id="ws-4-final" name="ws-4-final" class="final-code"></textarea>
+            </div>
+            
+            <!-- Item 5 -->
+            <div class="workstation-item" style="display: none;">
+                <h3>[5]</h3>
+                <label for="ws-5-name">Name:</label>
+                <input type="text" id="ws-5-name" name="ws-5-name">
+                
+                <label for="ws-5-serial">Serial:</label>
+                <textarea id="ws-5-serial" name="ws-5-serial"></textarea>
+                
+                <label for="ws-5-deserial">Deserial: <button type="button" class="breakdown-btn" data-item="5" style="background: var(--accent-orange); padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-left: 0.5rem;">🔍 Breakdown Parts</button></label>
+                <textarea id="ws-5-deserial" name="ws-5-deserial"></textarea>
+                <div id="ws-5-breakdown" class="breakdown-display" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--bg-element); border: 1px solid var(--border-color); border-radius: 6px;"></div>
+                
+                <label for="ws-5-test">Test:</label>
+                <textarea id="ws-5-test" name="ws-5-test" class="test-code"></textarea>
+                
+                <label for="ws-5-final">Final Code:</label>
+                <textarea id="ws-5-final" name="ws-5-final" class="final-code"></textarea>
+            </div>
+            
+            <!-- Item 6 -->
+            <div class="workstation-item" style="display: none;">
+                <h3>[6]</h3>
+                <label for="ws-6-name">Name:</label>
+                <input type="text" id="ws-6-name" name="ws-6-name">
+                
+                <label for="ws-6-serial">Serial:</label>
+                <textarea id="ws-6-serial" name="ws-6-serial"></textarea>
+                
+                <label for="ws-6-deserial">Deserial: <button type="button" class="breakdown-btn" data-item="6" style="background: var(--accent-orange); padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-left: 0.5rem;">🔍 Breakdown Parts</button></label>
+                <textarea id="ws-6-deserial" name="ws-6-deserial"></textarea>
+                <div id="ws-6-breakdown" class="breakdown-display" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--bg-element); border: 1px solid var(--border-color); border-radius: 6px;"></div>
+                
+                <label for="ws-6-test">Test:</label>
+                <textarea id="ws-6-test" name="ws-6-test" class="test-code"></textarea>
+                
+                <label for="ws-6-final">Final Code:</label>
+                <textarea id="ws-6-final" name="ws-6-final" class="final-code"></textarea>
+            </div>
+            
+            <!-- Item 7 -->
+            <div class="workstation-item" style="display: none;">
+                <h3>[7]</h3>
+                <label for="ws-7-name">Name:</label>
+                <input type="text" id="ws-7-name" name="ws-7-name">
+                
+                <label for="ws-7-serial">Serial:</label>
+                <textarea id="ws-7-serial" name="ws-7-serial"></textarea>
+                
+                <label for="ws-7-deserial">Deserial: <button type="button" class="breakdown-btn" data-item="7" style="background: var(--accent-orange); padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-left: 0.5rem;">🔍 Breakdown Parts</button></label>
+                <textarea id="ws-7-deserial" name="ws-7-deserial"></textarea>
+                <div id="ws-7-breakdown" class="breakdown-display" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--bg-element); border: 1px solid var(--border-color); border-radius: 6px;"></div>
+                
+                <label for="ws-7-test">Test:</label>
+                <textarea id="ws-7-test" name="ws-7-test" class="test-code"></textarea>
+                
+                <label for="ws-7-final">Final Code:</label>
+                <textarea id="ws-7-final" name="ws-7-final" class="final-code"></textarea>
+            </div>
+            
+            <!-- Item 8 -->
+            <div class="workstation-item" style="display: none;">
+                <h3>[8]</h3>
+                <label for="ws-8-name">Name:</label>
+                <input type="text" id="ws-8-name" name="ws-8-name">
+                
+                <label for="ws-8-serial">Serial:</label>
+                <textarea id="ws-8-serial" name="ws-8-serial"></textarea>
+                
+                <label for="ws-8-deserial">Deserial: <button type="button" class="breakdown-btn" data-item="8" style="background: var(--accent-orange); padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-left: 0.5rem;">🔍 Breakdown Parts</button></label>
+                <textarea id="ws-8-deserial" name="ws-8-deserial"></textarea>
+                <div id="ws-8-breakdown" class="breakdown-display" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--bg-element); border: 1px solid var(--border-color); border-radius: 6px;"></div>
+                
+                <label for="ws-8-test">Test:</label>
+                <textarea id="ws-8-test" name="ws-8-test" class="test-code"></textarea>
+                
+                <label for="ws-8-final">Final Code:</label>
+                <textarea id="ws-8-final" name="ws-8-final" class="final-code"></textarea>
+            </div>
+            
+            <!-- Item 9 -->
+            <div class="workstation-item" style="display: none;">
+                <h3>[9]</h3>
+                <label for="ws-9-name">Name:</label>
+                <input type="text" id="ws-9-name" name="ws-9-name">
+                
+                <label for="ws-9-serial">Serial:</label>
+                <textarea id="ws-9-serial" name="ws-9-serial"></textarea>
+                
+                <label for="ws-9-deserial">Deserial: <button type="button" class="breakdown-btn" data-item="9" style="background: var(--accent-orange); padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-left: 0.5rem;">🔍 Breakdown Parts</button></label>
+                <textarea id="ws-9-deserial" name="ws-9-deserial"></textarea>
+                <div id="ws-9-breakdown" class="breakdown-display" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--bg-element); border: 1px solid var(--border-color); border-radius: 6px;"></div>
+                
+                <label for="ws-9-test">Test:</label>
+                <textarea id="ws-9-test" name="ws-9-test" class="test-code"></textarea>
+                
+                <label for="ws-9-final">Final Code:</label>
+                <textarea id="ws-9-final" name="ws-9-final" class="final-code"></textarea>
+            </div>
+            
+            <!-- Item 10 -->
+            <div class="workstation-item" style="display: none;">
+                <h3>[10]</h3>
+                <label for="ws-10-name">Name:</label>
+                <input type="text" id="ws-10-name" name="ws-10-name">
+                
+                <label for="ws-10-serial">Serial:</label>
+                <textarea id="ws-10-serial" name="ws-10-serial"></textarea>
+                
+                <label for="ws-10-deserial">Deserial: <button type="button" class="breakdown-btn" data-item="10" style="background: var(--accent-orange); padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-left: 0.5rem;">🔍 Breakdown Parts</button></label>
+                <textarea id="ws-10-deserial" name="ws-10-deserial"></textarea>
+                <div id="ws-10-breakdown" class="breakdown-display" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--bg-element); border: 1px solid var(--border-color); border-radius: 6px;"></div>
+                
+                <label for="ws-10-test">Test:</label>
+                <textarea id="ws-10-test" name="ws-10-test" class="test-code"></textarea>
+                
+                <label for="ws-10-final">Final Code:</label>
+                <textarea id="ws-10-final" name="ws-10-final" class="final-code"></textarea>
+            </div>
+        </div>
+        
+        <div class="workstation-controls" style="text-align: center; margin-top: 2rem;">
+            <button id="add-workstation-item-btn" title="Add another item block">[+]</button>
+            <button id="export-workstation-btn" title="Copy all workstation data to clipboard">Copy Workstation</button>
+        </div>
+    </div>
+    <!-- END OF SURGICAL ADDITION -->
+
+</div>
+
+<script>
+// --- CORE LIBRARIES ---
+const B85_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+-;<=>?@^_`{/}~";
+const B85_REVERSE = new Int16Array(256).fill(-1);
+for(let i=0;i<85;i++)B85_REVERSE[B85_ALPHABET.charCodeAt(i)]=i;
+
+function b85Decode_BL4(s) {
+    if (!s || !s.startsWith("@U")) return null;
+    const serial_part = s.slice(2);
+    
+    const bytes = [];
+    let a = 0 >>> 0, c = 0;
+    const f = () => { bytes.push(a >>> 24 & 255, a >>> 16 & 255, a >>> 8 & 255, a & 255); a = 0; c = 0 };
+    for (let i = 0; i < serial_part.length; i++) {
+        const d = B85_REVERSE[serial_part.charCodeAt(i)];
+        if (d < 0 || d >= 85) return null;
+        a = (a * 85 + d) >>> 0;
+        if (++c === 5) f();
+    }
+    if (c > 0) {
+        for (let k = c; k < 5; k++) a = (a * 85 + 84) >>> 0;
+        if (c > 1) bytes.push(a >>> 24 & 255);
+        if (c > 2) bytes.push(a >>> 16 & 255);
+        if (c > 3) bytes.push(a >>> 8 & 255);
+    }
+    
+    const mirroredBytes = bytes.map(b => {
+        return ((b & 1) << 7) | ((b & 2) << 5) | ((b & 4) << 3) | ((b & 8) << 1) |
+               ((b & 16) >> 1) | ((b & 32) >> 3) | ((b & 64) >> 5) | ((b & 128) >> 7);
+    });
+
+    return mirroredBytes.map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+function b85Encode_BL4(hex) {
+    let bytes = [];
+    for (let i = 0; i < hex.length; i += 2) {
+        bytes.push(parseInt(hex.substr(i, 2), 16));
+    }
+
+    const mirroredBytes = bytes.map(b => {
+         return ((b & 1) << 7) | ((b & 2) << 5) | ((b & 4) << 3) | ((b & 8) << 1) |
+               ((b & 16) >> 1) | ((b & 32) >> 3) | ((b & 64) >> 5) | ((b & 128) >> 7);
+    });
+    
+    let r = [], i = 0;
+    const P = [52200625, 614125, 7225, 85, 1];
+    for (i = 0; i + 3 < mirroredBytes.length; i += 4) {
+        let v = (mirroredBytes[i] << 24 | mirroredBytes[i + 1] << 16 | mirroredBytes[i + 2] << 8 | mirroredBytes[i + 3]) >>> 0;
+        for (let p of P) r.push(B85_ALPHABET[Math.floor(v / p) % 85]);
+    }
+    if (i < mirroredBytes.length) {
+        let m = mirroredBytes.length - i;
+        let b0 = mirroredBytes[i], b1 = m > 1 ? mirroredBytes[i + 1] : 0, b2 = m > 2 ? mirroredBytes[i + 2] : 0;
+        let v = (b0 << 24 | b1 << 16 | b2 << 8) >>> 0;
+        let c = [];
+        for (let p of P) c.push(B85_ALPHABET[Math.floor(v / p) % 85]);
+        r.push(...c.slice(0, m + 1));
+    }
+    return "@U" + r.join("");
+}
+
+function hexToBinary(h){return Array.from(h).map(c=>parseInt(c,16).toString(2).padStart(4,'0')).join('')}
+function binaryToHex(b){let h='';while(b.length%4!==0)b='0'+b;for(let i=0;i<b.length;i+=4){h+=parseInt(b.substring(i,i+4),2).toString(16)}return h}
+function binaryToDna(binary) {
+    const dnaMap = { '00': 'A', '01': 'C', '10': 'G', '11': 'T' };
+    let dna = '';
+    for (let i = 0; i < binary.length; i += 2) {
+        const pair = binary.substr(i, 2);
+        if (pair.length === 2) {
+            dna += dnaMap[pair];
+        }
+    }
+    return dna;
+}
+function dnaToBinary(dna) {
+    const binaryMap = { 'A': '00', 'C': '01', 'G': '10', 'T': '11' };
+    let binary = '';
+    for (let i = 0; i < dna.length; i++) {
+        const base = dna[i].toUpperCase();
+        if (binaryMap[base]) {
+            binary += binaryMap[base];
+        }
+    }
+    return binary;
+}
+function reverseString(str) { return str.split('').reverse().join(''); }
+
+// --- AFFINE GAP ALIGNMENT LOGIC ---
+function affineGapAlignment(seqA, seqB, matchScore = 5, mismatchPenalty = -4, gapOpenPenalty = -15, gapExtendPenalty = -2) {
+    const lenA = seqA.length;
+    const lenB = seqB.length;
+    const M = Array(lenA + 1).fill(null).map(() => Array(lenB + 1).fill(-Infinity));
+    const Ix = Array(lenA + 1).fill(null).map(() => Array(lenB + 1).fill(-Infinity));
+    const Iy = Array(lenA + 1).fill(null).map(() => Array(lenB + 1).fill(-Infinity));
+    M[0][0] = 0;
+    for (let i = 1; i <= lenA; i++) Ix[i][0] = gapOpenPenalty + (i - 1) * gapExtendPenalty;
+    for (let j = 1; j <= lenB; j++) Iy[0][j] = gapOpenPenalty + (j - 1) * gapExtendPenalty;
+    for (let i = 1; i <= lenA; i++) {
+        for (let j = 1; j <= lenB; j++) {
+            const score = seqA[i - 1] === seqB[j - 1] ? matchScore : mismatchPenalty;
+            M[i][j] = score + Math.max(M[i - 1][j - 1], Ix[i - 1][j - 1], Iy[i - 1][j - 1]);
+            Ix[i][j] = Math.max(M[i - 1][j] + gapOpenPenalty, Ix[i - 1][j] + gapExtendPenalty);
+            Iy[i][j] = Math.max(M[i][j - 1] + gapOpenPenalty, Iy[i][j - 1] + gapExtendPenalty);
+        }
+    }
+    let alignedA = '', alignedB = '', i = lenA, j = lenB;
+    let scoreM = M[i][j], scoreIx = Ix[i][j], scoreIy = Iy[i][j];
+    const _M = 0, _Ix = 1, _Iy = 2;
+    let currentMatrix = (scoreM >= scoreIx && scoreM >= scoreIy) ? _M : (scoreIx >= scoreIy ? _Ix : _Iy);
+    while (i > 0 || j > 0) {
+        if (currentMatrix === _M) {
+            const score = (i > 0 && j > 0 && seqA[i - 1] === seqB[j - 1]) ? matchScore : mismatchPenalty;
+            alignedA = seqA[i - 1] + alignedA; alignedB = seqB[j - 1] + alignedB;
+            const prevM = M[i - 1][j - 1], prevIx = Ix[i - 1][j - 1];
+            currentMatrix = (M[i][j] === score + prevM) ? _M : ((M[i][j] === score + prevIx) ? _Ix : _Iy);
+            i--; j--;
+        } else if (currentMatrix === _Ix) {
+            alignedA = seqA[i - 1] + alignedA; alignedB = ' ' + alignedB;
+            currentMatrix = (Ix[i][j] === M[i - 1][j] + gapOpenPenalty) ? _M : _Ix;
+            i--;
+        } else {
+            alignedA = ' ' + alignedA; alignedB = seqB[j - 1] + alignedB;
+            currentMatrix = (Iy[i][j] === M[i][j - 1] + gapOpenPenalty) ? _M : _Iy;
+            j--;
+        }
+    }
+    let comparison = '', matches = 0, differences = 0, additions = 0;
+    for (let k = 0; k < alignedA.length; k++) {
+        if (alignedA[k] === alignedB[k]) { comparison += '='; matches++; }
+        else if (alignedA[k] === ' ' || alignedB[k] === ' ') { comparison += '+'; additions++; }
+        else { comparison += '!'; differences++; }
+    }
+    alignedA = alignedA.replace(/ /g, '\u00A0'); alignedB = alignedB.replace(/ /g, '\u00A0');
+    return { alignedA, alignedB, comparison, stats: { matches, differences, additions, total: alignedA.length } };
+}
+
+// --- STRUCTURAL PATTERN MATCHING LOGIC (OPTIMIZED) ---
+function listCommonPatterns(str1, str2, minLength) {
+    const patterns = new Set();
+    const len1 = str1.length;
+    const len2 = str2.length;
+
+    const substringsOfStr2 = new Set();
+    for (let i = 0; i <= len2 - minLength; i++) {
+        for (let j = i + minLength; j <= len2; j++) {
+            substringsOfStr2.add(str2.substring(i, j));
+        }
+    }
+
+    for (let i = 0; i <= len1 - minLength; i++) {
+        for (let j = i + minLength; j <= len1; j++) {
+            const sub = str1.substring(i, j);
+            if (substringsOfStr2.has(sub)) {
+                patterns.add(sub);
+            }
+        }
+    }
+    return Array.from(patterns);
+}
+
+function sortByLengthDescending(patterns) {
+    return patterns.sort((a, b) => b.length - a.length);
+}
+
+function greedyDeconstruct(inputString, sortedPatterns) {
+    let parts = [[inputString, false]]; 
+
+    for (const pattern of sortedPatterns) {
+        let newParts = [];
+        for (const part of parts) {
+            if (part[1]) {
+                newParts.push(part);
+                continue;
+            }
+
+            const currentString = part[0];
+            const splitPieces = currentString.split(pattern);
+            
+            if (splitPieces.length > 1) {
+                for (let i = 0; i < splitPieces.length; i++) {
+                    if (splitPieces[i]) {
+                        newParts.push([splitPieces[i], false]);
+                    }
+                    if (i < splitPieces.length - 1) {
+                        newParts.push([pattern, true]);
+                    }
+                }
+            } else {
+                newParts.push(part);
+            }
+        }
+        parts = newParts; 
+    }
+    return parts;
+}
+
+
+function formatAlignedSequence(sequence, comparison) {
+    let html = '';
+    for (let k = 0; k < comparison.length; k++) {
+        const char = sequence[k];
+        if (comparison[k] === '!') { html += `<span class="diff-highlight">${char}</span>`; }
+        else if (comparison[k] === '+') { html += `<span class="added-char">${char}</span>`; }
+        else { html += char; }
+    } return html;
+}
+function formatComparisonString(comparison) {
+    let html = '';
+    for (let k = 0; k < comparison.length; k++) {
+        const char = comparison[k];
+        if (char === '!') { html += `<span class="diff-highlight">${char}</span>`; }
+        else if (char === '+') { html += `<span class="added-char">${char}</span>`; }
+        else { html += `<span class="match-char">${char}</span>`; }
+    } return html;
+}
+
+// --- FULL SCRIPT ---
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- SHARED HELPER FUNCTIONS & DEFINITIONS ---
+    let activeEditor = null;
+    let lastComparisonData = { a: null, b: null };
+    let lastPermutationAnalysis = { binA: null, binB: null, diffIndices: [], mode: 'byte' };
+    // SURGICAL ADDITION: Workstation counter
+    let currentWorkstationItem = 1; 
+    let lastSeparateScanDeserialized = ''; // For duplicate removal
+
+    // --- TAB HANDLING ---
+    window.openTab = (evt, tabName) => {
+        document.querySelectorAll('.tab-content').forEach(tc => tc.style.display = "none");
+        document.querySelectorAll('.tab-link').forEach(tl => tl.classList.remove('active'));
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.classList.add('active');
+    };
+    
+    // --- INJECT HTML FOR COMPARATOR TAB ---
+    document.getElementById('Comparator').innerHTML = `<div class="grid-2-col"><div><label for="serialA-input">Serial 1:</label><textarea id="serialA-input" rows="3">@Uge8s!m/)}}!tgGjNWCv7=um@tAI&bID_4b+=#r\`uMKB6>*(p+_rqq+YC_B)k3RMi~NB{</textarea></div><div><label for="serialB-input">Serial 2:</label><textarea id="serialB-input" rows="3">@Uge8Oqm/)}}!tgGjNWCv7=um@tAI&bID_4b+=#r\`uMKB6>*(p+_rqq+YC_B)k3RMi~NB{</textarea></div></div><button id="compare-btn" style="font-size: 1.2rem; padding: 0.75rem 1.5rem;">🔬 Compare</button><button id="compare-parts-btn" style="padding: 0.5rem 1rem; font-size: 0.9rem; background-color: #4b4b7d; margin-left: 0.5rem;">🧬 Compare Parts</button><button id="structural-analysis-btn" style="padding: 0.5rem 1rem; font-size: 0.9rem; background-color: #00695C; margin-left: 0.5rem;">🧩 Analyze Structure</button><div id="results-container" class="comparison-results"></div><div id="selective-merge-container" style="display:none; margin-top: 1.5rem; padding: 1rem; background-color: #2c2c4d; border-radius: 6px; border: 1px solid var(--border-color);"><h4 style="margin-top:0;">Selective Merge Permutations</h4><label for="merge-sections-input">Target Sections to Merge (from Serial 1):</label><textarea id="merge-sections-input" rows="2" placeholder="Example: s!m, +YC_B)k"></textarea><p class="help-text">Copy/paste differing sections from Serial 1 above, separated by commas. The tool will generate all combinations of these selected differences.</p><button id="base85-permutation-analysis-btn" style="background-color: #a16c00;">Analyze Base85-Level Merge</button><button id="byte-permutation-analysis-btn" style="background-color: #6c757d;">Analyze Byte-Level Merge</button><button id="bit-permutation-analysis-btn" style="background-color: #4b4b7d;">Analyze Bit-Level Merge</button></div><div id="permutation-analysis-results" style="display:none; margin-top: 1rem; padding: 1rem; background-color: #3a3a5a; border-radius: 6px;"></div><div id="final-output-container" style="display: none;"></div><div id="permutation-output-container" style="margin-top: 1.5rem; display: none;"><div class="output-header"><div class="header-content"><div><h3>Generated Merged Serials</h3><p class="stats">Unique Serials Generated: <span class="serial-count" id="serial-count-permutations">0</span></p></div><button class="util-btn copy-all-btn" data-target="permutation-output">Copy All</button></div></div><div id="permutation-output" class="display-box" style="min-height: 200px; max-height: 400px; overflow-y: auto;"></div></div>`;
+    
+    // Activate the first tab
+    document.querySelector('.tab-link').click();
+    
+    // --- ATTACH ALL EVENT LISTENERS ---
+    
+    // --- COMPARATOR ---
+    async function runComparison() {
+        const serialA_input = document.getElementById('serialA-input').value.trim();
+        const serialB_input = document.getElementById('serialB-input').value.trim();
+        const resultsContainer = document.getElementById('results-container');
+        resetAllEditors(); 
+
+        let serialToCompareA, serialToCompareB, deserializedToCompareA, deserializedToCompareB;
+        const serialsToDeserialize = [];
+        const stringsToSerialize = [];
+        let serializeIndexA = -1, serializeIndexB = -1;
+
+        const isA_Base85 = serialA_input.startsWith('@U');
+        if (isA_Base85) {
+            serialToCompareA = serialA_input;
+            serialsToDeserialize.push(serialA_input);
+        } else {
+            deserializedToCompareA = serialA_input;
+            serializeIndexA = stringsToSerialize.push(serialA_input) - 1;
+        }
+
+        const isB_Base85 = serialB_input.startsWith('@U');
+        if (isB_Base85) {
+            serialToCompareB = serialB_input;
+            serialsToDeserialize.push(serialB_input);
+        } else {
+            deserializedToCompareB = serialB_input;
+            serializeIndexB = stringsToSerialize.push(serialB_input) - 1;
+        }
+
+        try {
+            // --- 1. Serialize any deserialized strings ---
+            if (stringsToSerialize.length > 0) {
+                try {
+                    const apiUrl = 'https://borderlands4-deserializer.nicnl.com/api/v1/serialize_bulk';
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(stringsToSerialize)
+                    });
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`API error: ${response.statusText} - ${errorText}`);
+                    }
+                    const result = await response.json();
+                    
+                    if (serializeIndexA !== -1) {
+                        serialToCompareA = result[serializeIndexA];
+                        if (!serialToCompareA) throw new Error('Serial 1 input failed to serialize.');
+                    }
+                    if (serializeIndexB !== -1) {
+                        serialToCompareB = result[serializeIndexB];
+                        if (!serialToCompareB) throw new Error('Serial 2 input failed to serialize.');
+                    }
+                } catch (apiError) {
+                    console.error('Serialization API failed:', apiError);
+                    if (serializeIndexA !== -1) serialToCompareA = 'Error: Serialization Failed';
+                    if (serializeIndexB !== -1) serialToCompareB = 'Error: Serialization Failed';
+                    alert(`Serialization Error: ${apiError.message}`);
+                    return; // Stop comparison if serialization fails
+                }
+            }
+
+            // --- 2. Deserialize any serial strings ---
+            if (serialsToDeserialize.length > 0) {
+                try {
+                    const apiUrl = 'https://borderlands4-deserializer.nicnl.com/api/v1/deserialize_bulk';
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(serialsToDeserialize)
+                    });
+                    if (!response.ok) {
+                         const errorText = await response.text();
+                        throw new Error(`API error: ${response.statusText} - ${errorText}`);
+                    }
+                    const result = await response.json();
+
+                    if (isA_Base85) {
+                        deserializedToCompareA = result[serialToCompareA]?.deserialized || 'Error: Deserialization Failed';
+                    }
+                    if (isB_Base85) {
+                        deserializedToCompareB = result[serialToCompareB]?.deserialized || 'Error: Deserialization Failed';
+                    }
+                } catch (apiError) {
+                    console.error('Deserialization API failed:', apiError);
+                    if (isA_Base85) deserializedToCompareA = `API Error: ${apiError.message}`;
+                    if (isB_Base85) deserializedToCompareB = `API Error: ${apiError.message}`;
+                }
+            }
+
+            // --- 3. Now we have all 4 values. Proceed with local decodes ---
+            const hexA = b85Decode_BL4(serialToCompareA);
+            const hexB = b85Decode_BL4(serialToCompareB);
+            
+            if (!hexA || !hexB) {
+                alert("Error: One or both inputs resulted in an invalid serial. Cannot compare.");
+                return;
+            }
+
+            const binA = hexToBinary(hexA);
+            const binB = hexToBinary(hexB);
+            const dnaA = binaryToDna(binA);
+            const dnaB = binaryToDna(binB);
+            
+            lastComparisonData = {
+                a: { serial: serialToCompareA, deserialized: deserializedToCompareA, hex: hexA, bin: binA, dna: dnaA },
+                b: { serial: serialToCompareB, deserialized: deserializedToCompareB, hex: hexB, bin: binB, dna: dnaB }
+            };
+
+            resultsContainer.innerHTML = 
+                createComparisonBlock('Deserialized', deserializedToCompareA, deserializedToCompareB) +
+                createComparisonBlock('Base85', serialToCompareA, serialToCompareB) +
+                createComparisonBlock('Hexadecimal (Byte-Mirrored)', hexA, hexB) +
+                createComparisonBlock('Binary (Byte-Mirrored)', binA, binB) +
+                createComparisonBlock('Base4 (DNA, Byte-Mirrored)', dnaA, dnaB);
+            
+            attachModifyListeners();
+            resultsContainer.style.display = 'block';
+            document.getElementById('selective-merge-container').style.display = 'block';
+            document.getElementById('permutation-analysis-results').style.display = 'none';
+            document.getElementById('final-output-container').style.display = 'none';
+
+        } catch (e) {
+            resultsContainer.innerHTML = `<p style="color: var(--danger-red);">Error during comparison: ${e.message}</p>`;
+            resultsContainer.style.display = 'block';
+        }
+    }
+
+    function runPartsComparison() {
+        const { a, b } = lastComparisonData;
+        if (!a || !b || !a.deserialized || !b.deserialized) {
+            alert("Please run a standard comparison first on two valid serials or deserialized codes.");
+            return;
+        }
+
+        const resultsContainer = document.getElementById('results-container');
+        resetAllEditors();
+
+        try {
+            const parts1 = parseDeserialized(a.deserialized);
+            const parts2 = parseDeserialized(b.deserialized);
+
+            const allBlockKeys = [...new Set([...Object.keys(parts1.blocks), ...Object.keys(parts2.blocks)])].sort((x, y) => parseInt(x) - parseInt(y));
+            const allArrayKeys = [...new Set([...Object.keys(parts1.arrays), ...Object.keys(parts2.arrays)])].sort((x, y) => parseInt(x) - parseInt(y));
+
+            let tableHtml = `
+                <div class="comparison-block">
+                    <h3>Deserialized Parts Comparison (Order-Agnostic)</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="text-align: left; background-color: var(--bg-element);">
+                                <th style="padding: 8px;">Part/Array</th>
+                                <th style="padding: 8px;">Count in Serial 1</th>
+                                <th style="padding: 8px;">Count in Serial 2</th>
+                                <th style="padding: 8px;">Difference / Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            allBlockKeys.forEach(key => {
+                const count1 = parts1.blocks[key] || 0;
+                const count2 = parts2.blocks[key] || 0;
+                let notes = '-';
+                if (count1 !== count2) {
+                    if (count1 > 0 && count2 === 0) notes = '<span style="color: var(--danger-red);">Present only in Serial 1</span>';
+                    else if (count2 > 0 && count1 === 0) notes = '<span style="color: var(--success-green);">Present only in Serial 2</span>';
+                    else if (count2 > count1) notes = `<span style="color: var(--success-green);">+${count2 - count1} in Serial 2</span>`;
+                    else notes = `<span style="color: var(--danger-red);">-~${count1 - count2} from Serial 2</span>`;
+                }
+                tableHtml += `
+                    <tr style="border-top: 1px solid var(--border-color);">
+                        <td style="padding: 8px;">{${key}}</td>
+                        <td style="padding: 8px;">${count1}</td>
+                        <td style="padding: 8px;">${count2}</td>
+                        <td style="padding: 8px;">${notes}</td>
+                    </tr>
+                `;
+            });
+
+            allArrayKeys.forEach(key => {
+                const array1 = parts1.arrays[key] || {};
+                const array2 = parts2.arrays[key] || {};
+                const allNums = [...new Set([...Object.keys(array1), ...Object.keys(array2)])].sort((x, y) => parseInt(x) - parseInt(y));
+                let numNotes = [];
+
+                allNums.forEach(num => {
+                    const count1 = array1[num] || 0;
+                    const count2 = array2[num] || 0;
+                    if (count1 !== count2) {
+                        if (count1 > 0 && count2 === 0) numNotes.push(`<span style="color: var(--danger-red);">${num} only in 1</span>`);
+                        else if (count2 > 0 && count1 === 0) numNotes.push(`<span style="color: var(--success-green);">${num} only in 2</span>`);
+                        else if (count2 > count1) numNotes.push(`<span style="color: var(--success-green);">${num}: +${count2 - count1} in 2</span>`);
+                        else numNotes.push(`<span style="color: var(--danger-red);">${num}: -${count1 - count2} in 2</span>`);
+                    }
+                });
+
+                if (numNotes.length > 0) {
+                     tableHtml += `
+                        <tr style="border-top: 1px solid var(--border-color);">
+                            <td style="padding: 8px;">{${key}:[...]}</td>
+                            <td style="padding: 8px;">(Array)</td>
+                            <td style="padding: 8px;">(Array)</td>
+                            <td style="padding: 8px;">${numNotes.join(', ')}</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            tableHtml += `</tbody></table></div>`;
+            resultsContainer.innerHTML = tableHtml;
+            resultsContainer.style.display = 'block';
+            document.getElementById('selective-merge-container').style.display = 'none';
+            document.getElementById('permutation-analysis-results').style.display = 'none';
+
+        } catch (e) {
+            alert(`Parts Comparison Error: ${e.message}`);
+        }
+    }
+
+
+
+    function parseDeserialized(deserializedString) {
+        const blocks = {};
+        const arrays = {};
+        
+        const partsSection = deserializedString.includes('||') ? deserializedString.split('||')[1] : deserializedString;
+
+        const allBlocks = partsSection.match(/{[^{}]+}/g) || [];
+
+        allBlocks.forEach(block => {
+            const content = block.slice(1, -1); // remove braces
+            if (content.includes(':[')) { // Array block
+                const parts = content.split(':[');
+                const arrayId = parts[0];
+                const numsString = parts[1].slice(0, -1); // remove trailing ']'
+                const nums = numsString.trim().split(/\s+/);
+                if (!arrays[arrayId]) {
+                    arrays[arrayId] = {};
+                }
+                nums.forEach(num => {
+                    if(num){
+                       arrays[arrayId][num] = (arrays[arrayId][num] || 0) + 1;
+                    }
+                });
+            } else { // Simple or value block
+                blocks[block] = (blocks[block] || 0) + 1;
+            }
+        });
+
+        return { blocks, arrays };
+    }
+
+
+
+
+    async function runSeparateDuplicateScan() {
+        const input = document.getElementById('duplicate-scan-input').value.trim();
+        const resultsDiv = document.getElementById('separate-duplicate-scan-results');
+        resultsDiv.innerHTML = '';
+        lastSeparateScanDeserialized = ''; // Reset
+
+        if (!input) {
+            resultsDiv.innerHTML = `<p style="color: var(--danger-red);">Please paste a code to scan.</p>`;
+            return;
+        }
+
+        let deserialized = input;
+        if (input.startsWith('@U')) {
+            try {
+                const response = await fetch('https://borderlands4-deserializer.nicnl.com/api/v1/deserialize_bulk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify([input])
+                });
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API error: ${response.statusText} - ${errorText}`);
+                }
+                const result = await response.json();
+                if (Object.keys(result).length > 0) {
+                    deserialized = result[Object.keys(result)[0]].deserialized;
+                }
+                if (!deserialized) {
+                    throw new Error('Deserialization failed.');
+                }
+            } catch (e) {
+                resultsDiv.innerHTML = `<p style="color: var(--danger-red);">Error: ${e.message}</p>`;
+                return;
+            }
+        }
+
+        lastSeparateScanDeserialized = deserialized; // Store for later use
+
+        const parts = parseDeserialized(deserialized);
+        let reportHtml = '<h5>Duplicate Parts Report</h5>';
+        let hasDuplicates = false;
+
+        const allBlockKeys = Object.keys(parts.blocks).sort((x, y) => parseInt(x) - parseInt(y));
+        let blockDuplicatesHtml = '';
+        allBlockKeys.forEach(key => {
+            if (parts.blocks[key] > 1) {
+                hasDuplicates = true;
+                blockDuplicatesHtml += `<li>Part <code style="color: var(--accent-orange);">${key}</code> found ${parts.blocks[key]} times. <button class="util-btn btn-keep remove-dup-btn" data-part='${key}' data-keep-one="true">Keep 1</button> <button class="util-btn btn-remove remove-dup-btn" data-part='${key}' data-keep-one="false">Remove All</button></li>`;
+            }
+        });
+        if (blockDuplicatesHtml) {
+            reportHtml += '<h6>Duplicate Single Parts:</h6><ul>' + blockDuplicatesHtml + '</ul>';
+        }
+
+        const allArrayKeys = Object.keys(parts.arrays).sort((x, y) => parseInt(x) - parseInt(y));
+        let arrayDuplicatesHtml = '';
+        allArrayKeys.forEach(key => {
+            const arrayNums = parts.arrays[key];
+            const numKeys = Object.keys(arrayNums);
+            let duplicatesInArray = [];
+            numKeys.forEach(num => {
+                if(arrayNums[num] > 1){
+                    hasDuplicates = true;
+                    duplicatesInArray.push(`Part <code style="color: var(--accent-orange);">${num}</code> found ${arrayNums[num]} times <button class="util-btn btn-keep remove-dup-btn" data-part="${num}" data-array-id="${key}" data-keep-one="true">Keep 1</button> <button class="util-btn btn-remove remove-dup-btn" data-part="${num}" data-array-id="${key}" data-keep-one="false">Remove All</button>`);
+                }
+            });
+            if(duplicatesInArray.length > 0){
+                arrayDuplicatesHtml += `<li>In Array <code style="color: var(--accent-orange);">{${key}:[...]}</code>: ${duplicatesInArray.join(', ')}.</li>`;
+            }
+        });
+
+        if(arrayDuplicatesHtml){
+            reportHtml += '<h6>Duplicate Parts within Arrays:</h6><ul>' + arrayDuplicatesHtml + '</ul>';
+        }
+
+        if (!hasDuplicates) {
+            reportHtml += '<p style="color: var(--success-green);">No duplicate parts found.</p>';
+        } else {
+            reportHtml += `
+                <div style="margin-top: 1.5rem;">
+                    <h6>Bulk Remove</h6>
+                    <button class="util-btn btn-bulk remove-dup-btn" data-remove-type="block">Remove All Duplicate Block Parts</button>
+                    <button class="util-btn btn-bulk remove-dup-btn" data-remove-type="array">Remove All Duplicate Array Parts</button>
+                    <button class="util-btn btn-bulk remove-dup-btn" data-remove-type="all">Remove All Duplicates</button>
+                </div>
+            `;
+        }
+
+        reportHtml += `
+            <div id="separate-duplicate-remove-output" style="margin-top: 1.5rem; display: none;">
+                <h6>New Code</h6>
+                <label>Deserialized:</label>
+                <textarea id="separate-deserialized-output" rows="4" readonly></textarea>
+                <label>Serialized:</label>
+                <textarea id="separate-serialized-output" rows="4" readonly></textarea>
+            </div>
+        `;
+
+        resultsDiv.innerHTML = reportHtml;
+    }
+
+    async function runStructuralAnalysis() {
+        const serialA_input = document.getElementById('serialA-input').value.trim();
+        const serialB_input = document.getElementById('serialB-input').value.trim();
+        const resultsContainer = document.getElementById('results-container');
+        resetAllEditors();
+        resultsContainer.innerHTML = `<p>Running structural analysis... this may take a moment.</p>`;
+        resultsContainer.style.display = 'block';
+
+        try {
+            let serialToCompareA, serialToCompareB, deserializedToCompareA, deserializedToCompareB;
+            const serialsToDeserialize = [];
+            const stringsToSerialize = [];
+            let serializeIndexA = -1, serializeIndexB = -1;
+
+            const isA_Base85 = serialA_input.startsWith('@U');
+            if (isA_Base85) {
+                serialToCompareA = serialA_input;
+                serialsToDeserialize.push(serialA_input);
+            } else {
+                deserializedToCompareA = serialA_input;
+                serializeIndexA = stringsToSerialize.push(serialA_input) - 1;
+            }
+
+            const isB_Base85 = serialB_input.startsWith('@U');
+            if (isB_Base85) {
+                serialToCompareB = serialB_input;
+                serialsToDeserialize.push(serialB_input);
+            } else {
+                deserializedToCompareB = serialB_input;
+                serializeIndexB = stringsToSerialize.push(serialB_input) - 1;
+            }
+
+            if (stringsToSerialize.length > 0) {
+                const apiUrl = 'https://borderlands4-deserializer.nicnl.com/api/v1/serialize_bulk';
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(stringsToSerialize)
+                });
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API error: ${response.statusText} - ${errorText}`);
+                }
+                const result = await response.json();
+
+                if (serializeIndexA !== -1) {
+                    serialToCompareA = result[serializeIndexA];
+                    if (!serialToCompareA) throw new Error('Serial 1 input failed to serialize.');
+                }
+                if (serializeIndexB !== -1) {
+                    serialToCompareB = result[serializeIndexB];
+                    if (!serialToCompareB) throw new Error('Serial 2 input failed to serialize.');
+                }
+            }
+
+            if (serialsToDeserialize.length > 0) {
+                const apiUrl = 'https://borderlands4-deserializer.nicnl.com/api/v1/deserialize_bulk';
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(serialsToDeserialize)
+                });
+                if (!response.ok) {
+                        const errorText = await response.text();
+                    throw new Error(`API error: ${response.statusText} - ${errorText}`);
+                }
+                const result = await response.json();
+
+                if (isA_Base85) {
+                    deserializedToCompareA = result[serialToCompareA]?.deserialized || 'Error: Deserialization Failed';
+                }
+                if (isB_Base85) {
+                    deserializedToCompareB = result[serialToCompareB]?.deserialized || 'Error: Deserialization Failed';
+                }
+            }
+
+            const hexA = b85Decode_BL4(serialToCompareA);
+            const hexB = b85Decode_BL4(serialToCompareB);
+
+            if (!hexA || !hexB) {
+                alert("Error: One or both inputs resulted in an invalid serial. Cannot compare.");
+                return;
+            }
+
+            const binA = hexToBinary(hexA);
+            const binB = hexToBinary(hexB);
+
+            // Structural analysis
+            const commonPatterns = sortByLengthDescending(listCommonPatterns(binA, binB, 16));
+            let structuralHtml = '';
+            if (commonPatterns.length === 0) {
+                    structuralHtml = `<p>No significant common structural patterns (>= 16 bits) found.</p>`;
+            } else {
+                const partsA = greedyDeconstruct(binA, commonPatterns);
+                const partsB = greedyDeconstruct(binB, commonPatterns);
+
+                const formatParts = (parts) => {
+                    return parts.map(part => {
+                        const className = part[1] ? 'common-pattern' : 'unique-pattern';
+                        return `<span class="${className}">${part[0]}</span>`;
+                    }).join('');
+                };
+
+                const commonCountA = partsA.filter(p => p[1]).length;
+                const commonCountB = partsB.filter(p => p[1]).length;
+                const uniqueCountA = partsA.filter(p => !p[1]).length;
+                const uniqueCountB = partsB.filter(p => !p[1]).length;
+
+                structuralHtml = `
+                    <div class="comparison-block">
+                        <div class="comparison-block-header">
+                            <h3>Structural Analysis (on Byte-Mirrored Binary)</h3>
+                            <div class="comparison-stats">
+                                <span>Serial 1 Chunks: <strong style="color: var(--success-green);">${commonCountA} Common</strong> / <strong style="color: var(--danger-red);">${uniqueCountA} Unique</strong></span>
+                                <span>Serial 2 Chunks: <strong style="color: var(--success-green);">${commonCountB} Common</strong> / <strong style="color: var(--danger-red);">${uniqueCountB} Unique</strong></span>
+                            </div>
+                        </div>
+                        <p class="help-text" style="margin-top: -0.5rem; margin-bottom: 1rem;">Shows how serials are built from common (<span class="common-pattern">green</span>) and unique (<span class="unique-pattern">red</span>) data chunks.</p>
+                        <div class="display-box"><b>Serial 1: </b>${formatParts(partsA)}</div>
+                        <div class="display-box"><b>Serial 2: </b>${formatParts(partsB)}</div>
+                    </div>
+                `;
+            }
+
+            // Duplicate part analysis
+            let duplicateHtml = '';
+            const combinedDeserialized = deserializedToCompareA + '\n' + deserializedToCompareB;
+            const parts = parseDeserialized(combinedDeserialized);
+            let reportHtml = '<div class="comparison-block"><h3>Duplicate Parts Report (Combined)</h3>';
+            let hasDuplicates = false;
+
+            const allBlockKeys = Object.keys(parts.blocks).sort((x, y) => parseInt(x) - parseInt(y));
+            let blockDuplicatesHtml = '';
+            allBlockKeys.forEach(key => {
+                if (parts.blocks[key] > 1) {
+                    hasDuplicates = true;
+                    blockDuplicatesHtml += `<li>Part <code style="color: var(--accent-orange);">{${key}}</code> found ${parts.blocks[key]} times. <button class="util-btn btn-keep remove-dup-btn" data-part='${key}' data-keep-one="true">Keep 1</button> <button class="util-btn btn-remove remove-dup-btn" data-part='${key}' data-keep-one="false">Remove All</button></li>`;
+                }
+            });
+            if (blockDuplicatesHtml) {
+                reportHtml += '<h4>Duplicate Single Parts:</h4><ul>' + blockDuplicatesHtml + '</ul>';
+            }
+
+            const allArrayKeys = Object.keys(parts.arrays).sort((x, y) => parseInt(x) - parseInt(y));
+            let arrayDuplicatesHtml = '';
+            allArrayKeys.forEach(key => {
+                const arrayNums = parts.arrays[key];
+                const numKeys = Object.keys(arrayNums);
+                let duplicatesInArray = [];
+                numKeys.forEach(num => {
+                    if(arrayNums[num] > 1){
+                        hasDuplicates = true;
+                        duplicatesInArray.push(`Part <code style="color: var(--accent-orange);">${num}</code> found ${arrayNums[num]} times <button class="util-btn btn-keep remove-dup-btn" data-part="${num}" data-array-id="${key}" data-keep-one="true">Keep 1</button> <button class="util-btn btn-remove remove-dup-btn" data-part="${num}" data-array-id="${key}" data-keep-one="false">Remove All</button>`);
+                    }
+                });
+                if(duplicatesInArray.length > 0){
+                    arrayDuplicatesHtml += `<li>In Array <code style="color: var(--accent-orange);">{${key}:[...]}</code>: ${duplicatesInArray.join(', ')}.</li>`;
+                }
+            });
+
+            if(arrayDuplicatesHtml){
+                reportHtml += '<h4>Duplicate Parts within Arrays:</h4><ul>' + arrayDuplicatesHtml + '</ul>';
+            }
+
+            if (!hasDuplicates) {
+                reportHtml += '<p style="color: var(--success-green);">No duplicate parts found in the combined deserialized codes.</p>';
+            } else {
+                reportHtml += `
+                    <div style="margin-top: 1.5rem;">
+                        <h4>Bulk Remove</h4>
+                        <button class="util-btn btn-bulk remove-dup-btn" data-remove-type="block">Remove All Duplicate Block Parts</button>
+                        <button class="util-btn btn-bulk remove-dup-btn" data-remove-type="array">Remove All Duplicate Array Parts</button>
+                        <button class="util-btn btn-bulk remove-dup-btn" data-remove-type="all">Remove All Duplicates</button>
+                    </div>
+                `;
+            }
+
+            reportHtml += `
+                <div id="duplicate-remove-output" style="margin-top: 1.5rem; display: none;">
+                    <h4>New Code</h4>
+                    <label>Deserialized:</label>
+                    <textarea id="deserialized-output" rows="4" readonly></textarea>
+                    <label>Serialized:</label>
+                    <textarea id="serialized-output" rows="4" readonly></textarea>
+                </div>
+            `;
+
+            reportHtml += '</div>';
+            duplicateHtml = reportHtml;
+
+            // Add the separate duplicate scan input
+            duplicateHtml += `
+                <div class="comparison-block">
+                    <h4>Scan a new code for duplicates:</h4>
+                    <textarea id="duplicate-scan-input" rows="4" placeholder="Paste a single serialized or deserialized code here..."></textarea>
+                    <button id="run-separate-duplicate-scan-btn" class="util-btn btn-bulk" style="margin-top: 1rem;">Scan for Duplicates</button>
+                    <div id="separate-duplicate-scan-results" style="margin-top: 1.5rem;"></div>
+                </div>
+            `;
+
+            resultsContainer.innerHTML = structuralHtml + duplicateHtml;
+
+            document.getElementById('run-separate-duplicate-scan-btn')?.addEventListener('click', runSeparateDuplicateScan);
+
+        } catch (e) {
+            resultsContainer.innerHTML = `<p style="color: var(--danger-red);">Structural Analysis Error: ${e.message}</p>`;
+        }
+    }
+
+    function createComparisonBlock(title, valA, valB) {
+        let matchCount = 0;
+        let diffCount = 0;
+        const lenA = valA.length;
+        const lenB = valB.length;
+        const maxLen = Math.max(lenA, lenB);
+        for (let i = 0; i < maxLen; i++) {
+            if (valA[i] === valB[i]) { matchCount++; }
+            else if (i < lenA && i < lenB) { diffCount++; }
+        }
+        const addedCount = Math.abs(lenA - lenB);
+        const matchPercent = maxLen > 0 ? ((matchCount / maxLen) * 100).toFixed(1) : "100.0";
+        const diffPercent = maxLen > 0 ? ((diffCount / maxLen) * 100).toFixed(1) : "0.0";
+        const addedPercent = maxLen > 0 ? ((addedCount / maxLen) * 100).toFixed(1) : "0.0";
+        const statsHtml = `<div class="comparison-stats"><span>Match: <strong style="color: var(--success-green);">${matchPercent}%</strong></span><span>Diff: <strong style="color: var(--danger-red);">${diffPercent}%</strong></span><span>Added: <strong style="color: var(--accent-orange);">${addedPercent}%</strong></span></div>`;
+        const formatValue = (val) => title.includes('Hex') ? val.replace(/(.{2})/g, '$1 ').trim() : title.includes('Binary') ? val.replace(/(.{8})/g, '$1 ').trim() : val;
+        const generateHtml = (str1, str2) => {
+            let html = '';
+            const max = Math.max(str1.length, str2.length);
+            for(let i = 0; i < max; i++) {
+                if (i >= str1.length) { html += `<span class="added-char">${str2[i]}</span>`; }
+                else if (i >= str2.length) { html += `<span class="diff-highlight">${str1[i]}</span>`; }
+                else { html += (str1[i] === str2[i]) ? str1[i] : `<span class="diff-highlight">${str1[i]}</span>`; }
+            } return html;
+        };
+        const id_title = title.toLowerCase().replace(/\s/g, '-').replace(/[()]/g, '');
+        return `<div class="comparison-block"><div class="comparison-block-header"><h3>${title}</h3>${statsHtml}</div><div class="result-box"><div id="${id_title}-A" class="display-box" data-original-html='${generateHtml(formatValue(valA), formatValue(valB))}'>${generateHtml(formatValue(valA), formatValue(valB))}</div><div class="button-container"><button class="modify-btn" data-target="${id_title}-A" data-format="${id_title}">Modify</button></div></div><div class="result-box"><div id="${id_title}-B" class="display-box" data-original-html='${generateHtml(formatValue(valB), formatValue(valA))}'>${generateHtml(formatValue(valB), formatValue(valA))}</div><div class="button-container"><button class="modify-btn" data-target="${id_title}-B" data-format="${id_title}">Modify</button></div></div></div>`;
+    }
+
+    async function reEncodeValue(modifiedValue, format) {
+        let cleanFormat = format.replace('align-', '');
+
+        if (cleanFormat === 'deserialized') {
+            try {
+                const apiUrl = 'https://borderlands4-deserializer.nicnl.com/api/v1/serialize_bulk';
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify([modifiedValue]) // Send as an array
+                });
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API Error: ${errorText}`);
+                }
+                const result = await response.json();
+                if (result && result['0']) {
+                    return result['0']; // Return the new serial
+                } else {
+                    throw new Error("API did not return a valid serial.");
+                }
+            } catch (e) {
+                // We throw the error so handleModifyClick can catch it
+                throw new Error(`Reserialization failed: ${e.message}`);
+            }
+        }
+
+        let newSerial = '';
+        if (cleanFormat === 'base85') { newSerial = modifiedValue; if(!b85Decode_BL4(newSerial)) throw new Error("Invalid Base85 string."); } 
+        else if (cleanFormat.includes('hexadecimal')) { newSerial = b85Encode_BL4(modifiedValue.replace(/\s/g, '')); } 
+        else if (cleanFormat.includes('binary')) { newSerial = b85Encode_BL4(binaryToHex(modifiedValue.replace(/\s/g, ''))); }
+        else if (cleanFormat.includes('base4-dna')) { const newBinary = dnaToBinary(modifiedValue); newSerial = b85Encode_BL4(binaryToHex(newBinary)); }
+        if (!newSerial) throw new Error("Encoding failed.");
+        return newSerial;
+    }
+    
+    async function handleModifyClick(event) {
+        const btn = event.target;
+        if (activeEditor && activeEditor.button === btn) {
+            const { displayBox, displayBoxA, displayBoxB, format } = activeEditor;
+            let outputHtml = '';
+            let modified = false;
+            if(displayBoxA && displayBoxB) {
+                const currentA = displayBoxA.textContent.replace(/[\s\u00A0]/g, '');
+                const currentB = displayBoxB.textContent.replace(/[\s\u00A0]/g, '');
+                const originalA = displayBoxA.dataset.originalText;
+                const originalB = displayBoxB.dataset.originalText;
+                if (currentA !== originalA) {
+                    try {
+                        const newSerial = await reEncodeValue(currentA, format);
+                        outputHtml += `<div>New Serial 1: <code class="final-output-code">${newSerial}</code></div>`;
+                        modified = true;
+                    } catch (e) { alert(`Re-encoding Error for Serial 1: ${e.message}`); }
+                }
+                if (currentB !== originalB) {
+                     try {
+                        const newSerial = await reEncodeValue(currentB, format);
+                        outputHtml += `<div>New Serial 2: <code class="final-output-code">${newSerial}</code></div>`;
+                        modified = true;
+                    } catch (e) { alert(`Re-encoding Error for Serial 2: ${e.message}`); }
+                }
+            } else {
+                // --- SURGICAL CHANGE ---
+                if (format === 'deserialized') {
+                    // User wants to copy the MODIFIED deserialized text, not re-encode it.
+                    const modifiedValue = displayBox.textContent; // Preserve whitespace for copying
+                    // We need to escape HTML to display it safely in the <code> tag
+                    const escapedValue = modifiedValue.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    
+                    // --- SURGICAL CHANGE ---
+                    // Wrap label in a non-selectable span.
+                    // Put the code in its own block-level code tag for easy selection.
+                    outputHtml = `<div>
+                                    <span style="user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; color: var(--text-secondary);">Modified Deserialized Code:</span>
+                                    <code class="final-output-code" style="white-space: pre-wrap; display: block; margin-top: 0.5rem;">${escapedValue}</code>
+                                  </div>`;
+                    // --- END SURGICAL CHANGE ---
+                    modified = true;
+                } else {
+                    // Original logic for all other formats (Base85, Hex, Binary, etc.)
+                    const modifiedValue = displayBox.textContent.replace(/[\s\u00A0]/g, '');
+                    try {
+                        const newSerial = await reEncodeValue(modifiedValue, format);
+                        outputHtml = `New Serial Code: <code class="final-output-code">${newSerial}</code>`;
+                        modified = true;
+                    } catch (e) { alert(`Re-encoding Error: ${e.message}`); }
+                }
+                // --- END SURGICAL CHANGE ---
+            }
+            if (modified) {
+                const finalOutputContainer = document.getElementById('final-output-container');
+                finalOutputContainer.innerHTML = outputHtml;
+                finalOutputContainer.style.display = 'block';
+                finalOutputContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            resetAllEditors();
+        } else {
+            resetAllEditors();
+            const targetIdA = btn.dataset.targetA, targetIdB = btn.dataset.targetB, targetId = btn.dataset.target;
+            if(targetIdA && targetIdB){
+                const displayBoxA = document.getElementById(targetIdA), displayBoxB = document.getElementById(targetIdB);
+                displayBoxA.contentEditable = true; displayBoxB.contentEditable = true;
+                displayBoxA.parentElement.classList.add('editing'); displayBoxA.focus();
+                activeEditor = { button: btn, displayBoxA, displayBoxB, format: btn.dataset.format };
+            } else {
+                const displayBox = document.getElementById(targetId);
+                displayBox.contentEditable = true; displayBox.classList.add('editing'); displayBox.focus();
+                activeEditor = { button: btn, displayBox, format: btn.dataset.format };
+            }
+            btn.dataset.originalText = btn.textContent;
+            btn.textContent = 'Re-encode';
+            btn.style.backgroundColor = 'var(--success-green)';
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = 'Cancel'; cancelBtn.className = 'btn-cancel modify-btn';
+            btn.insertAdjacentElement('afterend', cancelBtn);
+            cancelBtn.onclick = resetAllEditors;
+            activeEditor.cancelBtn = cancelBtn;
+        }
+    }
+
+    function resetAllEditors() {
+        if (activeEditor) {
+            const { button, cancelBtn, displayBox, displayBoxA, displayBoxB } = activeEditor;
+            if (displayBoxA && displayBoxB) {
+                displayBoxA.contentEditable = false; displayBoxB.contentEditable = false;
+                displayBoxA.parentElement.classList.remove('editing');
+                displayBoxA.innerHTML = displayBoxA.dataset.originalHtml; displayBoxB.innerHTML = displayBoxB.dataset.originalHtml;
+            }
+            if (displayBox) {
+                 displayBox.contentEditable = false; displayBox.classList.remove('editing');
+                 displayBox.innerHTML = displayBox.dataset.originalHtml;
+            }
+            button.textContent = button.dataset.originalText || 'Modify';
+            button.style.backgroundColor = 'var(--accent-orange)'; 
+            if (cancelBtn) cancelBtn.remove();
+        } 
+        activeEditor = null;
+    }
+
+    function attachModifyListeners() { 
+        document.querySelectorAll('.modify-btn').forEach(btn => btn.addEventListener('click', handleModifyClick)); 
+    }
+
+    document.getElementById('compare-btn')?.addEventListener('click', runComparison);
+    document.getElementById('compare-parts-btn')?.addEventListener('click', runPartsComparison);
+
+    document.getElementById('structural-analysis-btn')?.addEventListener('click', runStructuralAnalysis);
+
+    function analyzePermutations(mode = 'byte') {
+        const sectionsInput = document.getElementById('merge-sections-input').value.trim();
+        const resultsDiv = document.getElementById('permutation-analysis-results');
+        const { a, b } = lastComparisonData;
+        if (!a || !b) { alert('Please run a comparison first.'); return; }
+        let n = 0, uniqueSelectedIndices = [];
+        if (sectionsInput) {
+            const sections = sectionsInput.split(',').map(s => s.trim()).filter(s => s);
+            let selectedIndices = new Set();
+            if (mode === 'base85') {
+                 sections.forEach(section => {
+                    let startIndex = a.serial.indexOf(section); if (startIndex === -1) return;
+                    for(let i = startIndex; i < startIndex + section.length; i++) if(a.serial[i] !== b.serial[i]) selectedIndices.add(i);
+                });
+            } else {
+                sections.forEach(section => {
+                    let startIndex = a.serial.indexOf(section); if (startIndex === -1) return;
+                    const startByte = Math.floor((startIndex - 2) * (a.hex.length / 2 / (a.serial.length - 2)));
+                    const endByte = Math.ceil((startIndex - 2 + section.length) * (a.hex.length / 2 / (a.serial.length - 2)));
+                    for(let i = startByte; i < endByte; i++) {
+                        const byteA = a.hex.substring(i * 2, i * 2 + 2), byteB = b.hex.substring(i * 2, i * 2 + 2);
+                        if(byteA !== byteB) selectedIndices.add(i);
+                    }
+                });
+            }
+             uniqueSelectedIndices = [...selectedIndices];
+        } else {
+            if (mode === 'base85') {
+                for(let i=0; i < a.serial.length; i++) if(a.serial[i] !== b.serial[i]) uniqueSelectedIndices.push(i);
+            } else {
+                const hexA = a.hex.match(/.{1,2}/g), hexB = b.hex.match(/.{1,2}/g);
+                for(let i=0; i < hexA.length; i++) if(hexA[i] !== hexB[i]) uniqueSelectedIndices.push(i);
+            }
+        }
+        if (uniqueSelectedIndices.length === 0) {
+            resultsDiv.innerHTML = `<p>The selected sections do not contain any differences, or the serials are identical.</p>`;
+            resultsDiv.style.display = 'block'; return;
+        }
+        if (mode === 'bit') {
+            let bitDiffCount = 0;
+            uniqueSelectedIndices.forEach(byteIndex => {
+                const startBit = byteIndex * 8;
+                for (let i = 0; i < 8; i++) if (a.bin[startBit + i] !== b.bin[startBit + i]) bitDiffCount++;
+            });
+            n = bitDiffCount;
+        } else { n = uniqueSelectedIndices.length; }
+        lastPermutationAnalysis = { serialA: a.serial, serialB: b.serial, binA: a.bin, binB: b.bin, selectedIndices: uniqueSelectedIndices, mode };
+        const totalPermutations = BigInt(2) ** BigInt(n);
+        const GENERATION_LIMIT = 20;
+        let html = `<p>Using your selection, found <strong>${n.toLocaleString()}</strong> differing ${mode}(s).</p><p>This allows for <strong>${totalPermutations.toLocaleString()}</strong> unique serial permutations.</p>`;
+        if (n > GENERATION_LIMIT) {
+            html += `<p style="color: var(--danger-red);">Generation is disabled for more than ${GENERATION_LIMIT} differing ${mode}s to prevent browser freeze.</p>`;
+        } else {
+            html += `<button id="generate-permutations-btn">Generate All ${totalPermutations.toLocaleString()} Serials</button>`;
+        }
+        resultsDiv.innerHTML = html;
+        resultsDiv.style.display = 'block';
+        const genBtn = document.getElementById('generate-permutations-btn');
+        if (genBtn) genBtn.addEventListener('click', generatePermutations);
+    }
+
+    function generatePermutations() {
+        const btn = document.getElementById('generate-permutations-btn');
+        btn.disabled = true; btn.textContent = 'Generating...';
+        const outputContainer = document.getElementById('permutation-output-container');
+        const outputDiv = document.getElementById('permutation-output');
+        const countSpan = document.getElementById('serial-count-permutations');
+        outputContainer.style.display = 'block'; outputDiv.innerHTML = '';
+        const generatedSerials = new Set();
+        const { serialA, serialB, binA, binB, selectedIndices, mode } = lastPermutationAnalysis;
+        let diffIndices = [];
+        if (mode === 'bit') {
+            selectedIndices.forEach(byteIndex => {
+                const startBit = byteIndex * 8;
+                for (let i = 0; i < 8; i++) {
+                    const currentBit = startBit + i;
+                    if (binA[currentBit] !== binB[currentBit]) diffIndices.push(currentBit);
+                }
+            });
+        } else { diffIndices = selectedIndices; }
+        const n = diffIndices.length;
+        const totalPermutations = BigInt(2) ** BigInt(n);
+        function processChunk(i) {
+            const CHUNK_SIZE = 100;
+            const end = (BigInt(i) + BigInt(CHUNK_SIZE) > totalPermutations) ? totalPermutations : BigInt(i) + BigInt(CHUNK_SIZE);
+            let fragment = document.createDocumentFragment();
+            for (let j = BigInt(i); j < end; j++) {
+                let newSerial;
+                const binaryRepresentation = j.toString(2).padStart(n, '0');
+                if (mode === 'byte') {
+                    const hexBytesA = binA.match(/.{1,8}/g).map(b => parseInt(b, 2).toString(16).padStart(2, '0'));
+                    const hexBytesB = binB.match(/.{1,8}/g).map(b => parseInt(b, 2).toString(16).padStart(2, '0'));
+                    let tempHexArray = [...hexBytesA];
+                    for (let k = 0; k < n; k++) if (binaryRepresentation[k] === '1') tempHexArray[diffIndices[k]] = hexBytesB[diffIndices[k]];
+                    newSerial = b85Encode_BL4(tempHexArray.join(''));
+                } else if (mode === 'bit') {
+                    let tempBinArray = binA.split('');
+                     for (let k = 0; k < n; k++) if (binaryRepresentation[k] === '1') tempBinArray[diffIndices[k]] = binB[diffIndices[k]];
+                    newSerial = b85Encode_BL4(binaryToHex(tempBinArray.join('')));
+                } else {
+                    let tempCharArray = serialA.split('');
+                    for (let k = 0; k < n; k++) if (binaryRepresentation[k] === '1') tempCharArray[diffIndices[k]] = serialB[diffIndices[k]];
+                    newSerial = tempCharArray.join('');
+                    const decoded = b85Decode_BL4(newSerial);
+                    if (!decoded || b85Encode_BL4(decoded) !== newSerial) continue; 
+                }
+                if (!generatedSerials.has(newSerial)) {
+                    generatedSerials.add(newSerial);
+                    const line = document.createElement('div');
+                    line.textContent = newSerial;
+                    fragment.appendChild(line);
+                }
+            }
+            outputDiv.appendChild(fragment);
+            countSpan.textContent = generatedSerials.size.toLocaleString();
+            btn.textContent = `Generating... (${generatedSerials.size.toLocaleString()}/${totalPermutations.toLocaleString()})`;
+            if (end < totalPermutations) {
+                setTimeout(() => processChunk(end), 0);
+            } else { btn.textContent = 'Generation Complete'; }
+        }
+        processChunk(BigInt(0));
+    }
+
+    document.getElementById('bit-permutation-analysis-btn')?.addEventListener('click', () => analyzePermutations('bit'));
+
+    // --- UTILITIES TAB FUNCTIONS ---
+    function runDuplicateDetector() {
+        const input = document.getElementById('duplicate-detector-input').value.trim();
+        const resultsDiv = document.getElementById('duplicate-detector-results');
+        resultsDiv.innerHTML = '';
+
+        if (!input.includes("||")) {
+            resultsDiv.innerHTML = `<p style="color: var(--danger-red);">Error: This mode only works for deserialized serial block format lines (with || blocks and curly braces).</p>`;
+            return;
+        }
+
+        const parts = input.split("||");
+        const prefix_part = parts[0] + "||";
+        const block_str = parts[1].trim().replace(/\|$/, '');
+
+        const block_re = /\{(\d+)\}/g;
+        const array_re = /\{(\d+):\[([^\]]+)\]\}/g;
+
+        let single_nums = [];
+        let array_nums = {};
+        let block_items = [];
+        let array_items = [];
+
+        const blocks = block_str.match(/\{[^{}]+\}/g) || [];
+
+        blocks.forEach(block => {
+            block_items.push(block);
+            let match;
+            
+            if (match = /^\{(\d+)\}$/.exec(block)) {
+                single_nums.push(match[1]);
+            } else if (match = /^\{(\d+):\[([^\]]*)\]\}$/.exec(block)) {
+                const array_num = match[1];
+                const num_list = match[2].trim().split(/\s+/).filter(Boolean);
+                if (!array_nums[array_num]) {
+                    array_nums[array_num] = [];
+                }
+                array_nums[array_num].push(...num_list);
+                array_items.push({ array_num, num_list });
+            }
+        });
+
+        const single_counter = single_nums.reduce((acc, num) => { acc[num] = (acc[num] || 0) + 1; return acc; }, {});
+        
+        let all_array_nums_flat = [];
+        Object.values(array_nums).forEach(arr => all_array_nums_flat.push(...arr));
+        const array_counter = all_array_nums_flat.reduce((acc, num) => { acc[num] = (acc[num] || 0) + 1; return acc; }, {});
+
+        let html = '<h4>Duplicate Detector Report</h4>';
+        let hasDuplicates = false;
+
+        html += '<p><strong>Numbers repeated in singular blocks:</strong></p><ul>';
+        let found = false;
+        for (const [num, count] of Object.entries(single_counter)) {
+            if (count > 1) {
+                html += `<li><code>{${num}}</code> occurs ${count} times</li>`;
+                found = true;
+                hasDuplicates = true;
+            }
+        }
+        if (!found) html += '<li>None</li>';
+        html += '</ul>';
+
+        html += '<p><strong>Numbers repeated in arrays:</strong></p><ul>';
+        found = false;
+        for (const [num, count] of Object.entries(array_counter)) {
+            if (count > 1) {
+                html += `<li><code>${num}</code> occurs ${count} times in arrays</li>`;
+                found = true;
+                hasDuplicates = true;
+            }
+        }
+        if (!found) html += '<li>None</li>';
+        html += '</ul>';
+        
+        if (hasDuplicates) {
+            html += `<button id="remove-duplicates-btn" class="util-btn" style="margin-top: 1rem; background-color: var(--danger-red);">Remove All Duplicates</button>`;
+        }
+
+        resultsDiv.innerHTML = html;
+
+        document.getElementById('remove-duplicates-btn')?.addEventListener('click', () => {
+            const seen_blocks = new Set();
+            const new_blocks = [];
+            block_items.forEach(block => {
+                const match = /^\{(\d+)\}$/.exec(block);
+                if (match) {
+                    const num = match[1];
+                    if (single_counter[num] > 1) {
+                        if (!seen_blocks.has(num)) {
+                            new_blocks.push(block);
+                            seen_blocks.add(num);
+                        }
+                    } else {
+                        new_blocks.push(block);
+                    }
+                } else {
+                    new_blocks.push(block);
+                }
+            });
+
+            const new_arrays = [];
+            array_items.forEach(({ array_num, num_list }) => {
+                const new_num_list = [];
+                const seen_arr_nums = new Set();
+                num_list.forEach(num => {
+                    if (array_counter[num] > 1) {
+                        if (!seen_arr_nums.has(num)) {
+                            new_num_list.push(num);
+                            seen_arr_nums.add(num);
+                        }
+                    } else {
+                        new_num_list.push(num);
+                    }
+                });
+                if (new_num_list.length > 0) {
+                    new_arrays.push(`{${array_num}:[${new_num_list.join(' ')}]}`);
+                }
+            });
+            
+            let new_blocks_cleaned = new_blocks.filter(b => !/^\{(\d+):\[([^\]]*)\]\}$/.test(b));
+            
+            const final_code = `${prefix_part} ${new_blocks_cleaned.join(' ')} ${new_arrays.join(' ')}|`;
+
+            resultsDiv.innerHTML += `
+                <h4 style="margin-top: 2rem;">Resulting Code with Duplicates Removed</h4>
+                <textarea rows="4" readonly style="width: 100%; background-color: #1a1a2e;">${final_code}</textarea>
+            `;
+        });
+    }
+
+    function runCodeComparator() {
+        const code1 = document.getElementById('comparator-input-A').value.trim();
+        const code2 = document.getElementById('comparator-input-B').value.trim();
+        const resultsDiv = document.getElementById('code-comparator-results');
+        resultsDiv.innerHTML = '';
+
+        if (!code1.includes("||") || !code2.includes("||")) {
+            resultsDiv.innerHTML = `<p style="color: var(--danger-red);">Error: This mode only works for deserialized serial block format lines (with || blocks and curly braces).</p>`;
+            return;
+        }
+
+        const parseSerial = (code_line) => {
+            const block_str = code_line.split("||")[1].trim().replace(/\|$/, '');
+            const blocks = block_str.match(/\{[^{}]+\}/g) || [];
+            const blocks_counter = {};
+            const arrays_counter = {};
+
+            blocks.forEach(block => {
+                let match;
+                if (match = /^\{(\d+)\}$/.exec(block)) {
+                    const num = match[1];
+                    blocks_counter[num] = (blocks_counter[num] || 0) + 1;
+                } else if (match = /^\{(\d+):\[([^\]]*)\]\}$/.exec(block)) {
+                    const array_num = match[1];
+                    const num_list = match[2].trim().split(/\s+/).filter(Boolean);
+                    if (!arrays_counter[array_num]) {
+                        arrays_counter[array_num] = {};
+                    }
+                    num_list.forEach(num => {
+                        arrays_counter[array_num][num] = (arrays_counter[array_num][num] || 0) + 1;
+                    });
+                }
+            });
+            return { blocks: blocks_counter, arrays: arrays_counter };
+        };
+
+        const { blocks: blocks1, arrays: arrays1 } = parseSerial(code1);
+        const { blocks: blocks2, arrays: arrays2 } = parseSerial(code2);
+
+        const all_blocks = [...new Set([...Object.keys(blocks1), ...Object.keys(blocks2)])].sort((a, b) => a - b);
+        const all_arr_blocks = [...new Set([...Object.keys(arrays1), ...Object.keys(arrays2)])].sort((a, b) => a - b);
+
+        let html = `
+            <h4>Differences Table (Order-Agnostic)</h4>
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border-color);">Block/Array</th>
+                        <th style="text-align: center; padding: 8px; border-bottom: 1px solid var(--border-color);">Count in Code 1</th>
+                        <th style="text-align: center; padding: 8px; border-bottom: 1px solid var(--border-color);">Count in Code 2</th>
+                        <th style="text-align: left; padding: 8px; border-bottom: 1px solid var(--border-color);">Difference / Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        all_blocks.forEach(block => {
+            const cnt1 = blocks1[block] || 0;
+            const cnt2 = blocks2[block] || 0;
+            let diff = '';
+            if (cnt1 !== cnt2) {
+                if (cnt1 && !cnt2) diff = "Present only in Code 1";
+                else if (cnt2 && !cnt1) diff = "Present only in Code 2";
+                else if (cnt2 > cnt1) diff = `+${cnt2 - cnt1} in Code 2`;
+                else if (cnt1 > cnt2) diff = `-${cnt1 - cnt2} from Code 2`;
+            }
+            html += `
+                <tr>
+                    <td style="padding: 8px;"><code>{${block}}</code></td>
+                    <td style="text-align: center; padding: 8px;">${cnt1}</td>
+                    <td style="text-align: center; padding: 8px;">${cnt2}</td>
+                    <td style="padding: 8px;">${diff || '-'}</td>
+                </tr>
+            `;
+        });
+
+        all_arr_blocks.forEach(arr_id => {
+            const nums1 = arrays1[arr_id] || {};
+            const nums2 = arrays2[arr_id] || {};
+            const all_nums = [...new Set([...Object.keys(nums1), ...Object.keys(nums2)])].sort((a, b) => a - b);
+            let notes = [];
+
+            all_nums.forEach(num => {
+                const n1 = nums1[num] || 0;
+                const n2 = nums2[num] || 0;
+                if (n1 !== n2) {
+                    if (n1 && !n2) notes.push(`${num} only in Code 1`);
+                    else if (n2 && !n1) notes.push(`${num} only in Code 2`);
+                    else if (n2 > n1) notes.push(`${num}: +${n2 - n1} in Code 2`);
+                    else if (n1 > n2) notes.push(`${num}: -${n1 - n2} from Code 2`);
+                }
+            });
+            
+            const diff_notes = notes.join(', ');
+
+            html += `
+                <tr>
+                    <td style="padding: 8px;"><code>{${arr_id}:[...]}</code></td>
+                    <td style="text-align: center; padding: 8px;">in arr</td>
+                    <td style="text-align: center; padding: 8px;">in arr</td>
+                    <td style="padding: 8px;">${diff_notes || '-'}</td>
+                </tr>
+            `;
+        });
+
+        html += `</tbody></table>`;
+        resultsDiv.innerHTML = html;
+    }
+
+    // --- END UTILITIES TAB FUNCTIONS ---
+
+    // --- UTILITIES TAB LISTENERS ---
+    document.getElementById('run-duplicate-detector-btn')?.addEventListener('click', runDuplicateDetector);
+    document.getElementById('run-code-comparator-btn')?.addEventListener('click', runCodeComparator);
+
+
+    // --- COPY TO CLIPBOARD ---
+    function copyOutputToClipboard(event) {
+        const button = event.target;
+        const targetId = button.dataset.target;
+        const outputElement = document.getElementById(targetId);
+        let textToCopy;
+
+        if (!outputElement) return;
+
+        if (outputElement.tagName === 'TEXTAREA' || outputElement.tagName === 'INPUT') {
+            textToCopy = outputElement.value;
+        } else { // This handles DIVs containing text or other elements
+            textToCopy = Array.from(outputElement.childNodes)
+                .map(node => node.textContent)
+                .join('\n');
+        }
+
+        if (!textToCopy) {
+            button.textContent = 'Nothing to Copy';
+            setTimeout(() => { button.textContent = 'Copy All'; }, 1500);
+            return;
+        }
+
+        const textArea = document.createElement("textarea");
+        textArea.value = textToCopy;
+        
+        // Make it invisible
+        textArea.style.position = 'fixed';
+        textArea.style.top = '-9999px';
+        textArea.style.left = '-9999px';
+
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            document.execCommand('copy');
+            const originalText = button.textContent;
+            button.textContent = 'Copied!';
+            button.style.backgroundColor = 'var(--success-green)';
+            button.style.color = 'var(--text-primary)';
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.style.backgroundColor = ''; // Reverts to stylesheet
+                button.style.color = '';
+            }, 1500);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+            button.textContent = 'Error!';
+            button.style.backgroundColor = 'var(--danger-red)';
+            button.style.color = 'var(--text-primary)';
+             setTimeout(() => {
+                button.textContent = 'Copy All';
+                button.style.backgroundColor = '';
+                button.style.color = '';
+            }, 1500);
+        }
+
+        document.body.removeChild(textArea);
+    }
+
+    function handleBulkRemove(originalCode, removeType) {
+        const duplicateReport = parseDeserialized(originalCode);
+        let newCode = originalCode;
+
+        // Remove duplicate single blocks
+        if (removeType === 'block' || removeType === 'all') {
+            for (const block in duplicateReport.blocks) {
+                if (duplicateReport.blocks[block] > 1) {
+                    newCode = removeDuplicates(newCode, block, true, false, null);
+                }
+            }
+        }
+
+        // Remove duplicate parts within arrays
+        if (removeType === 'array' || removeType === 'all') {
+            for (const arrayId in duplicateReport.arrays) {
+                for (const num in duplicateReport.arrays[arrayId]) {
+                    if (duplicateReport.arrays[arrayId][num] > 1) {
+                        newCode = removeDuplicates(newCode, num, true, true, arrayId);
+                    }
+                }
+            }
+        }
+
+        return newCode;
+    }
+
+    document.body.addEventListener('click', async (event) => {
+        if (event.target.classList.contains('copy-all-btn')) {
+            copyOutputToClipboard(event);
+        }
+
+        if (event.target.classList.contains('remove-dup-btn')) {
+            const button = event.target;
+            const part = button.dataset.part;
+            const keepOne = button.dataset.keepOne === 'true';
+            const arrayId = button.dataset.arrayId;
+            const removeType = button.dataset.removeType;
+
+            const separateScanContainer = button.closest('#separate-duplicate-scan-results');
+            
+            if (separateScanContainer) {
+                if (!lastSeparateScanDeserialized) {
+                    alert('Could not find the code to modify. Please run the scan again.');
+                    return;
+                }
+
+                let newDeserializedCode;
+                if (removeType) {
+                    newDeserializedCode = handleBulkRemove(lastSeparateScanDeserialized, removeType);
+                } else if (arrayId) {
+                    newDeserializedCode = removeDuplicates(lastSeparateScanDeserialized, part, keepOne, true, arrayId);
+                } else {
+                    newDeserializedCode = removeDuplicates(lastSeparateScanDeserialized, part, keepOne, false, null);
+                }
+                displayNewCode(newDeserializedCode, 'separate-duplicate-remove-output', 'separate-deserialized-output', 'separate-serialized-output');
+
+            } else {
+                 alert('This functionality is not yet implemented for the combined scan.');
+            }
+        }
+    });
+
+    // --- SURGICAL ADDITION: Workstation Add Item Function ---
+    document.getElementById('add-workstation-item-btn')?.addEventListener('click', () => {
+        if (currentWorkstationItem < 10) {
+            currentWorkstationItem++;
+            const nextItem = document.querySelector(`#workstation-items-container .workstation-item:nth-child(${currentWorkstationItem})`);
+            if (nextItem) {
+                nextItem.style.display = 'block';
+                nextItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            if (currentWorkstationItem === 10) {
+                document.getElementById('add-workstation-item-btn').style.display = 'none';
+            }
+        }
+    });
+
+    // --- SURGICAL ADDITION: Workstation "Copy" Function ---
+    document.getElementById('export-workstation-btn')?.addEventListener('click', () => {
+        let exportContent = "";
+        
+        for (let i = 1; i <= currentWorkstationItem; i++) {
+            const name = document.getElementById(`ws-${i}-name`)?.value || '';
+            const serial = document.getElementById(`ws-${i}-serial`)?.value || '';
+            const deserial = document.getElementById(`ws-${i}-deserial`)?.value || '';
+            const test = document.getElementById(`ws-${i}-test`)?.value || '';
+            const finalCode = document.getElementById(`ws-${i}-final`)?.value || '';
+
+            // Only add item if it has any content
+            if (name || serial || deserial || test || finalCode) {
+                // Add a newline before this item if it's not the first one
+                if (exportContent !== "") {
+                    exportContent += "\n\n"; // Add extra space between items
+                }
+                
+                // Format as requested
+                exportContent += `[${i}]\n`;
+                exportContent += `Name: ${name}\n`;
+                exportContent += `Serial: ${serial}\n`;
+                exportContent += `Deserial: ${deserial}\n`;
+                exportContent += `Test: ${test}\n`;
+                exportContent += `Final Code: ${finalCode}`;
+            }
+        }
+        
+        if (exportContent === "") {
+            // No data to copy
+            const btn = document.getElementById('export-workstation-btn');
+            btn.textContent = "No Data!";
+            btn.style.background = "var(--danger-red)";
+            setTimeout(() => {
+                btn.textContent = "Copy Workstation";
+                btn.style.background = ""; // Revert to original
+            }, 2000);
+            return;
+        }
+
+        // Copy to clipboard
+        navigator.clipboard.writeText(exportContent).then(() => {
+            // Success feedback on the button
+            const btn = document.getElementById('export-workstation-btn');
+            btn.textContent = "Copied!";
+            btn.style.background = "#34c759"; // Keep hover green
+            setTimeout(() => {
+                btn.textContent = "Copy Workstation";
+                btn.style.background = ""; // Revert to original
+            }, 2000);
+        }).catch(err => {
+            // Error feedback on the button
+            console.error('Failed to copy workstation data: ', err);
+            const btn = document.getElementById('export-workstation-btn');
+            btn.textContent = "Copy Failed!";
+            btn.style.background = "var(--danger-red)";
+            setTimeout(() => {
+                btn.textContent = "Copy Workstation";
+                btn.style.background = ""; // Revert to original
+            }, 2000);
+        });
+    });
+
+    // --- SURGICAL ADDITION: Workstation Help Toggle Function ---
+    window.toggleWorkstationHelp = () => {
+        const helpSection = document.getElementById('workstation-help-section');
+        helpSection.classList.toggle('active');
+    };
+
+    // --- SURGICAL ADDITION: Workstation Example Highlighter ---
+    document.getElementById('workstation-help-section')?.addEventListener('click', (event) => {
+        const trigger = event.target.closest('li.highlight-trigger');
+        if (!trigger) return;
+
+        const textToHighlight = trigger.dataset.highlight;
+        if (!textToHighlight) return;
+
+        const codeBlock = document.getElementById('workstation-example-code');
+        const originalText = codeBlock.dataset.originalText;
+
+        // Reset text to original
+        codeBlock.innerHTML = originalText;
+
+        // Apply new highlight
+        const highlightedHtml = originalText.replace(textToHighlight, (match) => {
+            return `<span class="ws-highlight">${match}</span>`;
+        });
+        
+        codeBlock.innerHTML = highlightedHtml;
+    });
+    // --- END OF SURGICAL ADDITIONS ---
+
+    // --- WORKSTATION BREAKDOWN FEATURE ---
+    // Item Types mapping
+    const ITEM_TYPES = {
+        2: { manufacturer: "daedalus", type: "pistol" },
+        3: { manufacturer: "jakobs", type: "pistol" },
+        4: { manufacturer: "order", type: "pistol" },
+        5: { manufacturer: "tediore", type: "pistol" },
+        6: { manufacturer: "torgue", type: "pistol" },
+        7: { manufacturer: "ripper", type: "shotgun" },
+        8: { manufacturer: "daedalus", type: "shotgun" },
+        9: { manufacturer: "jakobs", type: "shotgun" },
+        10: { manufacturer: "maliwan", type: "shotgun" },
+        11: { manufacturer: "tediore", type: "shotgun" },
+        12: { manufacturer: "torgue", type: "shotgun" },
+        13: { manufacturer: "daedalus", type: "assault_rifle" },
+        14: { manufacturer: "tediore", type: "assault_rifle" },
+        15: { manufacturer: "order", type: "assault_rifle" },
+        16: { manufacturer: "vladof", type: "sniper" },
+        17: { manufacturer: "torgue", type: "assault_rifle" },
+        18: { manufacturer: "vladof", type: "assault_rifle" },
+        19: { manufacturer: "ripper", type: "smg" },
+        20: { manufacturer: "daedalus", type: "smg" },
+        21: { manufacturer: "maliwan", type: "smg" },
+        22: { manufacturer: "vladof", type: "smg" },
+        23: { manufacturer: "ripper", type: "sniper" },
+        24: { manufacturer: "jakobs", type: "sniper" },
+        25: { manufacturer: "maliwan", type: "sniper" },
+        26: { manufacturer: "order", type: "sniper" },
+        27: { manufacturer: "jakobs", type: "assault_rifle" },
+        254: { manufacturer: "siren", type: "class_mod" },
+        255: { manufacturer: "forgeknight", type: "class_mod" },
+        256: { manufacturer: "exo_soldier", type: "class_mod" },
+        259: { manufacturer: "gravitar", type: "class_mod" },
+        261: { manufacturer: "torgue", type: "repair_kit" },
+        263: { manufacturer: "maliwan", type: "gadget" },
+        264: { manufacturer: "hyperion", type: "enhancement" },
+        265: { manufacturer: "jakobs", type: "repair_kit" },
+        266: { manufacturer: "maliwan", type: "repair_kit" },
+        267: { manufacturer: "jakobs", type: "gadget" },
+        268: { manufacturer: "jakobs", type: "enhancement" },
+        269: { manufacturer: "vladof", type: "repair_kit" },
+        270: { manufacturer: "daedalus", type: "gadget" },
+        271: { manufacturer: "maliwan", type: "enhancement" },
+        272: { manufacturer: "order", type: "gadget" },
+        273: { manufacturer: "torgue", type: "heavy" },
+        274: { manufacturer: "ripper", type: "repair_kit" },
+        275: { manufacturer: "ripper", type: "heavy" },
+        277: { manufacturer: "daedalus", type: "repair_kit" },
+        278: { manufacturer: "ripper", type: "gadget" },
+        279: { manufacturer: "maliwan", type: "shield" },
+        281: { manufacturer: "order", type: "enhancement" },
+        282: { manufacturer: "vladof", type: "heavy" },
+        283: { manufacturer: "vladof", type: "shield" },
+        284: { manufacturer: "atlas", type: "enhancement" },
+        285: { manufacturer: "order", type: "repair_kit" },
+        286: { manufacturer: "cov", type: "enhancement" },
+        287: { manufacturer: "cov", type: "shield" },
+        288: { manufacturer: "tediore", type: "gadget" },
+        290: { manufacturer: "tediore", type: "repair_kit" },
+        291: { manufacturer: "vladof", type: "gadget" },
+        292: { manufacturer: "tediore", type: "enhancement" },
+        293: { manufacturer: "order", type: "shield" },
+        296: { manufacturer: "ripper", type: "enhancement" },
+        298: { manufacturer: "torgue", type: "gadget" },
+        299: { manufacturer: "daedalus", type: "enhancement" },
+        300: { manufacturer: "ripper", type: "shield" },
+        303: { manufacturer: "torgue", type: "enhancement" },
+        306: { manufacturer: "jakobs", type: "shield" },
+        307: { manufacturer: "daedalus", type: "class_mod" },
+        309: { manufacturer: "jakobs", type: "class_mod" },
+        310: { manufacturer: "vladof", type: "enhancement" },
+        311: { manufacturer: "tediore", type: "gadget" },
+        312: { manufacturer: "daedalus", type: "shield" },
+        321: { manufacturer: "hyperion", type: "shield" },
+        326: { manufacturer: "order", type: "gadget" },
+        327: { manufacturer: "torgue", type: "class_mod" }
+    };
+
+    // Parts data cache
+    let partsDataCache = null;
+    let loadingParts = false;
+
+    // Normalize manufacturer and type names for matching
+    function normalizeName(name) {
+        return name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
+    // Load and parse parts data (JSON format - works with file:// protocol)
+    async function loadPartsData() {
+        if (partsDataCache) return partsDataCache;
+        if (loadingParts) {
+            // Wait for existing load
+            while (loadingParts) await new Promise(resolve => setTimeout(resolve, 100));
+            return partsDataCache;
+        }
+
+        loadingParts = true;
+        // Map structure: key = "itemTypeCode|partId" -> part data
+        const partsMap = new Map();
+
+        try {
+            // Try to load consolidated JSON first (works with file:// protocol, no CORS issues)
+            // Fall back to CSV files if JSON doesn't exist
+            try {
+                console.log(`Attempting to load bl4_parts_consolidated.json...`);
+                const response = await fetch('bl4_parts_consolidated.json');
+                if (response.ok) {
+                    console.log(`✓ Successfully fetched bl4_parts_consolidated.json`);
+                    const jsonData = await response.json();
+                    
+                    if (jsonData.parts) {
+                        // Load from JSON
+                        for (const [key, partData] of Object.entries(jsonData.parts)) {
+                            partsMap.set(key, partData);
+                        }
+                        console.log(`[JSON] Loaded ${partsMap.size} parts from JSON file`);
+                        partsDataCache = partsMap;
+                        loadingParts = false;
+                        console.log(`[LOAD COMPLETE] Loaded ${partsMap.size} parts total`);
+                        return partsMap;
+                    }
+                }
+            } catch (jsonErr) {
+                console.error(`❌ Failed to load JSON file (likely CORS issue with file:// protocol):`, jsonErr);
+                console.error(`💡 SOLUTION: Run a local web server!`);
+                console.error(`   Option 1: Python: python -m http.server 8000`);
+                console.error(`   Option 2: Node.js: npx http-server`);
+                console.error(`   Then open: http://localhost:8000/0Deseralizer%20Comparator.html`);
+                console.warn(`Falling back to CSV files...`);
+            }
+
+            // Fall back to CSV files (may have CORS issues with file:// protocol)
+            const csvFiles = [
+                'BL4_Parts_Consolidated.csv',
+                'Parts-Viewer-Alt.csv',
+                'Parts-Viewer.csv',
+                'all_weapon_part.csv'
+            ];
+
+            for (const filename of csvFiles) {
+                try {
+                    console.log(`Attempting to load ${filename}...`);
+                    const response = await fetch(filename);
+                    if (!response.ok) {
+                        console.warn(`${filename} not found or failed to load (${response.status})`);
+                        continue;
+                    }
+                    console.log(`✓ Successfully fetched ${filename}`);
+                    const csvText = await response.text();
+                    const lines = csvText.split('\n').filter(line => line.trim());
+                    console.log(`  ${filename}: ${lines.length} lines (including header)`);
+                    
+                    if (lines.length < 2) {
+                        console.warn(`  ${filename}: Not enough lines, skipping`);
+                        continue;
+                    }
+                    
+                    // Parse header
+                    const headerLine = lines[0];
+                    const headers = [];
+                    let inQuotes = false;
+                    let currentHeader = '';
+                    for (let j = 0; j < headerLine.length; j++) {
+                        const char = headerLine[j];
+                        if (char === '"') {
+                            inQuotes = !inQuotes;
+                        } else if (char === ',' && !inQuotes) {
+                            headers.push(currentHeader.trim().toLowerCase());
+                            currentHeader = '';
+                        } else {
+                            currentHeader += char;
+                        }
+                    }
+                    headers.push(currentHeader.trim().toLowerCase());
+                    
+                    // Find column indices
+                    // For consolidated CSV and all_weapon_part.csv, first column is item type code
+                    // For other CSVs, look for "Manufacturer & Weapon Type ID" column
+                    let itemTypeCodeIdx = -1;
+                    if (filename === 'BL4_Parts_Consolidated.csv' || filename === 'all_weapon_part.csv') {
+                        itemTypeCodeIdx = 0; // First column
+                    } else {
+                        itemTypeCodeIdx = headers.findIndex(h => 
+                            (h.includes('manufacturer') && h.includes('weapon type') && h.includes('id')) ||
+                            h === 'manufacturer & weapon type id'
+                        );
+                    }
+                    // For consolidated CSV, use direct column mapping
+                    let manufacturerIdx, itemTypeIdx, idIdx, partTypeIdx, modelNameIdx, stringIdx, statsIdx, effectsIdx;
+                    
+                    if (filename === 'BL4_Parts_Consolidated.csv') {
+                        // Consolidated CSV: ItemTypeCode,PartId,Manufacturer,ItemType,PartType,String,ModelName,Stats,Effects
+                        itemTypeCodeIdx = 0;
+                        idIdx = 1;
+                        manufacturerIdx = 2;
+                        itemTypeIdx = 3;
+                        partTypeIdx = 4;
+                        stringIdx = 5;
+                        modelNameIdx = 6;
+                        statsIdx = 7;
+                        effectsIdx = 8;
+                        console.log(`[${filename}] Using consolidated CSV format - direct column mapping`);
+                        console.log(`  Headers: ${headers.slice(0, 9).join(', ')}`);
+                    } else {
+                        manufacturerIdx = headers.findIndex(h => h.includes('manufacturer') && !h.includes('weapon type') && !h.includes('id'));
+                        // For Parts-Viewer-Alt.csv, Item Type is in column 1 (empty header)
+                        // For Parts-Viewer.csv, header is "Item Type"
+                        itemTypeIdx = headers.findIndex(h => (h.includes('item type') || h.includes('weapon type')) && !h.includes('id') && h.trim() !== '');
+                        if (itemTypeIdx < 0 && filename === 'Parts-Viewer-Alt.csv') {
+                            // Column 1 has empty header but contains Item Type data
+                            itemTypeIdx = 1;
+                        }
+                        idIdx = headers.findIndex(h => (h === 'id' || h.includes('part id')) && !h.includes('manufacturer'));
+                        partTypeIdx = headers.findIndex(h => h.includes('part type'));
+                        modelNameIdx = headers.findIndex(h => h.includes('model name'));
+                        stringIdx = headers.findIndex(h => h === 'string');
+                        statsIdx = headers.findIndex(h => h.includes('stat'));
+                        effectsIdx = headers.findIndex(h => h.includes('effect'));
+                    }
+
+                    // Build reverse lookup: manufacturer+type -> itemTypeCode
+                    const reverseItemTypeMap = new Map();
+                    Object.entries(ITEM_TYPES).forEach(([code, info]) => {
+                        const key = `${normalizeName(info.manufacturer)}|${normalizeName(info.type)}`;
+                        reverseItemTypeMap.set(key, parseInt(code, 10));
+                    });
+
+                    for (let i = 1; i < lines.length; i++) {
+                        const parts = [];
+                        inQuotes = false;
+                        let currentPart = '';
+                        
+                        // Parse CSV considering quotes
+                        for (let j = 0; j < lines[i].length; j++) {
+                            const char = lines[i][j];
+                            if (char === '"') {
+                                inQuotes = !inQuotes;
+                            } else if (char === ',' && !inQuotes) {
+                                parts.push(currentPart.trim());
+                                currentPart = '';
+                            } else {
+                                currentPart += char;
+                            }
+                        }
+                        parts.push(currentPart.trim()); // Last part
+
+                        if (parts.length === 0) continue;
+
+                        // Get manufacturer and item type first (needed for both lookup methods)
+                        const manufacturerRaw = (manufacturerIdx >= 0 && manufacturerIdx < parts.length) ? (parts[manufacturerIdx] || '').trim() : '';
+                        const itemTypeRaw = (itemTypeIdx >= 0 && itemTypeIdx < parts.length) ? (parts[itemTypeIdx] || '').trim() : '';
+                        const manufacturer = manufacturerRaw;
+                        const itemType = itemTypeRaw;
+                        
+                        // Get item type code
+                        let itemTypeCode = null;
+                        
+                        // For consolidated CSV, item type code is always in first column
+                        if (filename === 'BL4_Parts_Consolidated.csv' && itemTypeCodeIdx >= 0 && itemTypeCodeIdx < parts.length && parts[itemTypeCodeIdx]) {
+                            itemTypeCode = parseInt(parts[itemTypeCodeIdx], 10);
+                        } else if (itemTypeCodeIdx >= 0 && itemTypeCodeIdx < parts.length && parts[itemTypeCodeIdx]) {
+                            // Direct item type code from CSV
+                            itemTypeCode = parseInt(parts[itemTypeCodeIdx], 10);
+                        } else if (manufacturer && itemType && manufacturerIdx >= 0 && itemTypeIdx >= 0) {
+                            // Need to derive from Manufacturer + Item Type using reverse lookup
+                            const normalizedMfg = normalizeName(manufacturer);
+                            const normalizedType = normalizeName(itemType.replace(/\s+/g, '_'));
+                            const key = `${normalizedMfg}|${normalizedType}`;
+                            itemTypeCode = reverseItemTypeMap.get(key);
+                        }
+                        
+                        if (!itemTypeCode || isNaN(itemTypeCode)) continue;
+
+                        let partId = (idIdx >= 0 && idIdx < parts.length && parts[idIdx]) ? parts[idIdx].trim() : '';
+                        if (!partId) continue;
+                        
+                        // Normalize part ID: remove decimals (e.g., "2.0" -> "2")
+                        // Try to parse as number first, then convert back to string to normalize
+                        const partIdNum = parseFloat(partId);
+                        if (!isNaN(partIdNum)) {
+                            partId = String(Math.floor(partIdNum)); // Convert "2.0" to "2"
+                        }
+                        
+                        const partType = (partTypeIdx >= 0 && partTypeIdx < parts.length) ? (parts[partTypeIdx] || '').trim() : '';
+                        const modelName = (modelNameIdx >= 0 && modelNameIdx < parts.length) ? (parts[modelNameIdx] || '').trim() : '';
+                        const stringName = (stringIdx >= 0 && stringIdx < parts.length) ? (parts[stringIdx] || '').trim() : '';
+                        const stats = (statsIdx >= 0 && statsIdx < parts.length) ? (parts[statsIdx] || '').trim() : '';
+                        const effects = (effectsIdx >= 0 && effectsIdx < parts.length) ? (parts[effectsIdx] || '').trim() : '';
+                        
+                        // Debug logging
+                        if (itemTypeCode === 19 && partId === '12') {
+                            console.log(`[${filename}] Found part 19|12:`, {
+                                itemTypeCode,
+                                partId,
+                                manufacturer,
+                                itemType,
+                                partType,
+                                modelName: modelName || stringName,
+                                stats,
+                                effects,
+                                key: `${itemTypeCode}|${partId}`,
+                                parts: parts.slice(0, 7)
+                            });
+                        }
+
+                        // Key: "itemTypeCode|partId" (normalized - no decimals)
+                        const key = `${itemTypeCode}|${partId}`;
+                        
+                        // Debug: Log some entries for verification
+                        if (itemTypeCode === 5 && ['2', '3', '4', '12', '15', '43', '53', '65', '72', '73', '75'].includes(partId)) {
+                            console.log(`[${filename}] Adding part ${key}:`, {
+                                manufacturer,
+                                itemType,
+                                partType,
+                                modelName,
+                                stringName,
+                                stats,
+                                effects
+                            });
+                        }
+                        
+                        // Merge data: prefer Parts-Viewer-Alt.csv for stats/effects, all_weapon_part.csv for base data
+                        const existing = partsMap.get(key);
+                        if (existing) {
+                            // Merge: keep existing data but add stats/effects if new has them
+                            if ((stats || effects) && (!existing.stats && !existing.effects)) {
+                                partsMap.set(key, {
+                                    ...existing,
+                                    stats: stats || existing.stats,
+                                    effects: effects || existing.effects
+                                });
+                            }
+                        } else {
+                            // New entry
+                            partsMap.set(key, {
+                                itemTypeCode: itemTypeCode,
+                                manufacturer: manufacturer,
+                                itemType: itemType,
+                                partId: partId,
+                                partType: partType,
+                                modelName: modelName || stringName,
+                                stats: stats,
+                                effects: effects
+                            });
+                        }
+                    }
+                    
+                    console.log(`  Processed ${filename}, partsMap now has ${partsMap.size} entries`);
+                    
+                    // If consolidated CSV was loaded successfully, skip other files for efficiency
+                    if (filename === 'BL4_Parts_Consolidated.csv' && partsMap.size > 0) {
+                        console.log(`✓ Consolidated CSV loaded with ${partsMap.size} parts, skipping other files`);
+                        break;
+                    }
+                } catch (err) {
+                    console.warn(`Failed to load ${filename}:`, err);
+                }
+            }
+
+            partsDataCache = partsMap;
+            loadingParts = false;
+            console.log(`[LOAD COMPLETE] Loaded ${partsMap.size} parts total`);
+            
+            // Debug: Check for test parts
+            const testParts = ['19|12', '5|2', '5|3', '5|4', '5|12', '5|15', '5|43', '5|53', '5|65', '5|72', '5|73', '5|75'];
+            console.log('Testing part lookups:');
+            testParts.forEach(key => {
+                if (partsMap.has(key)) {
+                    console.log(`  ✓ ${key}:`, partsMap.get(key));
+                } else {
+                    console.warn(`  ✗ ${key}: NOT FOUND`);
+                }
+            });
+            
+            // Show some sample keys
+            const sampleKeys = Array.from(partsMap.keys()).slice(0, 20);
+            console.log('Sample keys from partsMap:', sampleKeys);
+            
+            return partsMap;
+        } catch (err) {
+            console.error('Error loading parts data:', err);
+            loadingParts = false;
+            return new Map();
+        }
+    }
+
+    // Parse deserialized code and extract parts
+    function parseDeserializedCode(code) {
+        if (!code || !code.trim()) return null;
+
+        const parts = code.split('||');
+        if (parts.length < 2) return null;
+
+        const header = parts[0].trim();
+        const body = parts[1].trim().replace(/\|$/, ''); // Remove trailing |
+
+        // Extract item type from header (first number)
+        const headerMatch = header.match(/^(\d+),/);
+        if (!headerMatch) return null;
+
+        const itemTypeCode = parseInt(headerMatch[1], 10);
+        const itemTypeInfo = ITEM_TYPES[itemTypeCode];
+        
+        if (!itemTypeInfo) {
+            return {
+                itemTypeCode,
+                itemTypeInfo: null,
+                error: `Unknown item type code: ${itemTypeCode}`
+            };
+        }
+
+        // Extract all parts: {123}, {123:45}, and {123:[456 789]}
+        // Note: {123:45} format means part category 123, part ID 45
+        //       {123} means part ID 123 (belongs to item type from header)
+        //       {123:[456 789]} means part category 123, part IDs 456, 789
+        const singleParts = []; // {123} format
+        const keyedParts = []; // {123:45} format
+        const arrayParts = []; // {123:[456 789]} format
+
+        // Match keyed parts {123:45} first (to avoid matching with single parts)
+        const keyedRegex = /\{(\d+):(\d+)\}/g;
+        let match;
+        while ((match = keyedRegex.exec(body)) !== null) {
+            keyedParts.push({
+                category: match[1],
+                partId: match[2],
+                fullMatch: match[0]
+            });
+        }
+
+        // Match array parts {123:[456 789]}
+        const arrayRegex = /\{(\d+):\[([^\]]+)\]\}/g;
+        while ((match = arrayRegex.exec(body)) !== null) {
+            const category = match[1];
+            const values = match[2].trim().split(/\s+/).filter(v => v);
+            arrayParts.push({
+                category: category,
+                values: values,
+                fullMatch: match[0]
+            });
+        }
+
+        // Match single parts {123} - but exclude ones already matched as part of keyed/array
+        const allMatchedPositions = new Set();
+        [...keyedParts, ...arrayParts].forEach(p => {
+            const pos = body.indexOf(p.fullMatch);
+            if (pos >= 0) {
+                for (let i = pos; i < pos + p.fullMatch.length; i++) {
+                    allMatchedPositions.add(i);
+                }
+            }
+        });
+
+        const singleRegex = /\{(\d+)\}/g;
+        while ((match = singleRegex.exec(body)) !== null) {
+            // Check if this match is part of a keyed or array part
+            let isPartOfOther = false;
+            for (let i = match.index; i < match.index + match[0].length; i++) {
+                if (allMatchedPositions.has(i)) {
+                    isPartOfOther = true;
+                    break;
+                }
+            }
+            if (!isPartOfOther) {
+                singleParts.push({
+                    partId: match[1],
+                    fullMatch: match[0]
+                });
+            }
+        }
+
+        return {
+            itemTypeCode,
+            itemTypeInfo,
+            singleParts,
+            keyedParts,
+            arrayParts,
+            header,
+            body
+        };
+    }
+
+    // Legendary perks, elements, alt-fire lookup maps (will be populated from JSON)
+    let legendaryPerksMap = null;
+    let elementsMap = null;
+    let altFireMap = null;
+    
+    // Load legendary perks, elements, and alt-fire data
+    async function loadSpecialData() {
+        if (legendaryPerksMap) return; // Already loaded
+        
+        try {
+            // Try to load from bl4_parts_data.json
+            const response = await fetch('bl4_parts_data.json');
+            if (response.ok) {
+                const data = await response.json();
+                legendaryPerksMap = new Map();
+                elementsMap = new Map();
+                altFireMap = new Map();
+                
+                // Build lookup maps: key = "category:partId" -> name
+                if (data.legendaryPerks) {
+                    data.legendaryPerks.forEach(p => {
+                        const code = p.code.replace(/[{}]/g, '');
+                        const [cat, id] = code.split(':');
+                        if (cat && id) {
+                            legendaryPerksMap.set(`${cat}:${id}`, {
+                                name: p.name,
+                                type: 'Legendary Perk',
+                                code: p.code
+                            });
+                        }
+                    });
+                }
+                
+                if (data.elements) {
+                    data.elements.forEach(e => {
+                        const code = e.code.replace(/[{}]/g, '');
+                        const [cat, id] = code.split(':');
+                        if (cat && id) {
+                            elementsMap.set(`${cat}:${id}`, {
+                                name: e.name,
+                                type: 'Element',
+                                code: e.code
+                            });
+                        }
+                    });
+                }
+                
+                if (data.altFireModes) {
+                    data.altFireModes.forEach(a => {
+                        const code = a.code.replace(/[{}]/g, '');
+                        const [cat, id] = code.split(':');
+                        if (cat && id) {
+                            altFireMap.set(`${cat}:${id}`, {
+                                name: a.name,
+                                type: 'Alt-Fire Mode',
+                                code: a.code
+                            });
+                        }
+                    });
+                }
+            }
+        } catch (err) {
+            console.warn('Failed to load special data:', err);
+        }
+    }
+    
+    // Lookup part information by item type code and part ID
+    // Also checks for legendary perks, elements, and alt-fire modes
+    async function lookupPart(itemTypeCode, partId, category = null) {
+        await loadSpecialData();
+        
+        // First, check if it's a legendary perk, element, or alt-fire
+        if (category) {
+            const specialKey = `${category}:${partId}`;
+            if (legendaryPerksMap && legendaryPerksMap.has(specialKey)) {
+                return legendaryPerksMap.get(specialKey);
+            }
+            if (elementsMap && elementsMap.has(specialKey)) {
+                return elementsMap.get(specialKey);
+            }
+            if (altFireMap && altFireMap.has(specialKey)) {
+                return altFireMap.get(specialKey);
+            }
+        }
+        
+        // Fall back to regular part lookup
+        const partsMap = await loadPartsData();
+        const key = `${itemTypeCode}|${partId}`;
+        let result = partsMap.get(key);
+        
+        // Try alternative key formats if not found
+        if (!result) {
+            // Try with spaces
+            const altKey1 = `${itemTypeCode}| ${partId}`;
+            const altKey2 = `${itemTypeCode} |${partId}`;
+            const altKey3 = `${itemTypeCode} | ${partId}`;
+            result = partsMap.get(altKey1) || partsMap.get(altKey2) || partsMap.get(altKey3);
+            
+            if (result) {
+                console.log(`Found part with alternative key format: ${key} (used: ${altKey1 || altKey2 || altKey3})`);
+            }
+        }
+        
+        // Debug logging for failed lookups
+        if (!result) {
+            console.warn(`Lookup failed for ${key}. ItemType: ${itemTypeCode}, PartId: ${partId}, Category: ${category}`);
+            if (partsMap.size === 0) {
+                console.error('❌ PartsMap is EMPTY! Data file did not load properly.');
+                console.error('💡 This usually means:');
+                console.error('   1. CORS error (if opening file:// directly in browser)');
+                console.error('   2. File not found');
+                console.error('   3. File format error');
+                console.error('💡 SOLUTION: Use a local web server:');
+                console.error('   python -m http.server 8000');
+                console.error('   Then open: http://localhost:8000/0Deseralizer%20Comparator.html');
+            } else {
+                console.log(`PartsMap has ${partsMap.size} entries. Sample keys:`, Array.from(partsMap.keys()).slice(0, 5));
+                // Show similar keys
+                const similarKeys = Array.from(partsMap.keys()).filter(k => k.startsWith(`${itemTypeCode}|`) || k.includes(`|${partId}`)).slice(0, 5);
+                if (similarKeys.length > 0) {
+                    console.log(`Similar keys found:`, similarKeys);
+                }
+            }
+        }
+        
+        return result || null;
+    }
+
+    // Generate breakdown HTML
+    async function generateBreakdown(parsed) {
+        if (!parsed || parsed.error) {
+            return `<div class="breakdown-item"><span class="breakdown-unknown">${parsed?.error || 'Failed to parse code'}</span></div>`;
+        }
+
+        const { itemTypeCode, itemTypeInfo, singleParts, keyedParts, arrayParts } = parsed;
+        let html = '';
+
+        // Item type header
+        const manufacturerName = itemTypeInfo.manufacturer.charAt(0).toUpperCase() + itemTypeInfo.manufacturer.slice(1);
+        const itemTypeName = itemTypeInfo.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        html += `<div class="breakdown-header">Item Type: <span class="breakdown-item-type">${itemTypeCode} - ${manufacturerName} ${itemTypeName}</span></div>`;
+
+        // Process single parts {123} - these belong to the item type from header
+        for (const part of singleParts) {
+            const partInfo = await lookupPart(itemTypeCode, part.partId);
+            
+            html += '<div class="breakdown-item">';
+            html += `<span class="breakdown-code">{${part.partId}}</span>`;
+            
+            if (partInfo) {
+                html += ` - <span class="breakdown-part-name">${partInfo.modelName || partInfo.partType || partInfo.stringName || 'Part'}</span>`;
+                if (partInfo.partType) {
+                    html += ` <span class="breakdown-part-type">(${partInfo.partType})</span>`;
+                }
+                if (partInfo.stats) {
+                    html += `<div class="breakdown-stats">📊 Stats: ${partInfo.stats}</div>`;
+                }
+                if (partInfo.effects) {
+                    html += `<div class="breakdown-effects">✨ Effects: ${partInfo.effects}</div>`;
+                }
+            } else {
+                html += ` - <span class="breakdown-unknown">Unknown Part (ID: ${part.partId})</span>`;
+            }
+            html += '</div>';
+        }
+
+        // Process keyed parts {123:45} - category:partId format
+        for (const keyedPart of keyedParts) {
+            const partInfo = await lookupPart(itemTypeCode, keyedPart.partId, keyedPart.category);
+            
+            html += '<div class="breakdown-item">';
+            html += `<span class="breakdown-code">{${keyedPart.category}:${keyedPart.partId}}</span>`;
+            
+            if (partInfo) {
+                // Check if it's a special type (perk/element/alt-fire)
+                if (partInfo.type) {
+                    html += ` - <span class="breakdown-part-name" style="color: var(--accent-orange);">${partInfo.name}</span>`;
+                    html += ` <span class="breakdown-part-type">(${partInfo.type})</span>`;
+                } else {
+                    // Regular part
+                    html += ` <span class="breakdown-part-type">(Category: ${keyedPart.category})</span>`;
+                    html += ` - <span class="breakdown-part-name">${partInfo.modelName || partInfo.partType || partInfo.stringName || 'Part'}</span>`;
+                    if (partInfo.partType && partInfo.modelName !== partInfo.partType) {
+                        html += ` <span class="breakdown-part-type">(${partInfo.partType})</span>`;
+                    }
+                    if (partInfo.stats) {
+                        html += `<div class="breakdown-stats">📊 Stats: ${partInfo.stats}</div>`;
+                    }
+                    if (partInfo.effects) {
+                        html += `<div class="breakdown-effects">✨ Effects: ${partInfo.effects}</div>`;
+                    }
+                }
+            } else {
+                html += ` <span class="breakdown-part-type">(Category: ${keyedPart.category})</span>`;
+                html += ` - <span class="breakdown-unknown">Unknown Part (ID: ${keyedPart.partId})</span>`;
+            }
+            html += '</div>';
+        }
+
+        // Process array parts {123:[456 789]} - category:[partIds] format
+        for (const arrayPart of arrayParts) {
+            html += '<div class="breakdown-item">';
+            html += `<span class="breakdown-code">{${arrayPart.category}:[${arrayPart.values.join(' ')}]}</span>`;
+            html += ` - <span class="breakdown-part-type">Array (Category: ${arrayPart.category})</span>`;
+            
+            for (const value of arrayPart.values) {
+                const partInfo = await lookupPart(itemTypeCode, value, arrayPart.category);
+                html += '<div style="margin-left: 1rem; margin-top: 0.25rem;">';
+                html += `<span class="breakdown-code">${value}</span>`;
+                
+                if (partInfo) {
+                    // Check if it's a special type (perk/element/alt-fire)
+                    if (partInfo.type) {
+                        html += ` - <span class="breakdown-part-name" style="color: var(--accent-orange);">${partInfo.name}</span>`;
+                        html += ` <span class="breakdown-part-type">(${partInfo.type})</span>`;
+                    } else {
+                        // Regular part
+                        html += ` - <span class="breakdown-part-name">${partInfo.modelName || partInfo.partType || partInfo.stringName || 'Part'}</span>`;
+                        if (partInfo.partType) {
+                            html += ` <span class="breakdown-part-type">(${partInfo.partType})</span>`;
+                        }
+                        if (partInfo.stats) {
+                            html += `<div class="breakdown-stats" style="margin-left: 0.5rem;">📊 ${partInfo.stats}</div>`;
+                        }
+                        if (partInfo.effects) {
+                            html += `<div class="breakdown-effects" style="margin-left: 0.5rem;">✨ ${partInfo.effects}</div>`;
+                        }
+                    }
+                } else {
+                    html += ` - <span class="breakdown-unknown">Unknown Part (ID: ${value})</span>`;
+                }
+                html += '</div>';
+            }
+            html += '</div>';
+        }
+
+        return html;
+    }
+
+    // Handle breakdown button clicks
+    document.addEventListener('click', async (e) => {
+        if (!e.target.classList.contains('breakdown-btn')) return;
+        
+        const itemNum = e.target.getAttribute('data-item');
+        const deserialTextarea = document.getElementById(`ws-${itemNum}-deserial`);
+        const breakdownDiv = document.getElementById(`ws-${itemNum}-breakdown`);
+        
+        if (!deserialTextarea || !breakdownDiv) return;
+
+        const code = deserialTextarea.value.trim();
+        if (!code) {
+            breakdownDiv.innerHTML = '<div class="breakdown-item"><span class="breakdown-unknown">Please enter a deserialized code first.</span></div>';
+            breakdownDiv.style.display = 'block';
+            return;
+        }
+
+        // Show loading
+        breakdownDiv.innerHTML = '<div class="breakdown-item">Loading parts data and parsing... Please wait.</div>';
+        breakdownDiv.style.display = 'block';
+
+        try {
+            // Force reload parts data to ensure it's loaded
+            partsDataCache = null;
+            console.log('Loading parts data...');
+            
+            const parsed = parseDeserializedCode(code);
+            console.log('Parsed code:', parsed);
+            
+            // Test lookup before generating breakdown
+            const testLookup = await lookupPart(5, '2', null);
+            console.log('Test lookup for 5|2:', testLookup);
+            
+            const html = await generateBreakdown(parsed);
+            breakdownDiv.innerHTML = html;
+            
+            // Log parts map info
+            const partsMap = await loadPartsData();
+            console.log(`Parts map size: ${partsMap.size}`);
+            console.log('Sample keys:', Array.from(partsMap.keys()).slice(0, 10));
+            console.log('Has 5|2?', partsMap.has('5|2'));
+        } catch (error) {
+            console.error('Breakdown error:', error);
+            breakdownDiv.innerHTML = `<div class="breakdown-item"><span class="breakdown-unknown">Error: ${error.message}</span><br><small>Check console (F12) for details.</small></div>`;
+        }
+    });
+    // --- END WORKSTATION BREAKDOWN FEATURE ---
+
+});
+
+// --- FUNCTIONS FOR DESERIALIZER TAB ---
+// --- THIS SECTION IS UNTOUCHED ---
+function toggleHelp() {
+    const helpSection = document.getElementById('help-section');
+    helpSection.classList.toggle('active');
+}
+
+async function deserialize() {
+    const inputData = document.getElementById('input-data').value.trim();
+    const outputTextarea = document.getElementById('output-data');
+    const statusDiv = document.getElementById('status');
+    if (!inputData) {
+        statusDiv.className = 'status active error';
+        statusDiv.textContent = '❌ Please enter some serials to deserialize!';
+        return;
+    }
+    statusDiv.className = 'status active processing';
+    statusDiv.textContent = '⏳ Deserializing...';
+    try {
+        // Split by newline and clean - just get the raw strings
+        const serials = inputData.split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0);
+        console.log('Sending ' + serials.length + ' serials to API');
+        // Make API call to https://borderlands4-deserializer.nicnl.com/api/v1/deserialize_bulk
+        const apiUrl = 'https://borderlands4-deserializer.nicnl.com/api/v1/deserialize_bulk';
+        console.log('Calling API:', apiUrl);
+        console.log('Payload:', serials.slice(0, 3));
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(serials)
+        });
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+        }
+        const result = await response.json();
+        console.log('API returned:', Object.keys(result).length, 'items');
+        // Format output to show only deserialized strings, one per line
+        let formattedOutput = '';
+        for (const [serial, data] of Object.entries(result)) {
+            if (data && data.deserialized) {
+                formattedOutput += data.deserialized + '\n';
+            }
+        }
+        outputTextarea.value = formattedOutput;
+        // Extract and display perk IDs found
+        extractPerkIds(result);
+        statusDiv.className = 'status active success';
+        statusDiv.textContent = `✅ Successfully deserialized ${Object.keys(result).length} items!`;
+        
+    } catch (error) {
+        console.error('Error:', error);
+        statusDiv.className = 'status active error';
+        statusDiv.textContent = `❌ Error: ${error.message}`;
+        outputTextarea.value = `Error: ${error.message}`;
+    }
+}
+function extractPerkIds(resultData) {
+    const perkIds = new Set();
+    const perkDetails = [];
+    // The result is a dictionary where keys are serials and values are the deserialized data
+    for (const [serial, data] of Object.entries(resultData)) {
+        if (!data) continue;
+        // Check for firmware
+        if (data.firmware) {
+            perkIds.add('firmware_' + data.firmware);
+            perkDetails.push({
+                serial: serial.substring(0, 30) + '...',
+                type: 'firmware',
+                id: data.firmware
+            });
+        }
+        // Check for rarity
+        if (data.rarity) {
+            perkIds.add('rarity_' + data.rarity);
+            perkDetails.push({
+                serial: serial.substring(0, 30) + '...',
+                type: 'rarity',
+                id: data.rarity
+            });
+        }
+        // Check for stat groups
+        if (data.stat_groups) {
+            data.stat_groups.forEach(group => {
+                if (group.stats) {
+                    group.stats.forEach(stat => {
+                        if (stat.stat_id) {
+                            perkIds.add('stat_' + stat.stat_id);
+                            perkDetails.push({
+                                serial: serial.substring(0, 30) + '...',
+                                type: 'stat',
+                                id: stat.stat_id
+                            });
+                        }
+                    });
+                }
+            });
+        }
+    }
+    console.log('Found perk IDs:', Array.from(perkIds).sort());
+    console.log('Perk details:', perkDetails);
+    // Show found perk IDs in status
+    if (perkIds.size > 0) {
+        const statusDiv = document.getElementById('status');
+        statusDiv.textContent += '\n\n📊 Found Perk IDs: ' + Array.from(perkIds).sort().join(', ');
+    }
+}
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const content = e.target.result;
+            const statusDiv = document.getElementById('status');
+            // Check if it's YAML format
+            if (content.includes('inventory:') || content.includes('backpack:')) {
+                // Parse YAML to extract serials
+                const serials = extractSerialsFromYAML(content);
+                document.getElementById('input-data').value = serials.join('\n');
+                statusDiv.className = 'status active success';
+                statusDiv.textContent = `✅ Loaded ${file.name} - Extracted ${serials.length} serials from backpack`;
+            } else {
+                // Plain text file
+                document.getElementById('input-data').value = content;
+                statusDiv.className = 'status active success';
+                statusDiv.textContent = '✅ Loaded ' + file.name + ' (' + file.size + ' bytes)';
+            }
+        };
+        reader.readAsText(file);
+    }
+}
+function extractSerialsFromYAML(yamlContent) {
+    const serials = [];
+    // Extract serial: '...' patterns
+    const serialPattern = /serial:\s+'@([^']+)'/g;
+    let match;
+    while ((match = serialPattern.exec(yamlContent)) !== null) {
+        serials.push('@' + match[1]);
+    }
+    return serials;
+}
+async function serialize() {
+    const inputData = document.getElementById('input-data').value.trim();
+    const outputTextarea = document.getElementById('output-data');
+    const statusDiv = document.getElementById('status');
+    if (!inputData) {
+        statusDiv.className = 'status active error';
+        statusDiv.textContent = '❌ Please enter deserialized strings to serialize!';
+        return;
+    }
+    statusDiv.className = 'status active processing';
+    statusDiv.textContent = '⏳ Serializing...';
+    try {
+        // Split by newline and clean
+        const deserializedStrings = inputData.split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0);
+        console.log('Sending ' + deserializedStrings.length + ' strings to serialize API');
+        // Make API call to serialize
+        const apiUrl = 'https://borderlands4-deserializer.nicnl.com/api/v1/serialize_bulk';
+        console.log('Calling Serialize API:', apiUrl);
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(deserializedStrings)
+        });
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+        }
+        const result = await response.json();
+        console.log('API returned serials:', Object.keys(result).length);
+        // Display serials one per line
+        let formattedOutput = '';
+        for (const [index, serial] of Object.entries(result)) {
+            formattedOutput += serial + '\n';
+        }
+        outputTextarea.value = formattedOutput;
+        statusDiv.className = 'status active success';
+        statusDiv.textContent = `✅ Successfully serialized ${Object.keys(result).length} items!`;
+    } catch (error) {
+        console.error('Error:', error);
+        statusDiv.className = 'status active error';
+        statusDiv.textContent = `❌ Error: ${error.message}`;
+        outputTextarea.value = `Error: ${error.message}`;
+    }
+}
+async function copyOutput() {
+    const outputTextarea = document.getElementById('output-data');
+    if (!outputTextarea.value.trim()) {
+        alert('No output to copy!');
+        return;
+    }
+    try {
+        // Try modern clipboard API first
+        await navigator.clipboard.writeText(outputTextarea.value);
+        const statusDiv = document.getElementById('status');
+        statusDiv.className = 'status active success';
+        statusDiv.textContent = '📋 Copied to clipboard!';
+        setTimeout(() => {
+            statusDiv.className = 'status';
+        }, 2000);
+    } catch (err) {
+        // Fallback to old method
+        outputTextarea.select();
+        document.execCommand('copy');
+        const statusDiv = document.getElementById('status');
+        statusDiv.className = 'status active success';
+        statusDiv.textContent = '📋 Copied to clipboard!';
+        setTimeout(() => {
+            statusDiv.className = 'status';
+        }, 2000);
+    }
+}
+    function removeDuplicates(originalCode, partToRemove, keepOne, isArray, arrayId) {
+        const parts = originalCode.split('||');
+        if (parts.length < 2) return originalCode;
+
+        const prefix = parts[0] + '||';
+        let body = parts[1];
+
+        if (isArray) {
+            const arrayRegex = new RegExp(`{${arrayId}:\\[([^\\]]*)\\]}`, 'g');
+            let keptOne = false; // Shared across all blocks of the same arrayId
+            body = body.replace(arrayRegex, (match, numsString) => {
+                const nums = numsString.trim().split(/\s+/);
+                const newNums = [];
+                nums.forEach(num => {
+                    if (num === partToRemove) {
+                        if (keepOne && !keptOne) {
+                            newNums.push(num);
+                            keptOne = true;
+                        }
+                    } else {
+                        newNums.push(num);
+                    }
+                });
+                // If the array is not empty, rebuild it. Otherwise, it will be removed.
+                if (newNums.length > 0) {
+                    return `{${arrayId}:[${newNums.join(' ')}]}`;
+                }
+                return '';
+            });
+        } else {
+            const regex = new RegExp(partToRemove.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g');
+            let keptOne = false;
+            body = body.replace(regex, (match) => {
+                if (keepOne) {
+                    if (!keptOne) {
+                        keptOne = true;
+                        return match;
+                    }
+                    return '';
+                } else {
+                    return '';
+                }
+            });
+        }
+
+        // Clean up extra spaces from removed parts/blocks
+        body = body.replace(/\s\s+/g, ' ').trim();
+
+        return prefix + ' ' + body;
+    }
+
+    function displayNewCode(deserializedCode, outputContainerId, deserializedOutputId, serializedOutputId) {
+        const outputContainer = document.getElementById(outputContainerId);
+        const deserializedOutput = document.getElementById(deserializedOutputId);
+        const serializedOutput = document.getElementById(serializedOutputId);
+
+        deserializedOutput.value = deserializedCode;
+
+        fetch('https://borderlands4-deserializer.nicnl.com/api/v1/serialize_bulk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify([deserializedCode])
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => { throw new Error(`API error: ${response.statusText} - ${text}`) });
+            }
+            return response.json();
+        })
+        .then(result => {
+            if (Object.keys(result).length > 0) {
+                serializedOutput.value = result[Object.keys(result)[0]];
+            } else {
+                throw new Error('Serialization failed.');
+            }
+        })
+        .catch(e => {
+            serializedOutput.value = `Error: ${e.message}`;
+        });
+
+        outputContainer.style.display = 'block';
+    }
+    // --- UTILITIES TAB FUNCTIONS ---
+</script>
+</body>
+</html>
