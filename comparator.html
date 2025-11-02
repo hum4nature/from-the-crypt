@@ -462,6 +462,21 @@
             align-items: center;
             gap: 1rem;
         }
+        .breakdown-copy-btn.green {
+            background: rgba(125, 216, 125, 0.2);
+            border: 1px solid rgba(125, 216, 125, 0.4);
+            color: #7dd87d;
+        }
+        .breakdown-copy-btn.green:hover {
+            background: rgba(125, 216, 125, 0.3);
+            border-color: #7dd87d;
+        }
+        .breakdown-copy-btn.green:active {
+            background: rgba(125, 216, 125, 0.4);
+        }
+        .breakdown-array-text {
+            color: #ffffff;
+        }
         .breakdown-part-type {
             color: #b0b0b0;
             font-style: italic;
@@ -477,6 +492,10 @@
             background: rgba(255, 170, 68, 0.15);
             padding: 0.15rem 0.4rem;
             border-radius: 3px;
+        }
+        .breakdown-count.duplicate-report {
+            color: #7dd87d;
+            background: rgba(125, 216, 125, 0.15);
         }
         .breakdown-stats {
             color: #7dd87d;
@@ -3249,10 +3268,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const dupCopySingleId = `dup-copy-single-${duplicateId}-${idx}-0`;
                 const dupCopyArrayId = `dup-copy-array-${duplicateId}-${idx}-0`;
                 html += '<div class="breakdown-duplicate-item">';
-                html += `<div><span class="breakdown-code">{${dup.partId}}</span> <span class="breakdown-count">x${dup.count} times</span></div>`;
+                html += `<div><span class="breakdown-code">{${dup.partId}}</span> <span class="breakdown-count duplicate-report">x${dup.count} times</span></div>`;
                 html += '<div class="breakdown-copy-group">';
                 html += `<button class="breakdown-copy-btn" id="${dupCopySingleId}" onclick="copySinglePart('${dup.itemTypeCode}', '${dup.partId}', '${dupCopySingleId}')">📋 Copy {${dup.itemTypeCode}:${dup.partId}}</button>`;
-                html += `<button class="breakdown-copy-btn" id="${dupCopyArrayId}" onclick="copyDuplicatesAsArray('${dup.itemTypeCode}', '${dup.partId}', ${dup.count}, '${dupCopyArrayId}')">📋×${dup.count} Copy Array</button>`;
+                html += `<button class="breakdown-copy-btn green" id="${dupCopyArrayId}" onclick="copyDuplicatesAsArray('${dup.itemTypeCode}', '${dup.partId}', ${dup.count}, '${dupCopyArrayId}')">📋×${dup.count} Copy Array</button>`;
                 html += '</div></div>';
             });
         }
@@ -3262,7 +3281,7 @@ document.addEventListener('DOMContentLoaded', () => {
             keyedDuplicates.forEach((dup, idx) => {
                 const dupKeyedCopyId = `dup-copy-keyed-${duplicateId}-${idx}`;
                 html += '<div class="breakdown-duplicate-item">';
-                html += `<div><span class="breakdown-code">{${dup.category}:${dup.partId}}</span> <span class="breakdown-count">x${dup.count} times</span></div>`;
+                html += `<div><span class="breakdown-code">{${dup.category}:${dup.partId}}</span> <span class="breakdown-count duplicate-report">x${dup.count} times</span></div>`;
                 html += '<div class="breakdown-copy-group">';
                 html += `<button class="breakdown-copy-btn" id="${dupKeyedCopyId}" onclick="copyPartCode('{${dup.category}:${dup.partId}}', '${dupKeyedCopyId}')">📋 Copy {${dup.category}:${dup.partId}}</button>`;
                 html += '</div></div>';
@@ -3275,10 +3294,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const dupArrayCopySingleId = `dup-array-copy-single-${duplicateId}-${idx}`;
                 const dupArrayCopyArrayId = `dup-array-copy-array-${duplicateId}-${idx}`;
                 html += '<div class="breakdown-duplicate-item">';
-                html += `<div><span class="breakdown-code">{${dup.category}:${dup.partId}}</span> <span class="breakdown-count">x${dup.count} times</span> in array {${dup.category}:[...]}</div>`;
+                html += `<div><span class="breakdown-code">{${dup.category}:${dup.partId}}</span> <span class="breakdown-count duplicate-report">x${dup.count} times</span> in array {${dup.category}:[...]}</div>`;
                 html += '<div class="breakdown-copy-group">';
                 html += `<button class="breakdown-copy-btn" id="${dupArrayCopySingleId}" onclick="copyPartCode('{${dup.category}:${dup.partId}}', '${dupArrayCopySingleId}')">📋 Copy {${dup.category}:${dup.partId}}</button>`;
-                html += `<button class="breakdown-copy-btn" id="${dupArrayCopyArrayId}" onclick="copyDuplicatesAsArray('${dup.category}', '${dup.partId}', ${dup.count}, '${dupArrayCopyArrayId}')">📋×${dup.count} Copy Array</button>`;
+                html += `<button class="breakdown-copy-btn green" id="${dupArrayCopyArrayId}" onclick="copyDuplicatesAsArray('${dup.category}', '${dup.partId}', ${dup.count}, '${dupArrayCopyArrayId}')">📋×${dup.count} Copy Array</button>`;
                 html += '</div></div>';
             });
         }
@@ -3376,11 +3395,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             html += '<div class="breakdown-item">';
-            html += `<span class="breakdown-code">{${arrayPart.category}:[${arrayPart.values.join(' ')}]}</span>`;
+            html += `<span class="breakdown-code breakdown-array-text">{${arrayPart.category}:[${arrayPart.values.join(' ')}]}</span>`;
             if (arrayItemTypeInfo) {
-                html += ` - <span class="breakdown-part-type">Array (Category: ${arrayPart.category} = ${arrayItemTypeInfo.manufacturer} ${arrayItemTypeInfo.type})</span>`;
+                html += ` - <span class="breakdown-part-type breakdown-array-text">Array (Category: ${arrayPart.category} = ${arrayItemTypeInfo.manufacturer} ${arrayItemTypeInfo.type})</span>`;
             } else {
-                html += ` - <span class="breakdown-part-type">Array (Category: ${arrayPart.category})</span>`;
+                html += ` - <span class="breakdown-part-type breakdown-array-text">Array (Category: ${arrayPart.category})</span>`;
             }
             
             // Render grouped parts
@@ -3392,10 +3411,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 html += '<div style="margin-left: 1rem; margin-top: 0.25rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">';
                 html += '<div>';
-                html += `<span class="breakdown-code">${value}</span>`;
+                html += `<span class="breakdown-code breakdown-array-text">${value}</span>`;
                 
                 if (count > 1) {
-                    html += ` <span class="breakdown-count">x${count} times</span>`;
+                    html += ` <span class="breakdown-count duplicate-report">x${count} times</span>`;
                 }
                 
                 if (partInfo) {
@@ -3424,7 +3443,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 html += '<div class="breakdown-copy-group">';
                 html += `<button class="breakdown-copy-btn" id="${copyBtnId}" onclick="copyPartCode('${code}', '${copyBtnId}')" title="Copy ${code}">📋</button>`;
                 if (count > 1) {
-                    html += `<button class="breakdown-copy-btn" id="${copyArrayId}" onclick="copyDuplicatesAsArray('${arrayPart.category}', '${value}', ${count}, '${copyArrayId}')" title="Copy all ${count} as array">📋×${count}</button>`;
+                    html += `<button class="breakdown-copy-btn green" id="${copyArrayId}" onclick="copyDuplicatesAsArray('${arrayPart.category}', '${value}', ${count}, '${copyArrayId}')" title="Copy all ${count} as array">📋×${count}</button>`;
                 }
                 html += '</div>';
                 html += '</div>';
@@ -3516,6 +3535,89 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     // --- END WORKSTATION BREAKDOWN FEATURE ---
+
+    // --- AUTO-DESERIALIZE BASE85 SERIALS ON PASTE ---
+    async function handleDeserialPaste(e, textarea) {
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text').trim();
+        
+        // Check if pasted text is a Base85 serial (starts with @U)
+        if (pastedText.startsWith('@U')) {
+            e.preventDefault(); // Prevent default paste
+            
+            // Show loading indicator
+            const originalValue = textarea.value;
+            textarea.value = '⏳ Deserializing...';
+            textarea.disabled = true;
+            
+            try {
+                // Call the deserialization API
+                const response = await fetch('https://borderlands4-deserializer.nicnl.com/api/v1/deserialize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ serial_b85: pastedText })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data && data.deserialized) {
+                    // Replace with deserialized content
+                    textarea.value = data.deserialized;
+                    
+                    // Show success feedback briefly
+                    textarea.style.borderColor = '#7dd87d';
+                    setTimeout(() => {
+                        textarea.style.borderColor = '';
+                    }, 2000);
+                } else {
+                    throw new Error('No deserialized data received');
+                }
+            } catch (error) {
+                console.error('Deserialization error:', error);
+                // Restore original value and show error
+                textarea.value = originalValue + pastedText;
+                textarea.style.borderColor = '#ff6b6b';
+                setTimeout(() => {
+                    textarea.style.borderColor = '';
+                }, 2000);
+            } finally {
+                textarea.disabled = false;
+                textarea.focus();
+            }
+        }
+        // If not Base85, allow normal paste
+    }
+    
+    // Attach paste event listeners to all deserial textareas
+    function attachDeserialPasteListeners() {
+        for (let i = 1; i <= 10; i++) {
+            const textarea = document.getElementById(`ws-${i}-deserial`);
+            if (textarea) {
+                // Remove existing listener if any
+                textarea.removeEventListener('paste', textarea._pasteHandler);
+                // Create new handler
+                textarea._pasteHandler = (e) => handleDeserialPaste(e, textarea);
+                textarea.addEventListener('paste', textarea._pasteHandler);
+            }
+        }
+    }
+    
+    // Attach listeners on page load and whenever new items are added
+    attachDeserialPasteListeners();
+    
+    // Re-attach when new workstation items are shown
+    const addWorkstationBtn = document.getElementById('add-workstation-item-btn');
+    if (addWorkstationBtn) {
+        const originalClickHandler = addWorkstationBtn.onclick || (() => {});
+        addWorkstationBtn.addEventListener('click', () => {
+            setTimeout(attachDeserialPasteListeners, 100); // Re-attach after item is shown
+        });
+    }
 
 });
 
