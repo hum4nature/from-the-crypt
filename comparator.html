@@ -341,8 +341,8 @@
             color: var(--text-primary);
         }
         .breakdown-toggle {
-            background: var(--accent-orange);
-            color: var(--bg-deep-blue);
+            background: #c94a4a;
+            color: #ffffff;
             border: none;
             padding: 0.3rem 0.8rem;
             border-radius: 4px;
@@ -352,7 +352,7 @@
             transition: all 0.2s;
         }
         .breakdown-toggle:hover {
-            background: var(--accent-orange-hover);
+            background: #d65a5a;
             transform: translateY(-1px);
         }
         .breakdown-content {
@@ -476,6 +476,77 @@
         }
         .breakdown-array-text {
             color: #ffffff;
+        }
+        .breakdown-visual-view {
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .breakdown-visual-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            cursor: pointer;
+            background: rgba(255, 170, 68, 0.1);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .breakdown-visual-header:hover {
+            background: rgba(255, 170, 68, 0.15);
+        }
+        .breakdown-visual-content {
+            padding: 0.75rem;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            overflow: hidden;
+            max-height: 5000px;
+        }
+        .breakdown-visual-content.collapsed {
+            max-height: 0 !important;
+            opacity: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        .breakdown-visual-code {
+            background-color: var(--bg-element);
+            color: var(--text-primary);
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 0.75rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            word-break: break-all;
+            white-space: pre-wrap;
+        }
+        .breakdown-visual-code span.ws-highlight {
+            background-color: var(--highlight-bg);
+            color: var(--highlight-text);
+            border-radius: 3px;
+            padding: 0 2px;
+            transition: all 0.1s ease-in-out;
+        }
+        .breakdown-visual-list {
+            list-style-type: none;
+            padding-left: 0;
+            margin: 0;
+        }
+        .breakdown-visual-list li {
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: color 0.2s;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+        }
+        .breakdown-visual-list li:hover {
+            background: rgba(255, 170, 68, 0.1);
+            color: var(--accent-orange-hover);
+        }
+        .breakdown-visual-list li code {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--accent-orange);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.9em;
         }
         .breakdown-part-type {
             color: #b0b0b0;
@@ -3307,6 +3378,116 @@ document.addEventListener('DOMContentLoaded', () => {
         return html;
     }
 
+    // Generate visual breakdown (like the example)
+    async function generateVisualBreakdown(originalCode, parsed) {
+        if (!parsed || parsed.error || !originalCode) {
+            return '';
+        }
+
+        const { itemTypeCode, itemTypeInfo, singleParts, keyedParts, arrayParts } = parsed;
+        const visualId = `visual-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        let html = '';
+
+        html += '<div class="breakdown-visual-view">';
+        html += `<div class="breakdown-visual-header" onclick="toggleBreakdown('${visualId}')">`;
+        html += `<span style="font-weight: 600; color: #ffaa44;">📋 Visual Breakdown</span>`;
+        html += `<button class="breakdown-toggle" id="toggle-${visualId}">Expand</button>`;
+        html += `</div>`;
+        html += `<div class="breakdown-visual-content collapsed" id="${visualId}">`;
+        
+        // Escape HTML in original code for display, but store raw in data attribute
+        const escapedCode = originalCode.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        
+        // Display the code block with ID for highlighting (store raw text in data attribute)
+        html += `<code class="breakdown-visual-code" id="visual-code-${visualId}" data-original-text="${originalCode.replace(/"/g, '&quot;')}">${escapedCode}</code>`;
+        
+        html += '<ul class="breakdown-visual-list">';
+        
+        // Add header parts
+        const headerMatch = originalCode.match(/^(\d+),\s*(\d+),\s*(\d+),\s*(\d+)/);
+        if (headerMatch) {
+            const manufacturerName = itemTypeInfo.manufacturer.charAt(0).toUpperCase() + itemTypeInfo.manufacturer.slice(1);
+            const itemTypeName = itemTypeInfo.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            html += `<li class="highlight-trigger" data-visual-id="${visualId}" data-highlight="${headerMatch[0].replace(/[()]/g, '\\$&')}"><code>${headerMatch[0]}</code> = Item Type: ${itemTypeCode} (${manufacturerName} ${itemTypeName})</li>`;
+        }
+        
+        // Add single parts
+        for (const part of singleParts) {
+            const partInfo = await lookupPart(itemTypeCode, part.partId);
+            const partCode = `{${part.partId}}`;
+            let description = 'Unknown Part';
+            if (partInfo) {
+                if (partInfo.type) {
+                    description = `${partInfo.name} (${partInfo.type})`;
+                } else {
+                    const displayName = partInfo.stringName || partInfo.modelName || partInfo.partType || 'Part';
+                    let descParts = [displayName];
+                    if (partInfo.stats) descParts.push(`[${partInfo.stats}]`);
+                    if (partInfo.effects) descParts.push(`[${partInfo.effects}]`);
+                    description = descParts.join(' ');
+                }
+            }
+            // Escape curly braces for regex
+            const escapedPartCode = partCode.replace(/[{}]/g, '\\$&');
+            html += `<li class="highlight-trigger" data-visual-id="${visualId}" data-highlight="${escapedPartCode}"><code>${partCode}</code> = ${description}</li>`;
+        }
+        
+        // Add keyed parts
+        for (const keyedPart of keyedParts) {
+            let partInfo = await lookupPart(itemTypeCode, keyedPart.partId, keyedPart.category);
+            if (!partInfo) {
+                const categoryAsItemType = parseInt(keyedPart.category, 10);
+                if (ITEM_TYPES[categoryAsItemType] && categoryAsItemType !== itemTypeCode) {
+                    partInfo = await lookupPart(categoryAsItemType, keyedPart.partId, keyedPart.category);
+                }
+            }
+            const partCode = `{${keyedPart.category}:${keyedPart.partId}}`;
+            let description = 'Unknown Part';
+            if (partInfo) {
+                if (partInfo.type) {
+                    description = `${partInfo.name} (${partInfo.type})`;
+                } else {
+                    const displayName = partInfo.stringName || partInfo.modelName || partInfo.partType || 'Part';
+                    let descParts = [displayName];
+                    if (partInfo.stats) descParts.push(`[${partInfo.stats}]`);
+                    if (partInfo.effects) descParts.push(`[${partInfo.effects}]`);
+                    description = descParts.join(' ');
+                }
+            }
+            // Escape special regex characters
+            const escapedCode = partCode.replace(/[{}:]/g, (m) => {
+                if (m === '{') return '\\{';
+                if (m === '}') return '\\}';
+                return m;
+            });
+            html += `<li class="highlight-trigger" data-visual-id="${visualId}" data-highlight="${escapedCode}"><code>${partCode}</code> = ${description}</li>`;
+        }
+        
+        // Add array parts
+        for (const arrayPart of arrayParts) {
+            const arrayItemTypeCode = parseInt(arrayPart.category, 10);
+            const arrayCode = `{${arrayPart.category}:[${arrayPart.values.join(' ')}]}`;
+            const arrayItemTypeInfo = ITEM_TYPES[arrayItemTypeCode];
+            const manufacturerName = arrayItemTypeInfo ? arrayItemTypeInfo.manufacturer.charAt(0).toUpperCase() + arrayItemTypeInfo.manufacturer.slice(1) : '';
+            const itemTypeName = arrayItemTypeInfo ? arrayItemTypeInfo.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '';
+            const categoryName = arrayItemTypeInfo ? `${manufacturerName} ${itemTypeName}` : `Category ${arrayPart.category}`;
+            // Escape for regex
+            const escapedArrayCode = arrayCode.replace(/[{}:\[\]]/g, (m) => {
+                if (m === '{') return '\\{';
+                if (m === '}') return '\\}';
+                if (m === '[') return '\\[';
+                if (m === ']') return '\\]';
+                return m;
+            });
+            html += `<li class="highlight-trigger" data-visual-id="${visualId}" data-highlight="${escapedArrayCode}"><code>${arrayCode}</code> = Array (${categoryName})</li>`;
+        }
+        
+        html += '</ul>';
+        html += '</div></div>';
+        
+        return html;
+    }
+
     // Generate breakdown HTML
     async function generateBreakdown(parsed) {
         if (!parsed || parsed.error) {
@@ -3487,6 +3668,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Make toggleBreakdown available globally
     window.toggleBreakdown = toggleBreakdown;
+    
+    // Attach visual highlight handlers
+    function attachVisualHighlightHandlers(container) {
+        container.querySelectorAll('.breakdown-visual-list li.highlight-trigger').forEach(li => {
+            li.addEventListener('click', function() {
+                const visualId = this.dataset.visualId;
+                const textToHighlight = this.dataset.highlight;
+                if (!visualId || !textToHighlight) return;
+
+                const codeBlock = container.querySelector(`#visual-code-${visualId}`);
+                if (!codeBlock) return;
+                
+                const originalText = codeBlock.dataset.originalText;
+                
+                // Reset text to original
+                codeBlock.textContent = originalText;
+                
+                // Create regex to find all instances (including escaped special chars)
+                // Unescape the highlight text for regex
+                const unescapedText = textToHighlight.replace(/\\(.)/g, '$1');
+                // Escape for regex matching
+                const regexEscaped = unescapedText.replace(/[{}:\[\]()]/g, '\\$&');
+                const regex = new RegExp(regexEscaped, 'g');
+                
+                // Apply highlight to all instances
+                const highlightedHtml = originalText.replace(regex, (match) => {
+                    return `<span class="ws-highlight">${match}</span>`;
+                });
+                
+                codeBlock.innerHTML = highlightedHtml;
+            });
+        });
+    }
 
     // Handle breakdown button clicks
     document.addEventListener('click', async (e) => {
@@ -3521,8 +3735,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const testLookup = await lookupPart(5, '2', null);
             console.log('Test lookup for 5|2:', testLookup);
             
+            // Generate visual breakdown first (collapsed)
+            const visualHtml = await generateVisualBreakdown(code, parsed);
+            
+            // Generate regular breakdown
             const html = await generateBreakdown(parsed);
-            breakdownDiv.innerHTML = html;
+            
+            // Combine them
+            breakdownDiv.innerHTML = visualHtml + html;
+            
+            // Attach highlight handlers for visual breakdown
+            attachVisualHighlightHandlers(breakdownDiv);
             
             // Log parts map info
             const partsMap = await loadPartsData();
