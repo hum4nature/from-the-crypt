@@ -326,55 +326,109 @@
         }
         .breakdown-display {
             font-family: 'Courier New', Courier, monospace;
-            font-size: 0.9rem;
-            line-height: 1.6;
+            font-size: 0.95rem;
+            line-height: 1.7;
         }
         .breakdown-header {
-            font-size: 1.1rem;
-            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 1.15rem;
+            font-weight: 500;
             margin-bottom: 0.75rem;
             padding-bottom: 0.5rem;
             border-bottom: 2px solid var(--border-color);
             color: var(--text-primary);
         }
+        .breakdown-toggle {
+            background: var(--accent-orange);
+            color: var(--bg-deep-blue);
+            border: none;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .breakdown-toggle:hover {
+            background: var(--accent-orange-hover);
+            transform: translateY(-1px);
+        }
+        .breakdown-content {
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            overflow: hidden;
+        }
+        .breakdown-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin: 0;
+            padding: 0;
+        }
         .breakdown-item {
-            margin-bottom: 0.75rem;
-            padding: 0.5rem;
+            margin-bottom: 0.85rem;
+            padding: 0.75rem;
             border-left: 3px solid var(--border-color);
-            padding-left: 0.75rem;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 3px;
+            padding-left: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .breakdown-item:hover {
+            background: rgba(255, 255, 255, 0.05);
         }
         .breakdown-code {
             color: var(--accent-orange);
-            font-weight: bold;
+            font-weight: 500;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            letter-spacing: 0.5px;
         }
         .breakdown-part-name {
-            color: var(--text-primary);
-            font-weight: 600;
+            color: #e8e8e8;
+            font-weight: 400;
+            font-size: 1em;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            letter-spacing: 0.3px;
         }
         .breakdown-part-type {
-            color: var(--text-secondary);
+            color: #b0b0b0;
             font-style: italic;
-            font-size: 0.85em;
+            font-size: 0.88em;
+            font-weight: 300;
+            margin-left: 0.3rem;
         }
         .breakdown-stats {
-            color: var(--success-green);
-            margin-top: 0.25rem;
-            font-size: 0.9em;
+            color: #7dd87d;
+            margin-top: 0.4rem;
+            margin-left: 1rem;
+            font-size: 1.05em;
+            font-weight: 400;
+            line-height: 1.5;
         }
         .breakdown-effects {
-            color: var(--accent-orange);
-            margin-top: 0.25rem;
-            font-size: 0.9em;
+            color: #ffaa44;
+            margin-top: 0.4rem;
+            margin-left: 1rem;
+            font-size: 1.1em;
+            font-weight: 500;
+            line-height: 1.6;
+            background: rgba(255, 170, 68, 0.1);
+            padding: 0.4rem 0.6rem;
+            border-radius: 4px;
+            border-left: 2px solid #ffaa44;
         }
         .breakdown-unknown {
-            color: var(--danger-red);
+            color: #ff6b6b;
+            font-weight: 400;
+            font-style: italic;
         }
         .breakdown-item-type {
             color: #87ceeb;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
+            font-weight: 500;
+            margin-bottom: 0.6rem;
+            font-size: 1em;
+            text-transform: capitalize;
         }
         /* Style for the new control buttons */
         #add-workstation-item-btn {
@@ -2895,12 +2949,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const { itemTypeCode, itemTypeInfo, singleParts, keyedParts, arrayParts } = parsed;
+        const breakdownId = `breakdown-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         let html = '';
 
-        // Item type header
+        // Item type header with toggle button
         const manufacturerName = itemTypeInfo.manufacturer.charAt(0).toUpperCase() + itemTypeInfo.manufacturer.slice(1);
         const itemTypeName = itemTypeInfo.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-        html += `<div class="breakdown-header">Item Type: <span class="breakdown-item-type">${itemTypeCode} - ${manufacturerName} ${itemTypeName}</span></div>`;
+        html += `<div class="breakdown-header">`;
+        html += `<span class="breakdown-item-type">Item Type: ${itemTypeCode} - ${manufacturerName} ${itemTypeName}</span>`;
+        html += `<button class="breakdown-toggle" onclick="toggleBreakdown('${breakdownId}')" id="toggle-${breakdownId}">Collapse</button>`;
+        html += `</div>`;
+        html += `<div class="breakdown-content" id="${breakdownId}">`;
 
         // Process single parts {123} - these belong to the item type from header
         for (const part of singleParts) {
@@ -3022,8 +3081,32 @@ document.addEventListener('DOMContentLoaded', () => {
             html += '</div>';
         }
 
+        // Close the collapsible content div
+        if (itemTypeInfo) {
+            html += `</div>`;
+        }
+
         return html;
     }
+
+    // Toggle breakdown collapse/expand
+    function toggleBreakdown(id) {
+        const content = document.getElementById(id);
+        const toggleBtn = document.getElementById(`toggle-${id}`);
+        
+        if (!content || !toggleBtn) return;
+        
+        if (content.classList.contains('collapsed')) {
+            content.classList.remove('collapsed');
+            toggleBtn.textContent = 'Collapse';
+        } else {
+            content.classList.add('collapsed');
+            toggleBtn.textContent = 'Expand';
+        }
+    }
+
+    // Make toggleBreakdown available globally
+    window.toggleBreakdown = toggleBreakdown;
 
     // Handle breakdown button clicks
     document.addEventListener('click', async (e) => {
