@@ -2910,8 +2910,11 @@ document.addEventListener('DOMContentLoaded', () => {
             html += `<span class="breakdown-code">{${part.partId}}</span>`;
             
             if (partInfo) {
-                html += ` - <span class="breakdown-part-name">${partInfo.modelName || partInfo.partType || partInfo.stringName || 'Part'}</span>`;
-                if (partInfo.partType) {
+                // Prioritize stringName (like JAK_AR.part_barrel_02_c) if available
+                const displayName = partInfo.stringName || partInfo.modelName || partInfo.partType || 'Part';
+                html += ` - <span class="breakdown-part-name">${displayName}</span>`;
+                // Show part type if different from what's displayed
+                if (partInfo.partType && partInfo.partType !== displayName && partInfo.partType !== partInfo.stringName) {
                     html += ` <span class="breakdown-part-type">(${partInfo.partType})</span>`;
                 }
                 if (partInfo.stats) {
@@ -2949,10 +2952,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     html += ` - <span class="breakdown-part-name" style="color: var(--accent-orange);">${partInfo.name}</span>`;
                     html += ` <span class="breakdown-part-type">(${partInfo.type})</span>`;
                 } else {
-                    // Regular part
+                    // Regular part - prioritize stringName if available
+                    const displayName = partInfo.stringName || partInfo.modelName || partInfo.partType || 'Part';
                     html += ` <span class="breakdown-part-type">(Category: ${keyedPart.category})</span>`;
-                    html += ` - <span class="breakdown-part-name">${partInfo.modelName || partInfo.partType || partInfo.stringName || 'Part'}</span>`;
-                    if (partInfo.partType && partInfo.modelName !== partInfo.partType) {
+                    html += ` - <span class="breakdown-part-name">${displayName}</span>`;
+                    // Show part type if different from what's displayed
+                    if (partInfo.partType && partInfo.partType !== displayName && partInfo.partType !== partInfo.stringName) {
                         html += ` <span class="breakdown-part-type">(${partInfo.partType})</span>`;
                     }
                     if (partInfo.stats) {
@@ -2995,9 +3000,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         html += ` - <span class="breakdown-part-name" style="color: var(--accent-orange);">${partInfo.name}</span>`;
                         html += ` <span class="breakdown-part-type">(${partInfo.type})</span>`;
                     } else {
-                        // Regular part
-                        html += ` - <span class="breakdown-part-name">${partInfo.modelName || partInfo.partType || partInfo.stringName || 'Part'}</span>`;
-                        if (partInfo.partType) {
+                        // Regular part - prioritize stringName (like JAK_AR.part_barrel_02_c) if available
+                        const displayName = partInfo.stringName || partInfo.modelName || partInfo.partType || 'Part';
+                        html += ` - <span class="breakdown-part-name">${displayName}</span>`;
+                        // Show part type if different from what's displayed
+                        if (partInfo.partType && partInfo.partType !== displayName && partInfo.partType !== partInfo.stringName) {
                             html += ` <span class="breakdown-part-type">(${partInfo.partType})</span>`;
                         }
                         if (partInfo.stats) {
