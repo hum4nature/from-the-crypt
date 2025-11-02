@@ -2927,8 +2927,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Process keyed parts {123:45} - category:partId format
+        // If category is a valid item type code and lookup fails as special, try using category as item type
         for (const keyedPart of keyedParts) {
-            const partInfo = await lookupPart(itemTypeCode, keyedPart.partId, keyedPart.category);
+            let partInfo = await lookupPart(itemTypeCode, keyedPart.partId, keyedPart.category);
+            
+            // If not found and category could be an item type code, try using it
+            if (!partInfo) {
+                const categoryAsItemType = parseInt(keyedPart.category, 10);
+                if (ITEM_TYPES[categoryAsItemType] && categoryAsItemType !== itemTypeCode) {
+                    // Category is a valid item type code, try using it for lookup
+                    partInfo = await lookupPart(categoryAsItemType, keyedPart.partId, keyedPart.category);
+                }
+            }
             
             html += '<div class="breakdown-item">';
             html += `<span class="breakdown-code">{${keyedPart.category}:${keyedPart.partId}}</span>`;
@@ -2960,13 +2970,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Process array parts {123:[456 789]} - category:[partIds] format
+        // Note: The category number IS the item type code for array parts!
         for (const arrayPart of arrayParts) {
+            const arrayItemTypeCode = parseInt(arrayPart.category, 10);
+            const arrayItemTypeInfo = ITEM_TYPES[arrayItemTypeCode];
+            
             html += '<div class="breakdown-item">';
             html += `<span class="breakdown-code">{${arrayPart.category}:[${arrayPart.values.join(' ')}]}</span>`;
-            html += ` - <span class="breakdown-part-type">Array (Category: ${arrayPart.category})</span>`;
+            if (arrayItemTypeInfo) {
+                html += ` - <span class="breakdown-part-type">Array (Category: ${arrayPart.category} = ${arrayItemTypeInfo.manufacturer} ${arrayItemTypeInfo.type})</span>`;
+            } else {
+                html += ` - <span class="breakdown-part-type">Array (Category: ${arrayPart.category})</span>`;
+            }
             
             for (const value of arrayPart.values) {
-                const partInfo = await lookupPart(itemTypeCode, value, arrayPart.category);
+                // Use arrayItemTypeCode (category number) instead of header's itemTypeCode
+                const partInfo = await lookupPart(arrayItemTypeCode, value, arrayPart.category);
                 html += '<div style="margin-left: 1rem; margin-top: 0.25rem;">';
                 html += `<span class="breakdown-code">${value}</span>`;
                 
